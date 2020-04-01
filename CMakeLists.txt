@@ -20,7 +20,8 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 #set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 #set BUILROOT_BUILD_PROJECT
-set(BUILROOT_BUILD_PROJECT true)
+#set(BUILROOT_BUILD_PROJECT true)
+#set(ENABLE_ASAN true)
 
 #set RK_SIMULATOR_HW
 #set(RK_SIMULATOR_HW true)
@@ -31,18 +32,21 @@ set(BUILROOT_BUILD_PROJECT true)
 if(RK_SIMULATOR_HW)
     add_compile_options(-DRK_SIMULATOR_HW)
 elseif(BUILROOT_BUILD_PROJECT)
-    SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
-    SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+	add_compile_options(-DDISABLE_PP)
+	SET(CMAKE_C_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-gcc")
+	SET(CMAKE_CXX_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-g++")
+	#SET(CMAKE_C_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-gcc")
+	#SET(CMAKE_CXX_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-g++")
 else()
-    SET(CMAKE_C_COMPILER "/home/hkj/isp2-fpga/fpga-ramdisk/toolchains/host/bin/arm-buildroot-linux-gnueabi-gcc")
-    SET(CMAKE_CXX_COMPILER "/home/hkj/isp2-fpga/fpga-ramdisk/toolchains/host/bin/arm-buildroot-linux-gnueabi-g++")
+	SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+	SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
 endif()
 
 # ----------------------------------------------------------------------------
 # ADD SYMBOL TABLE FOR GDB
 # ----------------------------------------------------------------------------
-SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -std=c++11 -Wno-reorder -O0 -Werror -g -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -std=c++11 -O0 -Wall -Wno-reorder -g -ggdb")
 # SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 #head file path
@@ -77,6 +81,7 @@ set (ALGO_COMMON_SRC
 	algos/interpolation.cpp
 	)
 set (COMMON_SRC
+	common/mediactl/mediactl.c
 	)
 if(RK_SIMULATOR_HW)
 set (HWI_SRC
@@ -178,12 +183,16 @@ endif()
 message(${CMAKE_LIBRARY_PATH})
 message(${LIBRARY_OUTPUT_PATH})
 
+if(ENABLE_ASAN)
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+SET(LINK_ASAN asan)
+endif()
+
 # add C++11 option
-add_compile_options(-std=c++11)
+#add_compile_options(-std=c++11)
 add_compile_options(-fPIC)
 add_compile_options(-Wno-unused-variable
 					-Wno-unused-but-set-variable
-					-Wno-reorder
 					-Wno-unused-function)
 # add_compile_options(-v)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -211,4 +220,5 @@ link_directories("${LIBRARY_OUTPUT_PATH}")
 target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkaiq_ahdr
 	rkaiq_acp rkaiq_asharp rkaiq_adhaz rkaiq_a3dlut rkaiq_ablc rkaiq_accm rkaiq_acgc
 	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_agic rkaiq_aie rkaiq_aldch
-	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS} ${OPENCV_3RDPARTY_LIBS} pthread)
+	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}
+	${OPENCV_3RDPARTY_LIBS} ${LINK_ASAN} pthread)

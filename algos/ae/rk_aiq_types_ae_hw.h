@@ -15,7 +15,7 @@
 
 #define RAWHISTBIG_SUBWIN_NUM 225
 #define RAWHISTLITE_SUBWIN_NUM 25
-#define SIHIST_WIN_NUM      4
+#define SIHIST_WIN_NUM      1
 #define SIHIST_WEIGHT_NUM   225
 #define HIST_WEIGHT_NUM     225
 #define HIST_BIN_N_MAX      256
@@ -129,20 +129,25 @@ struct sihst_cfg {
     unsigned char hist_weight[SIHIST_WEIGHT_NUM];
 } __attribute__ ((packed));
 
-
+/*NOTE: name of rawae/rawhist channel has been renamed!
+   RawAE0 = RawAE lite,  addr=0x4500  <=> RawHIST0
+   RawAE1 = RawAE big2, addr=0x4600 <=> RawHIST1
+   RawAE2 = RawAE big3, addr=0x4700 <=> RawHIST2
+   RawAE3 = RawAE big1, addr=0x4400, extra aebig <=> RawHIST3
+*/
 typedef struct rk_aiq_ae_meas_params_s {
-    struct rawaebig_meas_cfg rawaebig1;
-    struct rawaebig_meas_cfg rawaebig2;
-    struct rawaebig_meas_cfg rawaebig3;
-    struct rawaelite_meas_cfg rawaelite;
+    struct rawaelite_meas_cfg rawae0;
+    struct rawaebig_meas_cfg rawae1;
+    struct rawaebig_meas_cfg rawae2;
+    struct rawaebig_meas_cfg rawae3;
     struct yuvae_meas_cfg yuvae;
 } rk_aiq_ae_meas_params_t;
 
 typedef struct rk_aiq_hist_meas_params_s {
-    struct rawhistbig_cfg rawhstbig1;
-    struct rawhistbig_cfg rawhstbig2;
-    struct rawhistbig_cfg rawhstbig3;
-    struct rawhistlite_cfg rawhstlite;
+    struct rawhistlite_cfg rawhist0;
+    struct rawhistbig_cfg rawhist1;
+    struct rawhistbig_cfg rawhist2;
+    struct rawhistbig_cfg rawhist3;
     struct sihst_cfg sihist;
 } rk_aiq_hist_meas_params_t;
 /*****************************************************************************/

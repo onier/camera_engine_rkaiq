@@ -1,7 +1,7 @@
 /*
  * Isp20PollThread.h - isp20 poll thread for event and buffer
  *
- *  Copyright (c) 2014-2015 Intel Corporation
+ *  Copyright (c) 2019 Rockchip Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ private:
     int _mipi_dev_max;
     Mutex _mipi_buf_mutex;
     Mutex _mipi_trigger_mutex;
+    bool _first_trigger;
 private:
     XCAM_DEAD_COPY(Isp20PollThread);
     SmartPtr<SensorHw> _event_handle_dev;

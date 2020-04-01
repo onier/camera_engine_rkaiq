@@ -23,15 +23,15 @@
 
 XCAM_BEGIN_DECLARE
 
-typedef struct rk_aiq_static_metas_s {
-} rk_aiq_static_metas_t;
+//typedef struct rk_aiq_static_metas_s {
+//} rk_aiq_static_metas_t;
 
 typedef struct rk_aiq_metas_s {
     uint32_t frame_id;
 } rk_aiq_metas_t;
 
 typedef enum rk_aiq_err_code {
-
+    UNKNOWN,
 } rk_aiq_err_code_e;
 
 typedef struct rk_aiq_err_msg_s {

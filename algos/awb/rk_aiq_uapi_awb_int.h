@@ -21,9 +21,13 @@ rk_aiq_uapi_awb_GetAttrib(const RkAiqAlgoContext *ctx,
                           rk_aiq_wb_attrib_t *attr);
 XCamReturn
 rk_aiq_uapi_awb_GetCCT(const RkAiqAlgoContext *ctx,
-                          rk_aiq_wb_cct_t *cct );
+                       rk_aiq_wb_cct_t *cct );
 XCamReturn
 rk_aiq_uapi_awb_QueryWBInfo(const RkAiqAlgoContext *ctx,
-                          rk_aiq_wb_querry_info_t *wb_querry_info );
+                            rk_aiq_wb_querry_info_t *wb_querry_info );
+XCamReturn
+rk_aiq_uapi_awb_Lock(RkAiqAlgoContext *ctx);
+XCamReturn
+rk_aiq_uapi_awb_Unlock(const RkAiqAlgoContext *ctx);
 
 #endif

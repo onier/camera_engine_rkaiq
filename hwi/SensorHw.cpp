@@ -18,14 +18,14 @@
 #include <linux/v4l2-subdev.h>
 #include "SensorHw.h"
 
-// #define ADD_LOCK
-#define IS_HDR_SENSOR
+#define ADD_LOCK
 
 namespace RkCam {
 
 SensorHw::SensorHw(const char* name)
     : V4l2SubDevice (name)
     , _first(true)
+    , _working_mode(RK_AIQ_WORKING_MODE_NORMAL)
 {
     ENTER_CAMHW_FUNCTION();
     EXIT_CAMHW_FUNCTION();
@@ -275,11 +275,10 @@ SensorHw::setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar)
 #endif
 
     if (_first) {
-#ifdef IS_HDR_SENSOR
-	setHdrSensorExposure(expPar);
-#else
-        setLinearSensorExposure(expPar);
-#endif
+	if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL)
+            setLinearSensorExposure(expPar);
+	else
+	    setHdrSensorExposure(expPar);
 
 	_effecting_exp_map[2] = expPar;
 	_first = false;
@@ -327,8 +326,8 @@ SensorHw::getEffectiveParams(SmartPtr<RkAiqExpParamsProxy>& expParams, int frame
 	      int i = 0;
 
               rit = _effecting_exp_map.rbegin();
-	      while (i++ < 3 && rit->first > search_id)
-                  rit++;
+	      /* while (i++ < 3 && rit->first > search_id) */
+                  /* rit++; */
 	      expParams = rit->second;
 	      /*
 	       * printf("debug-hdr: %d: get-last %d, lexp: %d from map\n",
@@ -408,11 +407,11 @@ SensorHw::handle_sof(int64_t time, int frameid)
 	_mutex.unlock();
 #endif
 
-#ifdef IS_HDR_SENSOR
-	setHdrSensorExposure(exp);
-#else
-        setLinearSensorExposure(exp);
-#endif
+	if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL)
+            setLinearSensorExposure(exp);
+	else
+	    setHdrSensorExposure(exp);
+
 #ifdef ADD_LOCK
         _mutex.lock();
 #endif
@@ -486,4 +485,35 @@ SensorHw::get_v4l2_pixelformat(uint32_t pixelcode)
     }
     return pixelformat;
 }
+
+XCamReturn
+SensorHw::set_working_mode(int mode)
+{
+    rkmodule_hdr_cfg hdr_cfg;
+    __u32 hdr_mode;
+
+    xcam_mem_clear(hdr_cfg);
+    if (mode == RK_AIQ_WORKING_MODE_NORMAL) {
+        hdr_mode = NO_HDR;
+    } else if (mode == RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR ||
+               mode == RK_AIQ_ISP_HDR_MODE_2_LINE_HDR) {
+        hdr_mode = HDR_X2;
+    } else if (mode == RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR ||
+               mode == RK_AIQ_ISP_HDR_MODE_3_LINE_HDR) {
+        hdr_mode = HDR_X3;
+    }
+    hdr_cfg.hdr_mode = hdr_mode;
+    if (io_control(RKMODULE_SET_HDR_CFG, &hdr_cfg) < 0) {
+        XCAM_LOG_ERROR ("failed to set hdr mode");
+        return XCAM_RETURN_ERROR_IOCTL;
+    }
+
+    _working_mode = mode;
+
+    XCAM_LOG_DEBUG ("%s _working_mode: %d\n",
+                    __func__, _working_mode);
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
 }; //namespace RkCam

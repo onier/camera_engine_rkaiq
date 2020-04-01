@@ -48,8 +48,12 @@ typedef struct Uapi_ExpSwAttr_s {
     int                      AecOpType;
     AecEcmFlickerPeriod_t    EcmFlickerSelect;        /**< flicker period selection */
     //GridWeight
-    Cam5x5UCharMatrix_t      NormalGridWeights;//cxf
+    Cam5x5UCharMatrix_t      DayGridWeights;//cxf
     Cam5x5UCharMatrix_t      NightGridWeights;//cxf
+    //DayOrNight Switch
+    uint8_t                  DNTrigger;
+    CalibDb_AecDayNightMode_t   DNMode;
+    uint8_t                  NightMode;
 
     Uapi_AeAttr_t            stAuto;
     Uapi_MeAttr_t            stManual;
@@ -70,7 +74,7 @@ typedef struct Uapi_LinExpAttr_s {
     float                   Tolerance;
     int                     StrategyMode;
     bool                    DySetPointEn;
-    Uapi_AeDySetpoint_t     DySetpoint[AEC_LIGHT_MODE_MAX];
+    Uapi_AeDySetpoint_t     DySetpoint[AEC_DNMODE_MAX];
 } Uapi_LinExpAttr_t;
 
 typedef struct Uapi_HdrExpAttr_s {

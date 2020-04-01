@@ -60,8 +60,8 @@ typedef struct rk_aiq_wb_mwb_attrib_s {
 
 
 typedef enum rk_aiq_wb_awb_alg_method_s {
-    RK_AIQ_AWB_ALG_TYPE_INVAILD =0,
-    RK_AIQ_AWB_ALG_TYPE_GLOABL =1,
+    RK_AIQ_AWB_ALG_TYPE_INVAILD = 0,
+    RK_AIQ_AWB_ALG_TYPE_GLOABL = 1,
     //add more
 } rk_aiq_wb_awb_alg_method_t;
 
@@ -69,35 +69,43 @@ typedef enum rk_aiq_wb_awb_alg_method_s {
 typedef struct rk_aiq_wb_awb_attrib_s {
     rk_aiq_wb_awb_alg_method_t algMethod;
     unsigned int runInterval;
-    bool sceneAdjustEn;
-    bool colorBalanceEn;
+    bool sceneAdjustEn;//to do
+    bool colorBalanceEn;//to do
     bool cagaEn;
     bool wbGainShiftEn;
+    bool wbGainDaylightClipEn;
     bool wbGainClipEn;
-    bool extraLightEn;
-    bool autoSatDecrEn;
-    bool autoHdrFrameSelcEn;
+    bool extraLightEn;//to do
+    bool autoSatDecrEn;//to do
+    bool autoHdrFrameSelcEn;//to do
 } rk_aiq_wb_awb_attrib_t;
 
-typedef enum rk_aiq_wb_op_mode_s{
+typedef enum rk_aiq_wb_op_mode_s {
     RK_AIQ_WB_MODE_INVALID                     = 0,        /**< initialization value */
     RK_AIQ_WB_MODE_MANUAL                      = 1,        /**< run manual white balance */
     RK_AIQ_WB_MODE_AUTO                        = 2,        /**< run auto white balance */
     RK_AIQ_WB_MODE_MAX
 } rk_aiq_wb_op_mode_t;
 
-typedef struct rk_aiq_wb_attrib_s{
+typedef struct rk_aiq_wb_attrib_s {
     bool byPass;
     rk_aiq_wb_op_mode_t mode;
     rk_aiq_wb_mwb_attrib_t stManual;
     rk_aiq_wb_awb_attrib_t stAuto;
 } rk_aiq_wb_attrib_t;
 
-typedef struct rk_aiq_wb_querry_info_s{
+typedef struct rk_aiq_wb_querry_info_s {
     rk_aiq_wb_gain_t gain;
     rk_aiq_wb_cct_t cctGloabl;
     bool awbConverged;
 } rk_aiq_wb_querry_info_t;
+
+typedef enum rk_aiq_wb_lock_state_s {
+    RK_AIQ_WB_LOCK_INVALID                    = 0,        /**< initialization value */
+    RK_AIQ_WB_LOCKED,
+    RK_AIQ_WB_UNLOCKED,
+    RK_AIQ_WB_LOCK_MAX
+} rk_aiq_wb_lock_state_t;
 
 
 #endif

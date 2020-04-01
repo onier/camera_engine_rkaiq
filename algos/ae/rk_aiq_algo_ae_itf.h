@@ -39,8 +39,6 @@
 XCAM_BEGIN_DECLARE
 
 extern RkAiqAlgoDescription g_RkIspAlgoDescAe;
-static bool IsHdr;
-static AecProcResult_t LastAeProcRes;
 
 XCAM_END_DECLARE
 

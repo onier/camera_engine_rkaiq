@@ -43,6 +43,7 @@
 
 #include "RkAiqCalibDbTypes.h"
 #include "rk_aiq_types_ae_algo.h"
+#include "awb/rk_aiq_types_awb_algo_int.h"
 
 
 #define MAX_HDR_FRAMENUM  (3)
@@ -160,15 +161,15 @@ typedef enum {
  ****************************************************************************/
 typedef enum {
     AEC_WORKING_MODE_NORMAL,
-    AEC_WORKING_MODE_ISP_HDR    = 1,
-    AEC_WORKING_MODE_SENSOR_HDR = 10, // sensor built-in hdr mode
+    AEC_WORKING_MODE_ISP_HDR2    = 0x10,
+    AEC_WORKING_MODE_ISP_HDR3    = 0x20,
 } AecWorkingMode_t;
 
 typedef enum {
-    ISP_HDR_MODE_3_FRAME_HDR = AEC_WORKING_MODE_ISP_HDR + 1,
-    ISP_HDR_MODE_2_FRAME_HDR,
-    ISP_HDR_MODE_3_LINE_HDR,
-    ISP_HDR_MODE_2_LINE_HDR,
+    ISP_HDR_MODE_2_FRAME_HDR = AEC_WORKING_MODE_ISP_HDR2 + 1,
+    ISP_HDR_MODE_2_LINE_HDR = AEC_WORKING_MODE_ISP_HDR2 + 2,
+    ISP_HDR_MODE_3_FRAME_HDR = AEC_WORKING_MODE_ISP_HDR3 + 1,
+    ISP_HDR_MODE_3_LINE_HDR = AEC_WORKING_MODE_ISP_HDR3 + 2,
 } IspHdrMode_t;
 
 typedef enum {
@@ -220,8 +221,8 @@ typedef enum {
  */
 /*****************************************************************************/
 typedef enum {
-    DARK_ROI_DETECT = 0,
-    MAXLUMA_ROI_DETECT = 1
+    LOWLIGHT_DETECT = 0,
+    HIGHLIGHT_DETECT = 1
 } AecProcStrategyMode_t;
 
 /*****************************************************************************/
@@ -240,15 +241,20 @@ typedef enum {
 
 typedef enum
 {
-    TRIGGER_OFF = 0,
-    LIGHT_SENS = 1,
-    NO_LIGHT_SENS = 2,
-    NO_LIGHT_SENS_IRCUT = 3,
+    TRIGGER_OFF = 0, //no trigger DayNight Switch, use fixed DNMode!
+    HARDWARE_TRIGGER = 1, //have photosensitive element to trigger night mode  (hardware Trigger)
+    SOFTWARE_TRIGGER = 2, //use software params to trigger night mode  (software Trigger)
 } AecNightTriggerMode_t;
+
+typedef enum
+{
+    IR_BW = 0, //use IR LED as supplement light, black&white night-vision mode (software)
+    VB_RGB = 1, //use (visible light/no light) as supplement light, rgb night mode (software)
+} AecNightMode_t;
 
 typedef struct Aec_daynight_th_s {
     float         fac_th;
-    uint8_t         holdon_times_th;
+    uint8_t       holdon_times_th;
 } Aec_daynight_th_t;
 
 /*****************************************************************************/
@@ -287,7 +293,6 @@ typedef struct AecConfig_s {
     float                         PixelPeriodsPerLine;
 
     /*continue to use some old params to keep the same with AecConfig_t*/
-    enum AEC_LIGHT_MODE           LightMode;
     AecDampingMode_t              DampingMode;              /**< damping mode */
     AecEcmFlickerPeriod_t         EcmFlickerSelect;        /**< flicker period selection */
 
@@ -377,10 +382,10 @@ typedef struct AecProcResult_s {
     float                   LumaDeviation;
 
     bool_t                  aoe_enable;
-    enum AEC_LIGHT_MODE     DON_LightMode;
+    CalibDb_AecDayNightMode_t  DNMode;
     float                   DON_Fac;
-    uint8_t                 Night_Trigger;
-    uint8_t                 Night_Mode;
+    uint8_t                 DNTrigger;
+    uint8_t                 NightMode;
     float                   overHistPercent;
 
     /***Hdr results****/

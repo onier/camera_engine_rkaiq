@@ -12,25 +12,25 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(rkisp_demo)
 
 #set BUILROOT_BUILD_PROJECT
-set(BUILROOT_BUILD_PROJECT true)
+#set(BUILROOT_BUILD_PROJECT true)
+#set(ENABLE_ASAN true)
 
 # ----------------------------------------------------------------------------
 # SET THE COMPILER PATH
 # ----------------------------------------------------------------------------
 if(BUILROOT_BUILD_PROJECT)
-    SET(CMAKE_C_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-gcc")
-    SET(CMAKE_CXX_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-g++")
+		SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+		SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
 else()
-    SET(CMAKE_C_COMPILER "/home/hkj/isp2-fpga/fpga-ramdisk/toolchains/host/bin/arm-buildroot-linux-gnueabi-gcc")
-    SET(CMAKE_CXX_COMPILER "/home/hkj/isp2-fpga/fpga-ramdisk/toolchains/host/bin/arm-buildroot-linux-gnueabi-g++")
+		SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../puma-prebuilts/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+		SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../puma-prebuilts/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
 endif()
 
 # ----------------------------------------------------------------------------
 # ADD SYMBOL TABLE FOR GDB
 # ----------------------------------------------------------------------------
-SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
-# SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+# SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -ggdb")
+# SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -ggdb")
 
 # ----------------------------------------------------------------------------
 # set property to classify library kinds
@@ -47,9 +47,15 @@ set(ADD_RK_AIQ true)
 set(RK_AIQ_SOURCE_DIR ${PROJECT_SOURCE_DIR}/..)
 message("rkaiq src path" ${RK_AIQ_SOURCE_DIR})
 
+if(ENABLE_ASAN)
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+SET(LINK_ASAN asan)
+endif()
+
 if(ADD_RK_AIQ)
 add_compile_options(-std=c++11)
 add_compile_options(-DADD_RK_AIQ)
+add_compile_options(-O0)
 # add_compile_options(-v)
 SET(RK_AIQ_LIB_DIR ${RK_AIQ_SOURCE_DIR}/build/linux/all_lib/${CMAKE_BUILD_TYPE})
 message("rkaiq lib path" ${RK_AIQ_LIB_DIR})
@@ -78,9 +84,8 @@ SET(RK_AIQ_LIB rkaiq)
 endif()
 
 ##set extern libraries
-if(NOT BUILROOT_BUILD_PROJECT)
-    SET(RK_DRM_LIB_DIR ${PROJECT_SOURCE_DIR}/demo/libs/arm32/)
-endif()
+SET(RK_DRM_LIB_DIR ${PROJECT_SOURCE_DIR}/demo/libs/arm32/)
+
 SET(RK_DRM_LIB drm)
 
 #head file path
@@ -118,4 +123,4 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 link_directories("${LIBRARY_OUTPUT_PATH}" "${RK_AIQ_LIB_DIR}" "${RK_DRM_LIB_DIR}")
 #add executable file
 ADD_EXECUTABLE(rkisp_demo ${DIR_SRCS})
-target_link_libraries(rkisp_demo ${RK_AIQ_LIB} ${RK_DRM_LIB} pthread)
+target_link_libraries(rkisp_demo ${RK_AIQ_LIB} ${RK_DRM_LIB} ${LINK_ASAN} pthread)

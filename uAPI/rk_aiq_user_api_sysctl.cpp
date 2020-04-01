@@ -41,6 +41,8 @@ typedef struct rk_aiq_sys_ctx_s {
         return ret; \
     }
 
+#define RKAIQ_DEFAULT_IQ_PATH "/etc/iqfiles/"
+
 rk_aiq_sys_ctx_t*
 rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
                         const char* config_file_dir,
@@ -51,9 +53,19 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
 
     char config_file[256];
 
-    sprintf(config_file, "./%s/%s.xml", config_file_dir, sns_ent_name);
+    XCAM_ASSERT(sns_ent_name);
+    
+    bool is_ent_name = true;
+    if (sns_ent_name[0] != 'm' || sns_ent_name[3] != '_')
+        is_ent_name = false;
 
-    rk_aiq_sys_ctx_t* ctx = xcam_malloc_type(rk_aiq_sys_ctx_t);
+    if (!is_ent_name) {
+        if (config_file_dir)
+            sprintf(config_file, "%s/%s.xml", config_file_dir, sns_ent_name);
+        else
+            sprintf(config_file, "%s/%s.xml", RKAIQ_DEFAULT_IQ_PATH, sns_ent_name);
+    }
+    rk_aiq_sys_ctx_t* ctx = new rk_aiq_sys_ctx_t();
     RKAIQSYS_CHECK_RET(!ctx, NULL, "malloc ctx error !");
 
     ctx->_sensor_entity_name = strndup(sns_ent_name, 128);
@@ -65,15 +77,22 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
 #ifdef RK_SIMULATOR_HW
     ctx->_camHw = new CamHwSimulator();
 #else
-    // TODO
     ctx->_camHw = new CamHwIsp20();
+    // use auto selected iq file
+    if (is_ent_name) {
+        char iq_file[128] = {'\0'};
+        CamHwIsp20::selectIqFile(sns_ent_name, iq_file);
+        if (config_file_dir)
+            sprintf(config_file, "%s/%s", config_file_dir, iq_file);
+        else
+            sprintf(config_file, "%s/%s", RKAIQ_DEFAULT_IQ_PATH, iq_file);
+    }
 #endif
     ctx->_rkAiqManager->setCamHw(ctx->_camHw);
     ctx->_analyzer = new RkAiqCore();
     ctx->_rkAiqManager->setAnalyzer(ctx->_analyzer);
     ctx->_lumaAnalyzer = new RkLumaCore();
     ctx->_rkAiqManager->setLumaAnalyzer(ctx->_lumaAnalyzer);
-    // TODO: get static calibdb
     ctx->_calibDb = RkAiqCalibDb::createCalibDb(config_file);
     ctx->_rkAiqManager->setAiqCalibDb(ctx->_calibDb);
     XCamReturn ret = ctx->_rkAiqManager->init();
@@ -104,9 +123,9 @@ rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
     if (ctx->_sensor_entity_name)
         xcam_free((void*)(ctx->_sensor_entity_name));
 
-    RkAiqCalibDb::releaseCalibDb();
+    //RkAiqCalibDb::releaseCalibDb();
 
-    xcam_free((void*)ctx);
+    delete ctx;
 
     EXIT_XCORE_FUNCTION();
 }
@@ -156,12 +175,15 @@ rk_aiq_uapi_sysctl_stop(const rk_aiq_sys_ctx_t* ctx)
     return ret;
 }
 
-rk_aiq_static_metas_t*
+rk_aiq_static_info_t*
 rk_aiq_uapi_sysctl_getStaticMetas(const char* sns_ent_name)
 {
-    // TODO
-
+#ifdef RK_SIMULATOR_HW
+    /* nothing to do now*/
     return NULL;
+#else
+   return CamHwIsp20::getStaticCamHwInfo(sns_ent_name);
+#endif
 }
 
 rk_aiq_metas_t*
@@ -244,13 +266,31 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_awb.cpp"
 #include "rk_aiq_user_api_adebayer.cpp"
 #include "rk_aiq_user_api_ahdr.cpp"
-
+#include "rk_aiq_user_api_alsc.cpp"
+#include "rk_aiq_user_api_accm.cpp"
+#include "rk_aiq_user_api_a3dlut.cpp"
+#include "rk_aiq_user_api_adehaze.cpp"
+#include "rk_aiq_user_api_agamma.cpp"
 
 static void rk_aiq_init_lib(void) __attribute__((constructor));
 static void rk_aiq_init_lib(void)
 {
     xcam_get_log_level();
     ENTER_XCORE_FUNCTION();
+    CamHwIsp20::initCamHwInfos();
     EXIT_XCORE_FUNCTION();
 
 }
+static void rk_aiq_deinit_lib(void) __attribute__((destructor));
+static void rk_aiq_deinit_lib(void)
+{
+    ENTER_XCORE_FUNCTION();
+#ifdef RK_SIMULATOR_HW
+/* nothing to do now */
+#else
+    RkAiqCalibDb::releaseCalibDb();
+    CamHwIsp20::clearStaticCamHwInfo();
+#endif
+    EXIT_XCORE_FUNCTION();
+}
+
