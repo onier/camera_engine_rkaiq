@@ -202,6 +202,11 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 # ----------------------------------------------------------------------------
 add_subdirectory(algos)
 
+# ----------------------------------------------------------------------------
+# add rkaiq_3A_server implement
+# ----------------------------------------------------------------------------
+add_subdirectory(rkaiq_3A_server)
+
 # surpress link_directories warning
 cmake_policy(SET CMP0015 NEW)
 

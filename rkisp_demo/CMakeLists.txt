@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(rkisp_demo)
 
 #set BUILROOT_BUILD_PROJECT
-#set(BUILROOT_BUILD_PROJECT true)
+set(BUILROOT_BUILD_PROJECT true)
 #set(ENABLE_ASAN true)
 
 # ----------------------------------------------------------------------------
@@ -22,8 +22,8 @@ if(BUILROOT_BUILD_PROJECT)
 		SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
 		SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
 else()
-		SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../puma-prebuilts/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
-		SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../puma-prebuilts/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
+		SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
+		SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../puma/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
 endif()
 
 # ----------------------------------------------------------------------------

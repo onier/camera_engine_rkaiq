@@ -76,6 +76,7 @@ typedef enum RK_AIQ_AWB_BLK_STAT_REALWP_ILL_S {
 
 typedef struct rk_aiq_awb_stat_cfg_v201_s {
     bool awbEnable;
+    bool lscBypEnable;
     bool uvDetectionEnable[RK_AIQ_AWB_XY_TYPE_MAX_V201];
     bool xyDetectionEnable[RK_AIQ_AWB_XY_TYPE_MAX_V201];
     bool threeDyuvEnable[RK_AIQ_AWB_XY_TYPE_MAX_V201];
@@ -84,12 +85,9 @@ typedef struct rk_aiq_awb_stat_cfg_v201_s {
     bool blkWeightEnable[RK_AIQ_AWB_XY_TYPE_MAX_V201];//the different weight in WP sum
     bool blkStatisticsEnable;
     rk_aiq_down_scale_mode_t dsMode;
-    rk_aiq_awb_bayer_mode_t       mBayermode;
     rk_aiq_awb_blk_stat_mode_v201_t blkMeasureMode;
+    bool multiwindow_en;
     int frameChoose;//default value is 0,support to choose long frame ,middle frame or short frame when hdr is on
-    uint8_t rgb2yuv_c_range;
-    uint8_t rgb2yuv_y_range;
-    short rgb2yuv_matrix[9];
     unsigned short windowSet[4];//hOffset,vOffser,hSiz,vSize;
     unsigned char lightNum;
     unsigned short maxR;
@@ -107,7 +105,6 @@ typedef struct rk_aiq_awb_stat_cfg_v201_s {
     rk_aiq_rgb2xy_para_t      rgb2xy_param;
     rk_aiq_awb_xy_range_para_t    xyRange_param[RK_AIQ_AWB_MAX_WHITEREGIONS_NUM];
     //several window in pixel domain
-    bool multiwindow_en;
     unsigned short multiwindow[RK_AIQ_AWB_MULTIWINDOW_NUM][4];//8  windows in pixel domain ,hOffset,vOffser,hSize,vSize;
     //several winow in uv or xy domain
     rk_aiq_awb_exc_range_v201_t excludeWpRange[RK_AIQ_AWB_EXCLUDE_WP_RANGE_NUM];

@@ -49,7 +49,7 @@
 #define MAX_HDR_FRAMENUM  (3)
 #define AEC_AFPS_MASK (1 << 0)
 #define AEC_EFFECT_FNUM 3
-#define HDR_AEC_EFFECT_FNUM 5
+#define HDR_AEC_EFFECT_FNUM 4
 #define MAX_AEC_EFFECT_FNUM ((AEC_EFFECT_FNUM > HDR_AEC_EFFECT_FNUM) ? AEC_EFFECT_FNUM : HDR_AEC_EFFECT_FNUM)
 #define ZLJ_DEBUG
 
@@ -323,10 +323,11 @@ typedef struct AeInstanceConfig_s {
 /*****************************************************************************/
 typedef struct AecPreResult_s {
     float MeanLuma;
-    float DarkROILuma;
-    float DarkROIPdf;
-    float MaxLuma;
-    float MaxLumaROIPdf;
+    float LowLightLuma[MAX_HDR_FRAMENUM];
+    float LowLightROIPdf[MAX_HDR_FRAMENUM];
+    float HighLightLuma[MAX_HDR_FRAMENUM];
+    float HighLightROIPdf[MAX_HDR_FRAMENUM];
+    float OverExpROIPdf[MAX_HDR_FRAMENUM];
     float L2M_ExpRatio;
     float M2S_ExpRatio;
 

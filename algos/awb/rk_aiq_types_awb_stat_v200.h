@@ -58,9 +58,9 @@ typedef struct rk_aiq_awb_stat_cfg_v200_s {
     unsigned short storeWpFlagIllu[RK_AIQ_AWB_STORE_LS_WPFLAG_NUM];
     unsigned short threeDyuvIllu[RK_AIQ_AWB_YUV_LS_PARA_NUM];
     rk_aiq_down_scale_mode_t dsMode;
-    rk_aiq_awb_bayer_mode_t       mBayermode;
     rk_aiq_blk_stat_mode_v200_t blkMeasureMode;
-    bool multiwindowEn;
+    unsigned short blkMeasWpTh[3];
+    bool multiwindow_en;
     uint8_t frameChoose;//default value is 0,support to choose long frame ,middle frame or short frame when hdr is on
     uint8_t rgb2yuv_c_range;
     uint8_t rgb2yuv_y_range;
@@ -80,7 +80,6 @@ typedef struct rk_aiq_awb_stat_cfg_v200_s {
     rk_aiq_rgb2xy_para_t     rgb2xy_param;
     rk_aiq_awb_xy_range_para_t   xyRange_param[RK_AIQ_AWB_MAX_WHITEREGIONS_NUM];
     //several window in pixel domain
-    bool multiwindow_en;
     unsigned short multiwindow[RK_AIQ_AWB_MULTIWINDOW_NUM][4];//8  windows in pixel domain ,hOffset,vOffser,hSize,vSize;
     //several winow in uv or xy domain
     rk_aiq_awb_exc_range_t excludeWpRange[RK_AIQ_AWB_EXCLUDE_WP_RANGE_NUM];
