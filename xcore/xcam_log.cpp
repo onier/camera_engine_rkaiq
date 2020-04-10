@@ -156,6 +156,7 @@ int xcam_get_log_level() {
 }
 
 void xcam_print_log (int module, int sub_modules, int level, const char* format, ...) {
+    return;
     if (level <= g_xcore_log_infos[module].log_level &&
         (sub_modules & g_xcore_log_infos[module].sub_modules)) {
         char buffer[XCAM_MAX_STR_SIZE] = {0};
