@@ -28,9 +28,10 @@
 //#define ENHENCE_VERSION //for rk3588
 
 #define RK_AIQ_AWB_STAT_WP_RANGE_NUM_V201 4
-#define RK_AIQ_AWB_MULTIWINDOW_NUM_V201 0
+#define RK_AIQ_AWB_MULTIWINDOW_NUM_V201 4
 #define RK_AIQ_AWB_WP_HIST_BIN_NUM 8
 #define RK_AIQ_WP_GAIN_FRAC_BIS 10
+#define RK_AIQ_WP_GAIN_FRAC_BIS_INTERNAL 8
 #define RK_AIQ_AWBWP_WEIGHT_CURVE_DOT_NUM (RK_AIQ_AWB_WP_HIST_BIN_NUM+1)
 
 #define RK_AIQ_AWB_YUV2_THCURVE_DOT_NUM 6
@@ -86,8 +87,9 @@ typedef struct rk_aiq_awb_stat_cfg_v201_s {
     bool blkStatisticsEnable;
     rk_aiq_down_scale_mode_t dsMode;
     rk_aiq_awb_blk_stat_mode_v201_t blkMeasureMode;
+    bool blk_rtdw_measure_en;//right and down measure eanble
     bool multiwindow_en;
-    int frameChoose;//default value is 0,support to choose long frame ,middle frame or short frame when hdr is on
+    uint8_t frameChoose;//default value is 0,support to choose long frame ,middle frame or short frame when hdr is on
     unsigned short windowSet[4];//hOffset,vOffser,hSiz,vSize;
     unsigned char lightNum;
     unsigned short maxR;
@@ -115,6 +117,7 @@ typedef struct rk_aiq_awb_stat_cfg_v201_s {
     unsigned char blkWeight[RK_AIQ_AWB_GRID_NUM_TOTAL];
     rk_aiq_awb_xy_type_v201_t xyRangeTypeForBlkStatistics; //used when blkMeasureMode>BLK_MEASURE_MODE_ALL
     rk_aiq_awb_blk_stat_realwp_ill_e illIdxForBlkStatistics; //blkMeasureMode used when blkMeasureMode>BLK_MEASURE_MODE_ALL
+    bool blkStatisticsWithLumaWeightEn;
 } rk_aiq_awb_stat_cfg_v201_t;
 
 //typedef struct stat3a_lightType_s
@@ -147,7 +150,6 @@ typedef struct rk_aiq_awb_stat_res_v201_s {
     rk_aiq_awb_stat_wp_res_v201_t excWpRangeResult[RK_AIQ_AWB_STAT_WP_RANGE_NUM_V201];
     //wpno histogram
     unsigned int WpNoHist[RK_AIQ_AWB_WP_HIST_BIN_NUM];
-    bool     wpHistLeftShit3Bit[RK_AIQ_AWB_WP_HIST_BIN_NUM];
 } rk_aiq_awb_stat_res_v201_t,rk_aiq_awb_stat_res_v201_t;
 
 #endif

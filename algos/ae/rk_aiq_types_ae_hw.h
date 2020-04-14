@@ -213,13 +213,13 @@ typedef struct RkAiqAecHwStatsRes_s {
  */
 /*****************************************************************************/
 
-typedef struct RkAiqExpParam_s {
+typedef struct RkAiqExpRealParam_s {
     float integration_time;
     float analog_gain;
     float digital_gain;
     float isp_dgain;
     int   iso;
-} RkAiqExpParam_t;
+} RkAiqExpRealParam_t;
 
 typedef struct RkAiqExpSensorParam_s {
     unsigned short fine_integration_time;
@@ -230,9 +230,14 @@ typedef struct RkAiqExpSensorParam_s {
 } RkAiqExpSensorParam_t;
 
 typedef struct {
-    RkAiqExpParam_t exp_real_params; //real value
+    RkAiqExpRealParam_t exp_real_params; //real value
     RkAiqExpSensorParam_t exp_sensor_params;//reg value
 } RkAiqExpParamComb_t;
+
+typedef struct {
+    RkAiqExpParamComb_t LinearExp;
+    RkAiqExpParamComb_t HdrExp[3];
+} RkAiqExpParam_t;
 
 typedef struct RKAiqAecExpInfo_s {
     RkAiqExpParamComb_t LinearExp;

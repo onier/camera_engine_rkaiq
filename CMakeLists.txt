@@ -30,9 +30,9 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 # SET THE COMPILER PATH
 # ----------------------------------------------------------------------------
 if(RK_SIMULATOR_HW)
-    add_compile_options(-DRK_SIMULATOR_HW)
+	add_compile_options(-DRK_SIMULATOR_HW)
 elseif(BUILROOT_BUILD_PROJECT)
-	add_compile_options(-DDISABLE_PP)
+	#add_compile_options(-DDISABLE_PP)
 	SET(CMAKE_C_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-gcc")
 	SET(CMAKE_CXX_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-g++")
 	#SET(CMAKE_C_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-gcc")
@@ -95,6 +95,7 @@ set (HWI_SRC
         hwi/isp20/Isp20Params.cpp
         hwi/isp20/Isp20PollThread.cpp
         hwi/isp20/Isp20StatsBuffer.cpp
+        hwi/isp20/Isp20_module_dbg.cpp
         hwi/SensorHw.cpp
         )
 endif()
@@ -201,11 +202,6 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 # add algos implement
 # ----------------------------------------------------------------------------
 add_subdirectory(algos)
-
-# ----------------------------------------------------------------------------
-# add rkaiq_3A_server implement
-# ----------------------------------------------------------------------------
-add_subdirectory(rkaiq_3A_server)
 
 # surpress link_directories warning
 cmake_policy(SET CMP0015 NEW)
