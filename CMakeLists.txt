@@ -254,3 +254,13 @@ target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkai
 	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_agic rkaiq_aie rkaiq_aldch
 	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}
 	${OPENCV_3RDPARTY_LIBS} ${LINK_ASAN} pthread)
+
+install(TARGETS rkaiq
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+install(DIRECTORY include/ DESTINATION include/rkaiq
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY common/ DESTINATION include/rkaiq/common
+        FILES_MATCHING PATTERN "*.h")
