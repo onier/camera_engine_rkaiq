@@ -896,6 +896,10 @@ XCamReturn CamHwIsp20::stop()
     if (ret < 0) {
         LOGE_CAMHW("stop ispp params dev err: %d\n", ret);
     }
+    mIsppStatsDev->stop();
+    if (ret < 0) {
+        LOGE_CAMHW("stop ispp stats dev err: %d\n", ret);
+    }
 #endif
     ret = isp20Pollthread->hdr_mipi_stop();
     if (ret < 0) {
