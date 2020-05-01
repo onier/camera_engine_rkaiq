@@ -17,14 +17,14 @@
 
 #ifndef _RK_AIQ_VERSION_H_
 /*!
- * ==================== AIQ VERSION HISTORY ==================== 
- * 
+ * ==================== AIQ VERSION HISTORY ====================
+ *
  * v0.0.9
  *  - initial version, support HDR
- *  - optimized tnr,nr in low light condition 
+ *  - optimized tnr,nr in low light condition
  *  - optimized imx347 iq
- *  - FEC,ORB,LDCH not enabled 
- *  - set compile optimized level to Os 
+ *  - FEC,ORB,LDCH not enabled
+ *  - set compile optimized level to Os
  * v0.1.0
  *  - optimize nr quality under low light
  *  - optimize hdr image quality

@@ -227,7 +227,8 @@ add_compile_options(-Wno-unused-variable
 					-Wno-unused-but-set-variable
 					-Wno-unused-function
 					-Wno-misleading-indentation
-					-Wno-unused-label)
+					-Wno-unused-label
+					-fno-strict-aliasing)
 # add_compile_options(-v)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 

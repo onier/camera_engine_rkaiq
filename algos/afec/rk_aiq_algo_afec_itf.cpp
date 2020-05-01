@@ -244,14 +244,21 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     fecPreOut->afec_result.crop_height = 0;
     fecPreOut->afec_result.mesh_density = fecCtx->mesh_density;
     fecPreOut->afec_result.mesh_size = fecCtx->fec_mesh_size;
-    memcpy(fecPreOut->afec_result.meshxi, fecCtx->meshxi,
-        fecCtx->fec_mesh_size*sizeof(unsigned short));
-    memcpy(fecPreOut->afec_result.meshxf, fecCtx->meshxf,
-        fecCtx->fec_mesh_size*sizeof(unsigned char));
-    memcpy(fecPreOut->afec_result.meshyi, fecCtx->meshyi,
-        fecCtx->fec_mesh_size*sizeof(unsigned short));
-    memcpy(fecPreOut->afec_result.meshyf, fecCtx->meshyf,
-        fecCtx->fec_mesh_size*sizeof(unsigned char));
+    // TODO: should check the fec mode,
+    // if mode == RK_AIQ_ISPP_STATIC_FEC_WORKING_MODE_STABLIZATION
+    // params may be changed
+    if (inparams->u.proc.init) {
+        fecPreOut->afec_result.update = 1;
+        memcpy(fecPreOut->afec_result.meshxi, fecCtx->meshxi,
+            fecCtx->fec_mesh_size*sizeof(unsigned short));
+        memcpy(fecPreOut->afec_result.meshxf, fecCtx->meshxf,
+            fecCtx->fec_mesh_size*sizeof(unsigned char));
+        memcpy(fecPreOut->afec_result.meshyi, fecCtx->meshyi,
+            fecCtx->fec_mesh_size*sizeof(unsigned short));
+        memcpy(fecPreOut->afec_result.meshyf, fecCtx->meshyf,
+            fecCtx->fec_mesh_size*sizeof(unsigned char));
+    } else
+        fecPreOut->afec_result.update = 0;
 
     return XCAM_RETURN_NO_ERROR;
 }

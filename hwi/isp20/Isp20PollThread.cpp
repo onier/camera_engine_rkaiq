@@ -255,6 +255,7 @@ Isp20PollThread::new_video_buffer(SmartPtr<V4l2Buffer> buf,
 		snprintf(file_name, sizeof(file_name), "%s/%s",
 			 CAPTURE_RAW_PATH, CAPTURE_CNT_FILENAME);
 		set_value_to_file(file_name, g_cam_engine_capture_raw_num);
+
 		_is_raw_dir_exist = false;
 		LOGD_CAMHW("stop capturing raw!\n");
 	    }
@@ -738,17 +739,17 @@ Isp20PollThread::trigger_readback()
         _first_trigger = false;
     }
 
-	/* TODO: fix the trigger time for ahdr temporarily */
-	tg.times = 2;
-	LOGW_CAMHW("%s fix the trigger to %d time for ahdr temporarily\n",
-			   __func__,
-			   tg.times);
+    /* TODO: fix the trigger time for ahdr temporarily */
+    tg.times = 2;
+    LOGW_CAMHW("%s fix the trigger to %d time for ahdr temporarily\n",
+	       __func__,
+	       tg.times);
 
-	LOGD_CAMHW("%s set frame[%d] isp params, readback %d times, capturing on frame%d\n",
-			   __func__, sequence, tg.times,
-			   g_cam_engine_capture_raw_num);
+    LOGD_CAMHW("%s set frame[%d] isp params, readback %d times, capturing on frame%d\n",
+	       __func__, sequence, tg.times,
+	       g_cam_engine_capture_raw_num);
 
-	if (_rx_handle_dev) {
+    if (_rx_handle_dev) {
         if (_rx_handle_dev->setIspParamsSync(sequence)) {
             LOGE_CAMHW("%s frame[%d] set isp params failed, don't read back!\n",
                        __func__, sequence);
@@ -758,8 +759,10 @@ Isp20PollThread::trigger_readback()
             }
         } else {
             char file_name[32] = {0};
+	    int ret = XCAM_RETURN_NO_ERROR;
+
             snprintf(file_name, sizeof(file_name), "%s/%s",
-                 CAPTURE_RAW_PATH, CAPTURE_CNT_FILENAME);
+		     CAPTURE_RAW_PATH, CAPTURE_CNT_FILENAME);
             get_value_from_file(file_name, &g_cam_engine_capture_raw_num);
 
             for (int i = 0; i < _mipi_dev_max; i++) {
@@ -768,7 +771,12 @@ Isp20PollThread::trigger_readback()
 
                 _isp_mipi_rx_infos[i].dev->get_buffer(v4l2buf);
                 v4l2buf->set_expbuf_fd(buf_proxy->get_expbuf_fd());
-                _isp_mipi_rx_infos[i].dev->queue_buffer(v4l2buf);
+                ret = _isp_mipi_rx_infos[i].dev->queue_buffer(v4l2buf);
+		if (ret != XCAM_RETURN_NO_ERROR) {
+		    _isp_mipi_rx_infos[i].buf_list.pop(-1);
+		    break;
+		}
+
                 if (g_cam_engine_capture_raw_num > 0 && \
                     g_cam_engine_capture_raw_num < 5000) {
 
@@ -806,9 +814,14 @@ Isp20PollThread::trigger_readback()
                 g_cam_engine_capture_raw_num--;
                 set_value_to_file(file_name, g_cam_engine_capture_raw_num);
             }
-            _isp_core_dev->io_control(RKISP_CMD_TRIGGER_READ_BACK, &tg);
+
+	    if (ret == XCAM_RETURN_NO_ERROR)
+                _isp_core_dev->io_control(RKISP_CMD_TRIGGER_READ_BACK, &tg);
+	    else
+		LOGE_CAMHW("%s frame[%d] queue  failed, don't read back!\n",
+			   __func__, sequence);
         }
-	}
+    }
 }
 
 void
@@ -930,7 +943,7 @@ Isp20PollThread::write_frame_header_to_raw(FILE *fp, int dev_index,
     fwrite(buffer, sizeof(buffer), 1, fp);
     fflush(fp);
 
-    printf("frame%d: image rect: %dx%d, %d bit depth, Bayer fmt: %d, "
+    LOGD_CAMHW("frame%d: image rect: %dx%d, %d bit depth, Bayer fmt: %d, "
 	   "hdr frame number: %d, frame type: %d, Storage type: %d, "
 	   "line stride: %d, Effective line stride: %d\n",
 	   sequence, sns_width, sns_height,

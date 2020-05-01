@@ -138,6 +138,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 
     RkAiqAlgoProcResAldchInt* ldchPreOut = (RkAiqAlgoProcResAldchInt*)outparams;
     ldchPreOut->ldch_result.sw_ldch_en = ldchCtx->ldch_en;
+    // TODO: add update flag for ldch
     if (ldchCtx->ldch_en) {
         ldchPreOut->ldch_result.lut_h_size = ldchCtx->lut_h_size;
         ldchPreOut->ldch_result.lut_v_size = ldchCtx->lut_v_size;

@@ -4,6 +4,7 @@
 #define FEC_MESH_XY_NUM_ALGO 524288
 
 typedef struct {
+    unsigned char update;
     unsigned char sw_fec_en;
     unsigned char crop_en;
     unsigned int crop_width;

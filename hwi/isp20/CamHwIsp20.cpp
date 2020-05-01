@@ -1373,8 +1373,14 @@ CamHwIsp20::setIspParamsSync(int frameId)
     struct isp2x_isp_params_cfg update_params;
     SmartPtr<RkAiqIspParamsProxy> aiq_results;
 
-    xcam_mem_clear (update_params);
-    xcam_mem_clear (_full_active_isp_params);
+    /* xcam_mem_clear (update_params); */
+    /* xcam_mem_clear (_full_active_isp_params); */
+    update_params.module_en_update = 0;
+    update_params.module_ens = 0;
+    update_params.module_cfg_update = 0;
+    _full_active_isp_params.module_en_update = 0;
+    _full_active_isp_params.module_ens = 0;
+    _full_active_isp_params.module_cfg_update = 0;
     LOGD_CAMHW("merge isp params num %d\n", _pending_ispparams_queue.size());
     aiq_results = _pending_ispparams_queue.back();
     _pending_ispparams_queue.pop_back();
