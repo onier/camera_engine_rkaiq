@@ -26,13 +26,14 @@
 
 /*
  ***************** AE LIB VERSION NOTE *****************
- * v2.0.0:
- * add AecPrepare & AecPreProcessing function
- * AeProcessing no used here
+ * v0.0.9:
+ * basic version, support ae smooth & ae speed up
+ * v0.1.0:
+ * optimize ae smooth, add delay trigger
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v2.0.0"
+#define RKISP_ALGO_AE_VERSION     "v0.1.0"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 
