@@ -284,6 +284,9 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 
 #include "RkAiqVersion.h"
 #include "RkAiqCalibVersion.h"
+
+const char *rk_aiq_uapi_sysctl_getAiqVersion() { return RK_AIQ_VERSION; }
+
 static void _print_versions()
 {
     extern RkAiqAlgoDescription g_RkIspAlgoDescA3dlut;

@@ -184,6 +184,8 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
 const RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type);
 
+const char *rk_aiq_uapi_sysctl_getAiqVersion();
+
 RKAIQ_END_DECLARE
 
 #endif
