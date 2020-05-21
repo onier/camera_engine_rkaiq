@@ -30,10 +30,12 @@
  * basic version, support ae smooth & ae speed up
  * v0.1.0:
  * optimize ae smooth, add delay trigger
+ * v0.1.1:
+ * add dcg switch function in ae, adapt for Hdr/Normal
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.0"
+#define RKISP_ALGO_AE_VERSION     "v0.1.1"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 

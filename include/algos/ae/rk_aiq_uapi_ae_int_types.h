@@ -31,6 +31,8 @@ typedef CalibDb_HdrExpInitExp_t Uapi_HdrExpInitExp_t;
 
 typedef CalibDb_ExpInitExp_t Uapi_ExpInitExp_t;
 
+typedef CalibDb_AntiFlickerAttr_t Uapi_AntiFlicker_t;
+
 typedef CalibDb_AeAttr_t Uapi_AeAttr_t;
 
 typedef CalibDb_LinMeAttr_t Uapi_LinMeAttr_t;
@@ -42,19 +44,20 @@ typedef CalibDb_MeAttr_t Uapi_MeAttr_t;
 typedef struct Uapi_ExpSwAttr_s {
     bool                     Bypass;
     int                      RawStatsMode;
-    int                      HistStatsMode;//cxf
-    int                      YRangeMode;//cxf
+    int                      HistStatsMode;
+    int                      YRangeMode;
     uint8_t                  AecRunInterval;
     int                      AecOpType;
-    AecEcmFlickerPeriod_t    EcmFlickerSelect;        /**< flicker period selection */
     //GridWeight
-    Cam5x5UCharMatrix_t      DayGridWeights;//cxf
-    Cam5x5UCharMatrix_t      NightGridWeights;//cxf
+    Cam5x5UCharMatrix_t      DayGridWeights;
+    Cam5x5UCharMatrix_t      NightGridWeights;
+
     //DayOrNight Switch
     uint8_t                  DNTrigger;
     CalibDb_AecDayNightMode_t   DNMode;
-    uint8_t                  NightMode;
+    uint8_t                  FillLightMode;
 
+    Uapi_AntiFlicker_t       stAntiFlicker;
     Uapi_AeAttr_t            stAuto;
     Uapi_MeAttr_t            stManual;
     Uapi_ExpInitExp_t        stInitExp;
