@@ -30,8 +30,9 @@
  * basic version, support ae smooth & ae speed up
  * v0.1.0:
  * optimize ae smooth, add delay trigger
- * v0.1.1:
+ * v0.1.1-20200521:
  * add dcg switch function in ae, adapt for Hdr/Normal
+ * add Antiflicker mode:normal & auto
  */
 
 
