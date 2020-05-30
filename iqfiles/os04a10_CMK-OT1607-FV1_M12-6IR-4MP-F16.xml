@@ -6845,7 +6845,7 @@
           <correct_level index="1" type="double" size="[1 1]">               [1.00]          </correct_level>
       </LDCH>
       <FEC index="1" type="struct" size="[1 1]">
-          <enable index="1" type="double" size="[1 1]">               [0]          </enable>
+          <enable index="1" type="double" size="[1 1]">               [1]          </enable>
           <mesh_file index="1" type="char" size="[1 1]">               FEC_mesh_2688_1520_os04a10_6IR          </mesh_file>
           <correct_level index="1" type="double" size="[1 1]">               [1.00]          </correct_level>
       </FEC>
