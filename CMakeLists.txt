@@ -260,6 +260,11 @@ target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkai
 	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}
 	${OPENCV_3RDPARTY_LIBS} ${LINK_ASAN} pthread)
 
+# ----------------------------------------------------------------------------
+# add rkisp_api implement
+# ----------------------------------------------------------------------------
+add_subdirectory(rkisp_api)
+
 install(TARGETS rkaiq
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
