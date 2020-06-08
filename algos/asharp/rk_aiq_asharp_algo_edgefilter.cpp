@@ -132,7 +132,8 @@ AsharpResult_t init_edgefilter_params(RKAsharp_EdgeFilter_Params_t *pParams, Cal
 AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *strkedgefilterParams, RKAsharp_EdgeFilter_Params_Select_t *strkedgefilterParamsSelected, AsharpExpInfo_t *pExpInfo)
 {
     int i;
-	int gain_high, gain_low;
+	int gain_high = 0;
+	int gain_low = 0;
 	float ratio = 0.0f;
 	int iso_div 			= 50;
     int max_iso_step        = MAX_ISO_STEP;
@@ -159,13 +160,31 @@ AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *str
 	iso = pExpInfo->arIso[pExpInfo->hdr_mode];
 
 	#ifndef RK_SIMULATOR_HW
-	for (i = 0; i < max_iso_step - 1; i++)
-	{
-		if (iso>= strkedgefilterParams->iso[i] && iso<= strkedgefilterParams->iso[i+1] )
-		{
+	for (i = 0; i < max_iso_step - 1; i++){
+		if (iso>= strkedgefilterParams->iso[i] && iso<= strkedgefilterParams->iso[i+1] ){
 			iso_low = strkedgefilterParams->iso[i];
 			iso_high = strkedgefilterParams->iso[i + 1];
+			gain_low = i ;
+			gain_high = i + 1;
+			ratio = (float)(iso - iso_low)/(iso_high-iso_low);
+			break;
 		}
+	}
+
+	if(iso < strkedgefilterParams->iso[0]){
+		iso_low = strkedgefilterParams->iso[0];
+		iso_high = strkedgefilterParams->iso[1];
+		gain_low = 0 ;
+		gain_high =1;
+		ratio = 0;
+	}
+
+	if(iso >  strkedgefilterParams->iso[max_iso_step - 1]){
+		iso_low = strkedgefilterParams->iso[max_iso_step - 2];
+		iso_high = strkedgefilterParams->iso[max_iso_step - 1];
+		gain_low = max_iso_step - 2 ;
+		gain_high = max_iso_step - 1;
+		ratio = 1;
 	}
 	#else
 	for (i = max_iso_step - 1; i >= 0; i--)
@@ -176,7 +195,6 @@ AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *str
 			iso_high = iso_div * (2 << i);
 		}
 	}
-	#endif
 	
 	ratio = (float)(iso - iso_low)/(iso_high-iso_low);
 	if (iso_low == iso)
@@ -194,6 +212,7 @@ AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *str
 
 	gain_low		= MIN(MAX(gain_low, 0), max_iso_step - 1);
 	gain_high		= MIN(MAX(gain_high, 0), max_iso_step - 1);
+	#endif
 
     strkedgefilterParamsSelected->edge_thed    = (short)ROUND_F(INTERP1(strkedgefilterParams->edge_thed   [gain_low], strkedgefilterParams->edge_thed   [gain_high], ratio));
     strkedgefilterParamsSelected->dir_min      = INTERP1(strkedgefilterParams->dir_min     [gain_low], strkedgefilterParams->dir_min     [gain_high], ratio);
