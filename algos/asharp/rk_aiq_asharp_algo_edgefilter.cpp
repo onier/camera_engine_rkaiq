@@ -132,8 +132,7 @@ AsharpResult_t init_edgefilter_params(RKAsharp_EdgeFilter_Params_t *pParams, Cal
 AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *strkedgefilterParams, RKAsharp_EdgeFilter_Params_Select_t *strkedgefilterParamsSelected, AsharpExpInfo_t *pExpInfo)
 {
     int i;
-	int gain_high = 0;
-	int gain_low = 0;
+	int gain_high, gain_low;
 	float ratio = 0.0f;
 	int iso_div 			= 50;
     int max_iso_step        = MAX_ISO_STEP;
