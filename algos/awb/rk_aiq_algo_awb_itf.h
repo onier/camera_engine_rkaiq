@@ -31,8 +31,8 @@ XCAM_BEGIN_DECLARE
 extern RkAiqAlgoDescription g_RkIspAlgoDescAwb;
 typedef enum _awb_hardware_version
 {
-    AWB_HARDWARE_V200=0,
-    AWB_HARDWARE_V201=1,
+    AWB_HARDWARE_V200 = 0,
+    AWB_HARDWARE_V201 = 1,
     AWB_HARDWARE_VMAX
 } awb_hardware_version;
 
