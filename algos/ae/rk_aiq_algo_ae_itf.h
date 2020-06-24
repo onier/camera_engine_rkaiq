@@ -33,10 +33,17 @@
  * v0.1.1-20200521:
  * add dcg switch function in ae, adapt for Hdr/Normal
  * add Antiflicker mode:normal & auto
+ * v0.1.2-20200620
+ * add Longframe Mode in Hdr
+ * including Normal/LongFrame/Auto_Longframe
+ * v0.1.3-20200623
+ * add auto fps function
+ * Attention: for sony sensor, vts will be effective more quickly than exposure,
+ *                whitch will cause flicker.
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.1"
+#define RKISP_ALGO_AE_VERSION     "v0.1.3"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 
