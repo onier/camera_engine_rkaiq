@@ -25,7 +25,7 @@
 
 #define FUNC_ENTER LOG1("%s enter", __FUNCTION__);
 #define FUNC_EXIT LOG1("%s exit", __FUNCTION__);
-#define CALIBDB_PATH_LEN      128
+#define CALIBDB_PATH_LEN      256
 #define CALIBDB_ENV_PATH_STR  "rkaiq_calibdb_path"
 
 namespace RkCam {
@@ -136,12 +136,10 @@ CamCalibDbContext_t* RkAiqCalibDb::createCalibDb(char* iqFile)
                 if (parser.doParse(iqFile)) {
                     mCalibDbsMap[str] = pCalibDb;
                     LOGD("create calibdb from %s success.", iqFile);
-                    /*
                     if (calibSaveToFile(iqFile, pCalibDb))
                         LOGD("save to bin success.");
                     else
                         LOGE("save to bin failed.");
-                    */
                     return pCalibDb;
                 } else {
                     LOGE("parse %s failed.", iqFile);
