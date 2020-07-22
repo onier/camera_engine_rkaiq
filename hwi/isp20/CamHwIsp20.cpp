@@ -505,7 +505,7 @@ CamHwIsp20::getStaticCamHwInfo(const char* sns_ent_name, uint16_t index)
             LOGE_CAMHW("camerainfo of %s not fount!", sns_ent_name);
         }
     } else {
-        if (index >= 0 && index < mCamHwInfos.size() - 1) {
+        if (index >= 0 && index < mCamHwInfos.size()) {
             int i = 0;
             for (it = mCamHwInfos.begin(); it != mCamHwInfos.end(); it++, i++) {
                 if (i == index)        
