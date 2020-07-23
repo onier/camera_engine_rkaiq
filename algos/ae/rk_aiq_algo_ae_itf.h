@@ -40,10 +40,15 @@
  * add auto fps function
  * Attention: for sony sensor, vts will be effective more quickly than exposure,
  *                whitch will cause flicker.
+ * v0.1.4-20200722
+ * for LinearAe: aestats can use rawae/yuvae
+ * DCG-setting is divided into 2 parts: Hdr/Normal
+ * GainRange is divided into 2 parts: Linear/NonLinear(for sony sensor, dB-Mode)
+ * LCG=>LSNR, HCG=>HSNR
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.3"
+#define RKISP_ALGO_AE_VERSION     "v0.1.4"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 
