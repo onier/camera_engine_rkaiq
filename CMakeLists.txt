@@ -285,6 +285,10 @@ execute_process(COMMAND sh
 # ----------------------------------------------------------------------------
 add_subdirectory(rkisp_api)
 
+if(ENABLE_RKISP_DEMO)
+add_subdirectory(rkisp_demo)
+endif()
+
 install(TARGETS rkaiq
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
