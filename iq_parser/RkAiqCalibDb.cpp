@@ -147,7 +147,7 @@ CamCalibDbContext_t* RkAiqCalibDb::createCalibDb(char* iqFile)
                             LOGE("save to bin failed.");
                         */
                         return pCalibDb;
-			}
+                    }
                 } else {
                     LOGE("parse %s failed.", iqFile);
                 }
@@ -165,7 +165,7 @@ CamCalibDbContext_t* RkAiqCalibDb::createCalibDb(char* iqFile)
                     LOGE("get calibdb from bin failed.");
                 }
             } else {
-                LOGE("calibdb xml and bin are all not exist!");
+                LOGE("calibdb xml and bin are all not exist! [%s]", iqFile);
             }
         } else {
             LOGE("alloc calibdb memory failed.");

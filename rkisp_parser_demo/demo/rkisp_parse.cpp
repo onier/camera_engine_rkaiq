@@ -12,6 +12,7 @@
 using namespace RkCam;
 #define CALIBDB_PATH_LEN      256
 
+
 int main(int argc, char **argv)
 {
     char config_file[CALIBDB_PATH_LEN];
