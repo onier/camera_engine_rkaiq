@@ -22,7 +22,16 @@
 
 #include "rk_aiq_algo_des.h"
 
-#define RKISP_ALGO_ASD_VERSION     "v0.0.9"
+/*!
+ * ==================== ASD VERSION HISTORY ====================
+ *
+ * v0.0.9
+ *  - initial version, support cpsl control
+ * v0.1.0
+ *  - modify cpsl on2off condition
+ */
+
+#define RKISP_ALGO_ASD_VERSION     "v0.1.0"
 #define RKISP_ALGO_ASD_VENDOR      "Rockchip"
 #define RKISP_ALGO_ASD_DESCRIPTION "Rockchip Asd algo for ISP2.0"
 
