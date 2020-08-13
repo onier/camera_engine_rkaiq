@@ -8,6 +8,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+enum {
+  CAM_TYPE_RKISP1,
+  CAM_TYPE_RKCIF,
+  CAM_TYPE_USB,
+};
+
 /*
  * The context of rkisp capturing device
  *
@@ -126,6 +132,15 @@ int rkisp_get_media_info(struct rkisp_media_info *media_info,
 
 const struct rkisp_api_ctx *rkisp_open_device(const char *dev_path,
                                               int uselocal3A);
+
+/*
+ * Open rkisp video device and check device capability for ispp. Required.
+ *
+ * @type:   The video type, e.g. CAM_TYPE_RKISP1 or CAM_TYPE_RKCIF
+ *
+ * If failed return NULL.
+ */
+const struct rkisp_api_ctx *rkisp_open_device2(int type);
 
 /* Set crop of frames.  The crop operation is before scaling. Optional.
  * This can be called only when stream off.

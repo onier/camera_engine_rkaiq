@@ -18,6 +18,12 @@
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define FMT_NUM_PLANES 1 // TODO: support multi planes fmts
 
+#define MEDIA_MODEL_RKCIF   "rkcif"
+#define MEDIA_MODEL_RKISP0  "rkisp0"
+#define MEDIA_MODEL_RKISP1  "rkisp1"
+#define MEDIA_MODEL_RKISPP0  "rkispp0"
+#define MEDIA_MODEL_RKISPP1 "rkispp1"
+
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
 #define DEFAULT_FCC V4L2_PIX_FMT_NV12
@@ -58,12 +64,6 @@ struct rkisp_buf_priv {
   int index;
 };
 
-enum {
-  CAM_TYPE_RKISP1,
-  CAM_TYPE_RKCIF,
-  CAM_TYPE_USB,
-};
-
 struct rkisp_priv {
   struct rkisp_api_ctx ctx;
 
@@ -90,6 +90,7 @@ struct rkisp_priv {
 
 static const char *rkisp_get_active_sensor(const struct rkisp_priv *priv);
 static int rkisp_get_media_topology(struct rkisp_priv *priv);
+static int rkisp_get_media_topology2(struct rkisp_priv *priv);
 #if 0
 static int rkisp_init_engine(struct rkisp_priv *priv);
 static void rkisp_deinit_engine(struct rkisp_priv *priv);
@@ -414,6 +415,65 @@ free_priv:
   return NULL;
 }
 
+const struct rkisp_api_ctx *rkisp_open_device2(int type) {
+  struct rkisp_priv *priv;
+  struct v4l2_capability cap;
+
+  priv = (struct rkisp_priv *)malloc(sizeof(*priv));
+  if (!priv) {
+    ERR("malloc fail, %d\n", errno);
+    return NULL;
+  }
+  CLEAR(*priv);
+
+  priv->camera_type = type;
+  if (rkisp_get_media_topology2(priv))
+    goto free_priv;
+
+  printf("%s: %s\n", __func__, priv->ctx.dev_path);
+  priv->ctx.fd = open(priv->ctx.dev_path, O_RDWR | O_CLOEXEC, 0);
+  if (-1 == priv->ctx.fd) {
+    ERR("Cannot open '%s': %d, %s\n", priv->ctx.dev_path, errno, strerror(errno));
+    goto free_priv;
+  }
+
+  if (-1 == xioctl(priv->ctx.fd, VIDIOC_QUERYCAP, &cap)) {
+    ERR("%s ERR QUERYCAP, %d, %s\n", priv->ctx.dev_path, errno, strerror(errno));
+    goto err_close;
+  }
+
+  if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE) {
+    priv->buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+  } else if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+    priv->buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  } else {
+    ERR("%s is not a video capture device, capabilities: %x\n", priv->ctx.dev_path,
+        cap.capabilities);
+    goto err_close;
+  }
+
+  if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+    ERR("%s does not support streaming i/o\n", priv->ctx.dev_path);
+    goto err_close;
+  }
+
+  rkisp_get_fmt((struct rkisp_api_ctx *)priv);
+
+  /* Set default value in case app does not call #{rkisp_set_buf()} */
+  priv->req_buf_count = DEFAULT_BUFFER_COUNT;
+  priv->memory = V4L2_MEMORY_MMAP;
+
+  return (struct rkisp_api_ctx *)priv;
+
+err_close:
+  close(priv->ctx.fd);
+  priv->ctx.fd = -1;
+free_priv:
+  free(priv);
+
+  return NULL;
+}
+
 /* Any of fmt, memory type, or buf count changed shall re-request buf */
 static void rkisp_clr_buf(struct rkisp_priv *priv) {
   struct v4l2_requestbuffers req;
@@ -494,29 +554,24 @@ int rkisp_set_fmt(const struct rkisp_api_ctx *ctx, int w, int h, int fcc) {
   struct rkisp_priv *priv = (struct rkisp_priv *)ctx;
   struct v4l2_format fmt;
 
-  if (priv->ctx.width == fmt.fmt.pix.width &&
-      priv->ctx.height == fmt.fmt.pix.height &&
-      priv->ctx.fcc == fmt.fmt.pix.pixelformat)
-    return 0;
-
   /* Clear buffer if any. Driver requirs not buffer queued before set_fmt */
   rkisp_clr_buf(priv);
 
   CLEAR(fmt);
   fmt.type = priv->buf_type;
-  fmt.fmt.pix.width = w;
-  fmt.fmt.pix.height = h;
-  fmt.fmt.pix.pixelformat = fcc;
-  fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+  fmt.fmt.pix_mp.width = w;
+  fmt.fmt.pix_mp.height = h;
+  fmt.fmt.pix_mp.pixelformat = fcc;
+  fmt.fmt.pix_mp.field = V4L2_FIELD_INTERLACED;
 
   if (-1 == xioctl(priv->ctx.fd, VIDIOC_S_FMT, &fmt)) {
     ERR("%s ERR S_FMT: %d, %s\n", priv->ctx.dev_path, errno, strerror(errno));
     return -errno;
   }
 
-  priv->ctx.width = fmt.fmt.pix.width;
-  priv->ctx.height = fmt.fmt.pix.height;
-  priv->ctx.fcc = fmt.fmt.pix.pixelformat;
+  priv->ctx.width = fmt.fmt.pix_mp.width;
+  priv->ctx.height = fmt.fmt.pix_mp.height;
+  priv->ctx.fcc = fmt.fmt.pix_mp.pixelformat;
 
   if (priv->ctx.width != w || priv->ctx.height != h || priv->ctx.fcc != fcc)
     WARN("Format is not match, request: fcc %C%C%C%C [%dx%d], "
@@ -1174,3 +1229,70 @@ static int rkisp_get_media_topology(struct rkisp_priv *priv) {
   return ret;
 }
 
+static int rkisp_get_media_topology2(struct rkisp_priv *priv) {
+  char mdev_path[64];
+  int i, ret;
+  struct media_device *device = NULL;
+  int type;
+
+  for (i = 0;; i++) {
+    sprintf(mdev_path, "/dev/media%d", i);
+    INFO("Get media device: %s info\n", mdev_path);
+    if (access(mdev_path, F_OK))
+        break;
+
+    device = media_device_new(mdev_path);
+    if (device == NULL) {
+      printf("Failed to create media %s\n", mdev_path);
+      continue;
+    }
+
+    ret = media_device_enumerate(device);
+    if (ret < 0) {
+      printf("Failed to enumerate %s (%d)\n", mdev_path, ret);
+      media_device_unref(device);
+      continue;
+    }
+
+    const struct media_device_info *info = media_get_info(device);
+    if (strcmp(info->model, MEDIA_MODEL_RKCIF) == 0 ||
+        strcmp(info->model, MEDIA_MODEL_RKISP1) == 0 ||
+        strcmp(info->model, MEDIA_MODEL_RKISPP1) == 0) {
+      type = CAM_TYPE_RKCIF;
+	  } else if (strcmp(info->model, MEDIA_MODEL_RKISP0) == 0 ||
+        strcmp(info->model, MEDIA_MODEL_RKISPP0) == 0) {
+      type = CAM_TYPE_RKISP1;
+    }
+
+    if (priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKCIF) ||
+	    priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKISP0)) {
+	  ret = rkisp_enumrate_modules(device, &priv->media_info);
+	}
+
+	if (priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKISP1) ||
+	    priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKISP0)) {
+      ret = rkisp_get_devname(device, "rkisp-isp-subdev", priv->media_info.sd_isp_path);
+      ret = rkisp_get_devname(device, "rkisp-input-params", priv->media_info.vd_params_path);
+      ret = rkisp_get_devname(device, "rkisp-statistics", priv->media_info.vd_stats_path);
+	}
+
+	if (priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKISPP1) ||
+	    priv->camera_type == type && !strcmp(info->model, MEDIA_MODEL_RKISPP0)) {
+      ret = rkisp_get_devname(device, "rkispp_m_bypass", priv->media_info.vd_mb_path);
+      ret = rkisp_get_devname(device, "rkispp_scale0", priv->media_info.vd_s0_path);
+      ret = rkisp_get_devname(device, "rkispp_scale1", priv->media_info.vd_s1_path);
+      ret = rkisp_get_devname(device, "rkispp_scale2", priv->media_info.vd_s2_path);
+      strncpy(priv->ctx.dev_path, priv->media_info.vd_s0_path, sizeof(priv->ctx.dev_path));
+	}
+  }
+
+  strcpy(priv->mdev_path, mdev_path);
+
+  if (!rkisp_get_active_sensor(priv)) {
+    ERR("%s is RKISP1 or RKCIF device but not sensor attached\n",
+        priv->ctx.dev_path);
+    return -1;
+  }
+
+  return ret;
+}
