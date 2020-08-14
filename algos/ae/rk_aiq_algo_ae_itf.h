@@ -45,10 +45,14 @@
  * DCG-setting is divided into 2 parts: Hdr/Normal
  * GainRange is divided into 2 parts: Linear/NonLinear(for sony sensor, dB-Mode)
  * LCG=>LSNR, HCG=>HSNR
+ * v0.1.5-20200814
+ * In LinAe, Backlit support designated DarkROI
+ *              add OverExpCtrl
+ * delete some useless modules,including:AOE,Hist2Hal,IntervalAdjust
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.4"
+#define RKISP_ALGO_AE_VERSION     "v0.1.5"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 
