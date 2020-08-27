@@ -18,7 +18,7 @@
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define FMT_NUM_PLANES 1 // TODO: support multi planes fmts
 
-#define MEDIA_MODEL_RKCIF   "rkcif"
+#define MEDIA_MODEL_RKCIF   "rkcif_mipi_lvds"
 #define MEDIA_MODEL_RKISP0  "rkisp0"
 #define MEDIA_MODEL_RKISP1  "rkisp1"
 #define MEDIA_MODEL_RKISPP0  "rkispp0"
