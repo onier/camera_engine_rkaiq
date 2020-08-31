@@ -19,8 +19,6 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 
 #set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
-#set BUILROOT_BUILD_PROJECT
-#set(BUILROOT_BUILD_PROJECT true)
 #set(ENABLE_ASAN true)
 
 #set RK_SIMULATOR_HW
@@ -31,12 +29,8 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 # ----------------------------------------------------------------------------
 if(RK_SIMULATOR_HW)
 	add_compile_options(-DRK_SIMULATOR_HW)
-elseif(BUILROOT_BUILD_PROJECT)
-	#add_compile_options(-DDISABLE_PP)
-	SET(CMAKE_C_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-gcc")
-	SET(CMAKE_CXX_COMPILER "/home/camera/camera/rv1109_sdk/buildroot/output/rockchip_puma/host/bin/arm-linux-gnueabihf-g++")
-	#SET(CMAKE_C_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-gcc")
-	#SET(CMAKE_CXX_COMPILER "/home/xuhf/isp2.0-hal/buildroot/output/host/bin/arm-buildroot-linux-uclibcgnueabihf-g++")
+elseif(BUILDROOT_BUILD_PROJECT)
+	# Buildroot will set compiler when building
 else()
 	SET(CMAKE_C_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc")
 	SET(CMAKE_CXX_COMPILER "${PROJECT_SOURCE_DIR}/../../../../../prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++")
