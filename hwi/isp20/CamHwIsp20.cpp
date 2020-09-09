@@ -735,7 +735,8 @@ CamHwIsp20::initCamHwInfos()
                    strcmp(device->info.model, "rkisp") == 0) {
             isp_info = get_isp_subdevs(device, sys_path, CamHwIsp20::mIspHwInfos.isp_info);
         } else if (strcmp(device->info.model, "rkcif") == 0 ||
-                   strcmp(device->info.model, "rkcif_mipi_lvds") == 0) {
+                   strcmp(device->info.model, "rkcif_mipi_lvds") == 0 ||
+                   strcmp(device->info.model, "rkcif_lite_mipi_lvds") == 0) {
             cif_info = &CamHwIsp20::mCifHwInfos;
             get_cif_subdevs(device, sys_path, cif_info);
         } else {
