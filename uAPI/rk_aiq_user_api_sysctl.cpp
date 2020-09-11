@@ -379,10 +379,6 @@ rk_aiq_uapi_sysctl_getModuleCtl(const rk_aiq_sys_ctx_t* ctx, rk_aiq_module_id_t 
     return ret;
 }
 
-#include "RkAiqVersion.h"
-#include "RkAiqCalibVersion.h"
-
-const char *rk_aiq_uapi_sysctl_getAiqVersion() { return RK_AIQ_VERSION; }
 XCamReturn
 rk_aiq_uapi_sysctl_setCpsLtCfg(const rk_aiq_sys_ctx_t* ctx,
                                rk_aiq_cpsl_cfg_t* cfg)
@@ -603,7 +599,8 @@ rk_aiq_uapi_sysctl_swWorkingModeDyn(const rk_aiq_sys_ctx_t* ctx, rk_aiq_working_
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = ctx->_rkAiqManager->swWorkingModeDyn(mode);
+    /* ret = ctx->_rkAiqManager->swWorkingModeDyn(mode); */
+    ret = ctx->_rkAiqManager->swWorkingModeDyn_msg(mode);
     EXIT_XCORE_FUNCTION();
     return ret;
 }

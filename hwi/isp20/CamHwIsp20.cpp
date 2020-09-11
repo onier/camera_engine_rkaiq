@@ -2925,12 +2925,14 @@ CamHwIsp20::setIsppParamsSync(int frameId)
 
             ispp_params = (struct rkispp_params_cfg*)v4l2buf->get_buf().m.userptr;
 
+            bool update_full = false;
             // restore params for re-start and re-prepare
             if (_state == CAM_HW_STATE_STOPPED || _state == CAM_HW_STATE_PREPARED || _state == CAM_HW_STATE_PAUSED) {
                 // TODO: don't know why updating all ens will lead to no frame output
                 _full_active_ispp_params.module_en_update = _full_active_ispp_params.module_ens;
                 // just re-config the enabled moddules
                 _full_active_ispp_params.module_cfg_update = _full_active_ispp_params.module_ens;
+                update_full = true;
             } else {
                 _full_active_ispp_params.module_en_update = 0;
                 _full_active_ispp_params.module_cfg_update = 0;
@@ -2947,11 +2949,35 @@ CamHwIsp20::setIsppParamsSync(int frameId)
 
             _mutex.unlock();
 
+            u64 last_module_ens = _full_active_ispp_params.module_ens;
             gen_full_ispp_params(ispp_params, &_full_active_ispp_params);
-            // replace ens,update with _full_active_ispp_params
-            ispp_params->module_en_update = _full_active_ispp_params.module_en_update;
-            ispp_params->module_ens = _full_active_ispp_params.module_ens;
-            ispp_params->module_cfg_update = _full_active_ispp_params.module_cfg_update;
+
+            LOGD_CAMHW_SUBM(ISP20HW_SUBM, "ispp full en update 0x%x, ens 0x%x, cfg update 0x%x",
+                             _full_active_ispp_params.module_en_update,
+                             _full_active_ispp_params.module_ens,
+                             _full_active_ispp_params.module_cfg_update);
+
+            if (update_full) {
+                // replace ens,update with _full_active_ispp_params
+                ispp_params->module_en_update = _full_active_ispp_params.module_en_update;
+                ispp_params->module_ens = _full_active_ispp_params.module_ens;
+                ispp_params->module_cfg_update = _full_active_ispp_params.module_cfg_update;
+            } else {
+                int end = RK_ISP2X_PP_MAX_ID - RK_ISP2X_PP_TNR_ID;
+                u64 new_module_ens_update = 0;
+
+                for (int i = 0; i < end; i++)
+                    if ((last_module_ens & (1 << i)) != (_full_active_ispp_params.module_ens & (1 << i))) {
+                        new_module_ens_update |= 1 << i;
+                    }
+
+                ispp_params->module_en_update = new_module_ens_update;
+                ispp_params->module_ens = _full_active_ispp_params.module_ens;
+                ispp_params->module_cfg_update = _full_active_ispp_params.module_cfg_update;
+                LOGD_CAMHW_SUBM(ISP20HW_SUBM, "ispp new en update 0x%x, ens 0x%x, cfg update 0x%x",
+                                 ispp_params->module_en_update, ispp_params->module_ens,
+                                 ispp_params->module_cfg_update);
+            }
 
             LOGD_CAMHW_SUBM(ISP20HW_SUBM, "module_init_ens frome drv 0x%x\n", ispp_params->module_init_ens);
 
