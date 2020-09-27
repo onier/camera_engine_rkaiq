@@ -27,7 +27,7 @@
 
 XCamReturn AwbInitV200(awb_contex_t** para, const CamCalibDbContext_t* calib);
 XCamReturn AwbPrepareV200(awb_contex_t *para);
-XCamReturn AwbReConfigV200(awb_contex_t *para);
+XCamReturn AwbReconfigV200(awb_contex_t *para);
 XCamReturn AwbPreProcV200(rk_aiq_awb_stat_res_v200_t awb_measure_result, awb_contex_t* para);
 XCamReturn AwbProcessingV200(awb_contex_t* para);
 XCamReturn AwbReleaseV200(awb_contex_t* para);
