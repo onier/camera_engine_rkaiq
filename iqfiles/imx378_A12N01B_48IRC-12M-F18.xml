@@ -32326,7 +32326,7 @@
         </LUT3D>
         <LDCH index="1" type="struct" size="[1 1]">
             <enable index="1" type="double" size="[1 1]">
-                [1 ]
+                [0 ]
             </enable>
             <mesh_file index="1" type="char" size="[1 30]">
                 LDCH_mesh_imx415_3.6mm_3840_2160
