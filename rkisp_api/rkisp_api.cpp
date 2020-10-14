@@ -1131,6 +1131,10 @@ int rkisp_get_media0_info(struct rkisp_media_info *media_info,
                              media_info->vd_params_path);
     ret |= rkisp_get_devname(device, "rkisp-statistics",
                              media_info->vd_stats_path);
+  } else {
+      /* Try cif */
+    ret |= rkisp_get_devname(device, "stream_cif_mipi_id0",
+                             media_info->vd_cif_path);
   }
   if (ret) {
     media_device_unref(device);
