@@ -2808,7 +2808,7 @@ CamHwIsp20::setIspParamsSync(int frameId)
     if (aiq_results->data()->frame_id !=  frameId) {
         if (_last_aiq_results->data()->frame_id > aiq_results->data()->frame_id)
             aiq_results = _last_aiq_results;
-        LOGE_CAMHW_SUBM(ISP20HW_SUBM, "sequence(%d) != aiq params id(%d), last aiq params id(%d)\n",
+        LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sequence(%d) != aiq params id(%d), last aiq params id(%d)\n",
                 aiq_results->data()->frame_id, frameId, _last_aiq_results->data()->frame_id);
     } else {
         _pending_ispparams_queue.pop_back();
