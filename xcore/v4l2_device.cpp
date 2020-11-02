@@ -532,6 +532,32 @@ V4l2Device::prepare ()
 }
 
 XCamReturn
+V4l2Device::get_crop (struct v4l2_crop &crop)
+{
+    int ret = 0;
+    XCAM_ASSERT (is_opened());
+    ret = this->io_control (VIDIOC_G_CROP, &crop);
+    if (ret < 0) {
+        XCAM_LOG_ERROR("subdev(%s) VIDIOC_G_CROP failed", XCAM_STR(_name));
+        return XCAM_RETURN_ERROR_IOCTL;
+    }
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+V4l2Device::set_crop (struct v4l2_crop &crop)
+{
+    int ret = 0;
+    XCAM_ASSERT (is_opened());
+    ret = this->io_control (VIDIOC_S_CROP, &crop);
+    if (ret < 0) {
+        XCAM_LOG_ERROR("subdev(%s) VIDIOC_S_CROP failed", XCAM_STR(_name));
+        return XCAM_RETURN_ERROR_IOCTL;
+    }
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
 V4l2SubDevice::set_selection (struct v4l2_subdev_selection &aSelection)
 {
     int ret = 0;

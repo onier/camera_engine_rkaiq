@@ -897,14 +897,14 @@ typedef struct CalibDb_Awb_Para_s
 
 typedef struct CalibDb_HdrMerge_s
 {
-    float envLevel[6];
-    float oeCurve_smooth[6];
-    float oeCurve_offset[6];
-    float moveCoef[6];
-    float mdCurveLm_smooth[6];
-    float mdCurveLm_offset[6];
-    float mdCurveMs_smooth[6];
-    float mdCurveMs_offset[6];
+    float envLevel[13];
+    float oeCurve_smooth[13];
+    float oeCurve_offset[13];
+    float moveCoef[13];
+    float mdCurveLm_smooth[13];
+    float mdCurveLm_offset[13];
+    float mdCurveMs_smooth[13];
+    float mdCurveMs_offset[13];
     float oeCurve_damp;
     float mdCurveLm_damp;
     float mdCurveMs_damp;
@@ -914,41 +914,41 @@ typedef struct GlobalLuma_s
 {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float GlobalLumaMode;
-    float envLevel[6];
-    float ISO[6];
+    float envLevel[13];
+    float ISO[13];
     float Tolerance;
-    float globalLuma[6];
+    float globalLuma[13];
 } GlobalLuma_t;
 
-typedef struct GDetailsHighLight_s
+typedef struct DetailsHighLight_s
 {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float DetailsHighLightMode;
-    float OEPdf[6];
-    float EnvLv[6];
+    float OEPdf[13];
+    float EnvLv[13];
     float Tolerance;
-    float detailsHighLight[6];
+    float detailsHighLight[13];
 } DetailsHighLight_t;
 
 typedef struct DetailsLowLight_s
 {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float DetailsLowLightMode;
-    float FocusLuma[6];
-    float DarkPdf[6];
-    float ISO[6];
+    float FocusLuma[13];
+    float DarkPdf[13];
+    float ISO[13];
     float Tolerance;
-    float detailsLowLight[6];
+    float detailsLowLight[13];
 } DetailsLowLight_t;
 
 typedef struct LocalTMO_s
 {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float LocalTMOMode;
-    float DynamicRange[6];
-    float EnvLv[6];
+    float DynamicRange[13];
+    float EnvLv[13];
     float Tolerance;
-    float Strength[6];
+    float Strength[13];
 } LocalTMO_t;
 
 typedef struct GlobaTMO_s
@@ -957,10 +957,10 @@ typedef struct GlobaTMO_s
     float en;
     float iir;
     float mode;
-    float DynamicRange[6];
-    float EnvLv[6];
+    float DynamicRange[13];
+    float EnvLv[13];
     float Tolerance;
-    float Strength[6];
+    float Strength[13];
 } GlobaTMO_t;
 
 typedef struct TMO_en_s
@@ -996,16 +996,61 @@ typedef struct CalibDb_Blc_s {
     CalibDb_Blc_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_Blc_t;
 
+typedef struct CalibDb_Dpcc_set_RK_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_sw_mindis[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_sw_mindis[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char sw_dis_scale_min[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char sw_dis_scale_max[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_RK_t;
+
+typedef struct CalibDb_Dpcc_set_LC_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_line_thr[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_line_thr[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_line_mad_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_line_mad_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_LC_t;
+
+typedef struct CalibDb_Dpcc_set_PG_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_pg_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_pg_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_PG_t;
+
+typedef struct CalibDb_Dpcc_set_RND_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_rnd_thr[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_rnd_thr[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_rnd_offs[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_rnd_offs[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_RND_t;
+
+typedef struct CalibDb_Dpcc_set_RG_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_rg_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_rg_fac[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_RG_t;
+
+typedef struct CalibDb_Dpcc_set_RO_s {
+    unsigned char rb_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char rb_ro_lim[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char g_ro_lim[CALIBDB_DPCC_MAX_ISO_LEVEL];
+} CalibDb_Dpcc_set_RO_t;
+
 typedef struct CalibDb_Dpcc_set_s {
-    unsigned char red_blue_enable[6][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char green_enable[6][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char line_thresh[4][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char line_mad_fac[4][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char pg_fac[2][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char rnd_thresh[2][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char rg_fac[2][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char ro_lim[2][CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char rnd_offs[2][CALIBDB_DPCC_MAX_ISO_LEVEL];
+    CalibDb_Dpcc_set_RK_t rk;
+    CalibDb_Dpcc_set_LC_t lc;
+    CalibDb_Dpcc_set_PG_t pg;
+    CalibDb_Dpcc_set_RND_t rnd;
+    CalibDb_Dpcc_set_RG_t rg;
+    CalibDb_Dpcc_set_RO_t ro;
 } CalibDb_Dpcc_set_t;
 
 typedef struct CalibDb_Dpcc_Fast_Mode_s {
@@ -1037,7 +1082,7 @@ typedef struct CalibDb_Dpcc_Pdaf_s {
 typedef struct CalibDb_Dpcc_Expert_Mode_s {
     float iso[CALIBDB_DPCC_MAX_ISO_LEVEL];
     unsigned char stage1_Enable[CALIBDB_DPCC_MAX_ISO_LEVEL];
-    unsigned char grayscale_mode[CALIBDB_DPCC_MAX_ISO_LEVEL];
+    unsigned char grayscale_mode;
     unsigned char rk_out_sel[CALIBDB_DPCC_MAX_ISO_LEVEL];
     unsigned char dpcc_out_sel[CALIBDB_DPCC_MAX_ISO_LEVEL];
     unsigned char stage1_rb_3x3[CALIBDB_DPCC_MAX_ISO_LEVEL];
@@ -1266,13 +1311,27 @@ typedef struct CalibDb_LUMA_CCM_s {
     float alpha_scale[9];
 } CalibDb_LUMA_CCM_t;
 
-typedef struct CalibDb_Ccm_s {
-    bool enable;
+typedef struct CalibDb_Ccm_ModeCell_s {
+    bool valid;
+    char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     bool  damp_enable;
     CalibDb_AccmCof_t aCcmCof;
     CalibDb_LUMA_CCM_t   luma_ccm;
     int matrixAllNum;
     CalibDb_CcmMatrixProfile_t matrixAll[CCM_RESOLUTIONS_NUM_MAX * CCM_ILLUMINATION_MAX * CCM_PROFILES_NUM_MAX]; //type  CalibDb_CcmMatrixProfile_t;
+} CalibDb_Ccm_ModeCell_t;
+
+typedef enum  CalibDb_CcmHdrNormalMode_e {
+    CCM_FOR_MODE_NORMAL = 0,
+    CCM_FOR_MODE_HDR,
+    CCM_FOR_MODE_MAX,
+} CalibDb_CcmHdrNormalMode_t;
+
+
+typedef struct CalibDb_Ccm_s {
+    int modecellNum;
+    bool enable;
+    CalibDb_Ccm_ModeCell_t mode_cell[CCM_FOR_MODE_MAX];
 } CalibDb_Ccm_t;
 
 typedef struct CalibDb_UVNR_Params_s {
@@ -1343,14 +1402,11 @@ typedef struct CalibDb_UVNR_s {
 
 typedef struct CalibDb_Gamma_s {
     unsigned char gamma_en;
-    unsigned char gamma_out_mode;
     unsigned char gamma_out_segnum;
     unsigned char gamma_out_offset;
     float curve_normal[45];
     float curve_hdr[45];
     float curve_night[45];
-    float curve_user1[45];
-    float curve_user2[45];
 } CalibDb_Gamma_t;
 
 typedef struct CalibDb_YNR_ISO_s {
@@ -1696,9 +1752,6 @@ typedef struct CalibDb_Af_Contrast_s {
 
     float                   OutFocusValue;                /**< out of focus vlaue*/
     unsigned short          OutFocusPos;                  /**< out of focus position*/
-
-    unsigned short          gammaY[17];
-    unsigned char           gaussWeight[3];
 } CalibDb_Af_Contrast_t;
 
 typedef struct CalibDb_Af_Laser_s {
@@ -1718,6 +1771,13 @@ typedef struct CalibDb_Af_VcmCfg_s {
     int extra_delay;
 } CalibDb_Af_VcmCfg_t;
 
+typedef struct CalibDb_Af_MeasIsoCfg_s {
+    int iso;
+    unsigned short afmThres;
+    unsigned short gammaY[17];
+    unsigned char gaussWeight[3];
+} CalibDb_Af_MeasIsoCfg_t;
+
 typedef struct CalibDb_Af_DefCode_s {
     unsigned char code;
 } CalibDb_Af_DefCode_t;
@@ -1734,6 +1794,7 @@ typedef struct CalibDb_AF_s {
     CalibDb_Af_Laser_t laser_af;
     CalibDb_Af_Pdaf_t pdaf;
     CalibDb_Af_VcmCfg_t vcmcfg;
+    CalibDb_Af_MeasIsoCfg_t measiso_cfg[CALIBDB_MAX_ISO_LEVEL];
 } CalibDb_AF_t;
 
 typedef struct CalibDb_ORB_s {

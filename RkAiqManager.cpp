@@ -454,12 +454,14 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
 
     aiqParams = results->data().ptr();
 
+#ifndef RK_SIMULATOR_HW
     if (mWorkingMode != RK_AIQ_WORKING_MODE_NORMAL) {
         SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
         bool isHdrGlobalTmo = aiqParams->mIspParams->data()->ahdr_proc_res.isHdrGlobalTmo;
 
         mCamHwIsp20->setHdrGlobalTmoMode(aiqParams->mIspParams->data()->frame_id, isHdrGlobalTmo);
     }
+#endif
 
 #ifdef RUNTIME_MODULE_DEBUG
 #ifndef RK_SIMULATOR_HW
@@ -489,6 +491,7 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
         }
     }
 #else
+#ifndef RK_SIMULATOR_HW
     if (aiqParams->mCpslParams.ptr()) {
         SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
         int gray_mode = aiqParams->mIspParams->data()->ie.base.mode;
@@ -518,6 +521,7 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
             LOGE_ANALYZER("setFlParams error %d", ret);
         mDleayCpslParams.release();
     }
+#endif
 #endif
 
     if (aiqParams->mExposureParams.ptr()) {

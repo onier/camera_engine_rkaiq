@@ -311,7 +311,6 @@ typedef RKAiqAecExpInfo_t ExpInfo_t;
  * @brief   AEC Module configuration structure isp2; used for re-configuration as well
  *
  *****************************************************************************/
-
 typedef struct Aec_Sensor_nr_switch_s {
     bool valid;
     uint32_t direct;
@@ -319,6 +318,12 @@ typedef struct Aec_Sensor_nr_switch_s {
     uint32_t down_thres;
     uint32_t div_coeff;
 } Aec_Sensor_nr_switch_t;
+
+typedef struct Aec_uapi_advanced_attr_s {
+    bool    enable;
+    uint8_t DayGridWeights[RAWAEBIG_WIN_NUM];
+    uint8_t NightGridWeights[RAWAEBIG_WIN_NUM];
+} Aec_uapi_advanced_attr_t;
 
 typedef struct AecConfig_s {
 
@@ -346,6 +351,9 @@ typedef struct AecConfig_s {
 
     int                           RawWidth;
     int                           RawHeight;
+
+    /*add for api using advanced params*/
+    Aec_uapi_advanced_attr_t      ApiAdvanced;
 
     /*update attr flag*/
     bool                          IsReconfig;

@@ -197,6 +197,8 @@ public:
         _sharp_fbc_rotation = rot;
         return XCAM_RETURN_NO_ERROR;
     }
+    XCamReturn getSensorCrop(rk_aiq_rect_t& rect);
+    XCamReturn setSensorCrop(rk_aiq_rect_t& rect);
     XCamReturn setSensorFlip(bool mirror, bool flip, int skip_frm_cnt);
     XCamReturn getSensorFlip(bool& mirror, bool& flip);
     void setMulCamConc(bool cc);
@@ -296,6 +298,7 @@ private:
     drv_share_mem_ctx_t _ldch_drv_mem_ctx;
     drv_share_mem_ctx_t _fec_drv_mem_ctx;
     Mutex _mem_mutex;
+    rk_aiq_rect_t _crop_rect;
 };
 
 };

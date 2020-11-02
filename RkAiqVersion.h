@@ -275,12 +275,21 @@
  * - change vicap tx buf num from 6 to 4
  * - AFEC: fixed bug fec can't be dynamically switched on and off
  * - fix TMO,dehaze bugs
- * - optimize ldch & fec memory usage 
  * - isp driver v0.1.9
+ * v1.0x23.0
+ * - calib db: v1.4.2 magic code: 1089142 
+ * - update rkisp2x_tuner v1.0x3.0
+ * - isp driver v1.0x2.0
+ * - uAPI changes
+ *   - add rk_aiq_uapi_sysctl_setCrop/rk_aiq_uapi_sysctl_getCrop
+ *   - add rk_aiq_uapi_sysctl_preInit
+ * - fix ldch/fec memleak of aiq v1.3.0 
+ * - Open merge and tmo when mode is linear
+ * - rk_aiq_uapi_sysctl_preInit
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.3.0"
-#define RK_AIQ_RELEASE_DATE "2020-10-17"
+#define RK_AIQ_VERSION_REAL_V "v1.0x23.0"
+#define RK_AIQ_RELEASE_DATE "2020-11-02"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

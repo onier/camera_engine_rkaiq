@@ -46,6 +46,29 @@ typedef struct rk_aiq_sys_ctx_s {
 
 RKAIQ_BEGIN_DECLARE
 
+typedef struct rk_aiq_sys_preinit_cfg_s {
+   rk_aiq_working_mode_t mode;
+   std::string force_iq_file;
+} rk_aiq_sys_preinit_cfg_t;
+
+static std::map<std::string, rk_aiq_sys_preinit_cfg_t> g_rk_aiq_sys_preinit_cfg_map;
+
+XCamReturn
+rk_aiq_uapi_sysctl_preInit(const char* sns_ent_name,
+                           rk_aiq_working_mode_t mode,
+                           const char* force_iq_file)
+{
+    std::string sns_ent_name_str(sns_ent_name);
+    rk_aiq_sys_preinit_cfg_t cfg;
+
+    cfg.mode = mode;
+    if (force_iq_file)
+        cfg.force_iq_file = force_iq_file;
+    g_rk_aiq_sys_preinit_cfg_map[sns_ent_name_str] = cfg;
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
 rk_aiq_sys_ctx_t*
 rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
                         const char* config_file_dir,
@@ -81,14 +104,38 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
     ctx->_camHw = new CamHwSimulator();
 #else
     ctx->_camHw = new CamHwIsp20();
+
+    // use user defined iq file
+    std::map<std::string, rk_aiq_sys_preinit_cfg_t>::iterator it =
+        g_rk_aiq_sys_preinit_cfg_map.find(std::string(ctx->_sensor_entity_name));
+    int user_hdr_mode = -1;
+    bool user_spec_iq = false;
+    if (it != g_rk_aiq_sys_preinit_cfg_map.end()) {
+        if (!it->second.force_iq_file.empty()) {
+            sprintf(config_file, "%s/%s", config_file_dir, it->second.force_iq_file.c_str());
+            LOGI("use user sepcified iq file %s", config_file);
+            user_spec_iq = true;
+        } else {
+            user_hdr_mode = it->second.mode;
+            LOGI("selected by user sepcified hdr mode %d", user_hdr_mode);
+        }
+    }
+
     // use auto selected iq file
-    if (is_ent_name) {
+    if (is_ent_name && !user_spec_iq) {
         char iq_file[128] = {'\0'};
         CamHwIsp20::selectIqFile(sns_ent_name, iq_file);
 
         char* hdr_mode = getenv("HDR_MODE");
         int start = strlen(iq_file) - strlen(".xml");
-        if (hdr_mode) {
+
+        if (user_hdr_mode != -1) {
+            iq_file[start] = '\0';
+            if (user_hdr_mode == RK_AIQ_WORKING_MODE_ISP_HDR3)
+                strcat(iq_file, "-hdr3.xml");
+            else
+                strcat(iq_file, "_normal.xml");
+        } else if (hdr_mode) {
             iq_file[start] = '\0';
             if (strstr(hdr_mode, "32"))
                 strcat(iq_file, "-hdr3.xml");
@@ -125,23 +172,35 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
     ctx->_lumaAnalyzer = new RkLumaCore();
     ctx->_rkAiqManager->setLumaAnalyzer(ctx->_lumaAnalyzer);
     ctx->_calibDb = RkAiqCalibDb::createCalibDb(config_file);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (!ctx->_calibDb)
+        goto error;
     ctx->_rkAiqManager->setAiqCalibDb(ctx->_calibDb);
-    XCamReturn ret = ctx->_rkAiqManager->init();
-    if (ret) {
-        LOGE("_rkAiqManager init error!");
-        rk_aiq_uapi_sysctl_deinit(ctx);
-        return NULL;
-    }
+    ret = ctx->_rkAiqManager->init();
+    if (ret)
+        goto error;
 
     EXIT_XCORE_FUNCTION();
 
     return ctx;
+
+error:
+    LOGE("_rkAiqManager init error!");
+    rk_aiq_uapi_sysctl_deinit(ctx);
+    return NULL;
 }
 
 void
 rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
 {
     ENTER_XCORE_FUNCTION();
+
+    std::map<std::string, rk_aiq_sys_preinit_cfg_t>::iterator it =
+        g_rk_aiq_sys_preinit_cfg_map.find(std::string(ctx->_sensor_entity_name));
+    if (it != g_rk_aiq_sys_preinit_cfg_map.end()) {
+        g_rk_aiq_sys_preinit_cfg_map.erase(it);
+        LOGI("unset user specific iq file.");
+    }
 
     if (ctx->_rkAiqManager.ptr())
         ctx->_rkAiqManager->deInit();
@@ -629,4 +688,21 @@ rk_aiq_uapi_sysctl_setMulCamConc(const rk_aiq_sys_ctx_t* ctx, bool cc)
     ENTER_XCORE_FUNCTION();
     ctx->_rkAiqManager->setMulCamConc(cc);
     EXIT_XCORE_FUNCTION();
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_setCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t rect)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = sys_ctx->_camHw->setSensorCrop(rect);
+    return ret;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t* rect)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = sys_ctx->_camHw->getSensorCrop(*rect);
+
+    return ret;
 }

@@ -294,20 +294,6 @@ XCamReturn rk_aiq_uapi_getWBMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode);
 XCamReturn rk_aiq_uapi_lockAWB(const rk_aiq_sys_ctx_t* ctx);
 XCamReturn rk_aiq_uapi_unlockAWB(const rk_aiq_sys_ctx_t* ctx);
 
-
-/*
-*****************************
-*
-* Desc: set auto white balance mode
-* Argument:
-*
-*
-*****************************
-*/
-
-XCamReturn rk_aiq_uapi_setAWBRange(const rk_aiq_sys_ctx_t* ctx, awbRange_t range);
-XCamReturn rk_aiq_uapi_getAWBRange(const rk_aiq_sys_ctx_t* ctx, awbRange_t *range);
-
 /*
 *****************************
 *
@@ -466,18 +452,6 @@ XCamReturn rk_aiq_uapi_getVcmCfg(const rk_aiq_sys_ctx_t* ctx, rk_aiq_lens_vcmcfg
 *****************************
 */
 XCamReturn rk_aiq_uapi_getSearchPath(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_sec_path_t* path);
-
-/*
-*****************************
-*
-* Desc: set optical zoom position
-* Argument:
-*   pos:  [1, 2000]
-*
-*****************************
-*/
-XCamReturn rk_aiq_uapi_setOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int pos);
-XCamReturn rk_aiq_uapi_getOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int *pos);
 
 /*
 **********************************************************
@@ -747,6 +721,15 @@ XCamReturn rk_aiq_uapi_getMirrorFlip(const rk_aiq_sys_ctx_t* ctx, bool* mirror, 
 */
 XCamReturn rk_aiq_uapi_setFecEn(const rk_aiq_sys_ctx_t* ctx, bool en);
 
+/*
+*****************************
+*
+* Desc: set corrective direction of FEC, valid only if aiq hasn't executed the 'prepare' action
+* Argument:
+*****************************
+*/
+XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
+                                              const fec_correct_direction_t direction);
 /*
 *****************************
 *

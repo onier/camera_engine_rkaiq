@@ -1,8 +1,8 @@
 get AIQ version:
 strings /oem/usr/lib/librkaiq.so |grep "AIQ v"
 
-windows command:
-adb push .\rkaiq_tool_server\librkmedia.so /oem/usr/lib/
+rkmedia path:
+/oem/usr/lib/librkmedia.so
 
 tool_server execute path:
 /tmp/rkaiq_tool_server

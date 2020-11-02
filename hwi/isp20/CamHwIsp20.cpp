@@ -52,6 +52,7 @@ CamHwIsp20::CamHwIsp20()
     _ldch_drv_mem_ctx.type = MEM_TYPE_LDCH;
     _ldch_drv_mem_ctx.ops_ctx = this;
     _ldch_drv_mem_ctx.mem_info = (void*)(ldch_mem_info_array);
+    xcam_mem_clear(_crop_rect);
 }
 
 CamHwIsp20::~CamHwIsp20()
@@ -1415,6 +1416,22 @@ CamHwIsp20::setupPipelineFmt()
         ret = XCAM_RETURN_NO_ERROR;
     }
 
+    if (!_linked_to_isp && _crop_rect.width && _crop_rect.height) {
+        struct v4l2_format mipi_tx_fmt;
+        memset(&mipi_tx_fmt, 0, sizeof(mipi_tx_fmt));
+        LOGD_CAMHW_SUBM(ISP20HW_SUBM, "vicap get_crop %dx%d@%d,%d\n",
+            _crop_rect.width, _crop_rect.height, _crop_rect.left, _crop_rect.top);
+        ret = _mipi_tx_devs[0]->get_format(mipi_tx_fmt);
+        mipi_tx_fmt.fmt.pix.width = _crop_rect.width;
+        mipi_tx_fmt.fmt.pix.height = _crop_rect.height;
+        ret = _mipi_tx_devs[0]->set_format(mipi_tx_fmt);
+        sns_sd_sel.r.width = _crop_rect.width;
+        sns_sd_sel.r.height = _crop_rect.height;
+        sns_sd_fmt.format.width = _crop_rect.width;
+        sns_sd_fmt.format.height = _crop_rect.height;
+        ret = XCAM_RETURN_NO_ERROR;
+    }
+
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sensor fmt info: bounds %dx%d, crop %dx%d@%d,%d !",
                     sns_sd_sel.r.width, sns_sd_sel.r.height,
                     sns_sd_fmt.format.width, sns_sd_fmt.format.height,
@@ -2411,7 +2428,7 @@ CamHwIsp20::overrideExpRatioToAiqResults(const sint32_t frameId,
         // shadow resgister,needs to set a frame before, for ctrl_cfg/lg_scl reg
         aiq_results->data()->ahdr_proc_res.TmoProcRes.sw_hdrtmo_expl_lgratio = \
                 (int)(2048 * (log(curLExpo / nextLExpo) / log(2)));
-        if( aiq_results->data()->ahdr_proc_res.LongFrameMode || aiq_results->data()->ahdr_proc_res.isTmoOn)
+        if( aiq_results->data()->ahdr_proc_res.LongFrameMode || aiq_results->data()->ahdr_proc_res.isLinearTmo)
             aiq_results->data()->ahdr_proc_res.TmoProcRes.sw_hdrtmo_lgscl_ratio = 128;
         else
             aiq_results->data()->ahdr_proc_res.TmoProcRes.sw_hdrtmo_lgscl_ratio = \
@@ -2808,8 +2825,8 @@ CamHwIsp20::setIspParamsSync(int frameId)
     if (aiq_results->data()->frame_id !=  frameId) {
         if (_last_aiq_results->data()->frame_id > aiq_results->data()->frame_id)
             aiq_results = _last_aiq_results;
-        LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sequence(%d) != aiq params id(%d), last aiq params id(%d)\n",
-                aiq_results->data()->frame_id, frameId, _last_aiq_results->data()->frame_id);
+        LOGW_CAMHW_SUBM(ISP20HW_SUBM, "isp stream sequence(%d) != aiq params id(%d), last params is id(%d)\n",
+                        frameId, aiq_results->data()->frame_id, _last_aiq_results->data()->frame_id);
     } else {
         _pending_ispparams_queue.pop_back();
     }
@@ -4237,6 +4254,39 @@ XCamReturn CamHwIsp20::getSensorFlip(bool& mirror, bool& flip)
     return mSensorSubdev->get_mirror_flip(mirror, flip);
 }
 
+XCamReturn CamHwIsp20::setSensorCrop(rk_aiq_rect_t& rect)
+{
+    XCamReturn ret;
+    struct v4l2_crop crop;
+    for (int i = 0; i < 3; i++) {
+        SmartPtr<V4l2Device> mipi_tx = _mipi_tx_devs[i].dynamic_cast_ptr<V4l2Device>();
+        memset(&crop, 0, sizeof(crop));
+        crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        ret = mipi_tx->get_crop(crop);
+        crop.c.left = rect.left;
+        crop.c.top = rect.top;
+        crop.c.width = rect.width;
+        crop.c.height = rect.height;
+        ret = mipi_tx->set_crop(crop);
+    }
+    _crop_rect = rect;
+    return ret;
+}
+
+XCamReturn CamHwIsp20::getSensorCrop(rk_aiq_rect_t& rect)
+{
+    XCamReturn ret;
+    struct v4l2_crop crop;
+    SmartPtr<V4l2Device> mipi_tx = _mipi_tx_devs[0].dynamic_cast_ptr<V4l2Device>();
+    memset(&crop, 0, sizeof(crop));
+    ret = mipi_tx->get_crop(crop);
+    rect.left = crop.c.left;
+    rect.top = crop.c.top;
+    rect.width = crop.c.width;
+    rect.height = crop.c.height;
+    return ret;
+}
+
 void CamHwIsp20::setHdrGlobalTmoMode(int frame_id, bool mode)
 {
     if (mNormalNoReadBack)
@@ -4279,22 +4329,22 @@ void CamHwIsp20::allocMemResource(void *ops_ctx, void *config, void **mem_ctx)
     if (share_mem_cfg->mem_type == MEM_TYPE_LDCH) {
         ldchbuf_size.meas_width = share_mem_cfg->alloc_param.width;
         ldchbuf_size.meas_height = share_mem_cfg->alloc_param.height;
-        ret = isp20->mIspCoreDev->io_control(RKISP_CMD_SET_LDCHBUF_SIZE  , &ldchbuf_size);
+        ret = isp20->mIspCoreDev->io_control(RKISP_CMD_SET_LDCHBUF_SIZE, &ldchbuf_size);
         if (ret < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "alloc ldch buf failed!");
             return;
         }
         xcam_mem_clear(ldchbuf_info);
-        ret = isp20->mIspCoreDev->io_control(RKISP_CMD_GET_LDCHBUF_INFO , &ldchbuf_info);
+        ret = isp20->mIspCoreDev->io_control(RKISP_CMD_GET_LDCHBUF_INFO, &ldchbuf_info);
         if (ret < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "failed to get ldch buf info!!");
             return;
         }
         rk_aiq_ldch_share_mem_info_t* mem_info_array =
             (rk_aiq_ldch_share_mem_info_t*)(isp20->_ldch_drv_mem_ctx.mem_info);
-        for (int i=0; i<ISP2X_LDCH_BUF_NUM; i++) {
+        for (int i = 0; i < ISP2X_LDCH_BUF_NUM; i++) {
             mem_info_array[i].map_addr =
-                    mmap(NULL, ldchbuf_info.buf_size[i], PROT_READ | PROT_WRITE, MAP_SHARED, ldchbuf_info.buf_fd[i], 0);
+                mmap(NULL, ldchbuf_info.buf_size[i], PROT_READ | PROT_WRITE, MAP_SHARED, ldchbuf_info.buf_fd[i], 0);
             if (MAP_FAILED == mem_info_array[i].map_addr)
                 LOGE_CAMHW_SUBM(ISP20HW_SUBM, "failed to map ldch buf!!");
 
@@ -4309,22 +4359,22 @@ void CamHwIsp20::allocMemResource(void *ops_ctx, void *config, void **mem_ctx)
         fecbuf_size.meas_width = share_mem_cfg->alloc_param.width;
         fecbuf_size.meas_height = share_mem_cfg->alloc_param.height;
         fecbuf_size.meas_mode = share_mem_cfg->alloc_param.reserved[0];
-        ret = isp20->_ispp_sd->io_control(RKISPP_CMD_SET_FECBUF_SIZE , &fecbuf_size);
+        ret = isp20->_ispp_sd->io_control(RKISPP_CMD_SET_FECBUF_SIZE, &fecbuf_size);
         if (ret < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "alloc fec buf failed!");
             return;
         }
         xcam_mem_clear(fecbuf_info);
-        ret = isp20->_ispp_sd->io_control(RKISPP_CMD_GET_FECBUF_INFO , &fecbuf_info);
+        ret = isp20->_ispp_sd->io_control(RKISPP_CMD_GET_FECBUF_INFO, &fecbuf_info);
         if (ret < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "failed to get fec buf info!!");
             return;
         }
         rk_aiq_fec_share_mem_info_t* mem_info_array =
             (rk_aiq_fec_share_mem_info_t*)(isp20->_fec_drv_mem_ctx.mem_info);
-        for (int i=0; i<FEC_MESH_BUF_NUM; i++) {
+        for (int i = 0; i < FEC_MESH_BUF_NUM; i++) {
             mem_info_array[i].map_addr =
-                    mmap(NULL, fecbuf_info.buf_size[i], PROT_READ | PROT_WRITE, MAP_SHARED, fecbuf_info.buf_fd[i], 0);
+                mmap(NULL, fecbuf_info.buf_size[i], PROT_READ | PROT_WRITE, MAP_SHARED, fecbuf_info.buf_fd[i], 0);
             if (MAP_FAILED == mem_info_array[i].map_addr)
                 LOGE_CAMHW_SUBM(ISP20HW_SUBM, "failed to map fec buf!!");
 
@@ -4332,13 +4382,13 @@ void CamHwIsp20::allocMemResource(void *ops_ctx, void *config, void **mem_ctx)
             mem_info_array[i].size = fecbuf_info.buf_size[i];
             struct rkispp_fec_head *head = (struct rkispp_fec_head*)mem_info_array[i].map_addr;
             mem_info_array[i].meshxf =
-                                (unsigned char*)mem_info_array[i].map_addr + head->meshxf_oft;
+                (unsigned char*)mem_info_array[i].map_addr + head->meshxf_oft;
             mem_info_array[i].meshyf =
-                                (unsigned char*)mem_info_array[i].map_addr + head->meshyf_oft;
+                (unsigned char*)mem_info_array[i].map_addr + head->meshyf_oft;
             mem_info_array[i].meshxi =
-                                (unsigned short*)((char*)mem_info_array[i].map_addr + head->meshxi_oft);
+                (unsigned short*)((char*)mem_info_array[i].map_addr + head->meshxi_oft);
             mem_info_array[i].meshyi =
-                                (unsigned short*)((char*)mem_info_array[i].map_addr + head->meshyi_oft);
+                (unsigned short*)((char*)mem_info_array[i].map_addr + head->meshyi_oft);
             mem_info_array[i].state = (char*)&head->stat;
         }
         *mem_ctx = (void*)(&isp20->_fec_drv_mem_ctx);
@@ -4355,7 +4405,7 @@ void CamHwIsp20::releaseMemResource(void *mem_ctx)
     if (drv_mem_ctx->type == MEM_TYPE_LDCH) {
         rk_aiq_ldch_share_mem_info_t* mem_info_array =
             (rk_aiq_ldch_share_mem_info_t*)(drv_mem_ctx->mem_info);
-        for (int i=0; i<ISP2X_LDCH_BUF_NUM; i++) {
+        for (int i = 0; i < ISP2X_LDCH_BUF_NUM; i++) {
             if (mem_info_array[i].map_addr) {
                 ret = munmap(mem_info_array[i].map_addr, mem_info_array[i].size);
                 if (ret < 0)
@@ -4367,7 +4417,7 @@ void CamHwIsp20::releaseMemResource(void *mem_ctx)
     } else if (drv_mem_ctx->type == MEM_TYPE_FEC) {
         rk_aiq_fec_share_mem_info_t* mem_info_array =
             (rk_aiq_fec_share_mem_info_t*)(drv_mem_ctx->mem_info);
-        for (int i=0; i<FEC_MESH_BUF_NUM; i++) {
+        for (int i = 0; i < FEC_MESH_BUF_NUM; i++) {
             if (mem_info_array[i].map_addr) {
                 ret = munmap(mem_info_array[i].map_addr, mem_info_array[i].size);
                 if (ret < 0)
@@ -4394,7 +4444,7 @@ CamHwIsp20::getFreeItem(void *mem_ctx)
         do {
             for (idx = 0; idx < ISP2X_LDCH_BUF_NUM; idx++) {
                 if (mem_info_array[idx].state &&
-                    (0==mem_info_array[idx].state[0])) {
+                        (0 == mem_info_array[idx].state[0])) {
                     return (void*)&mem_info_array[idx];
                 }
             }
@@ -4405,7 +4455,7 @@ CamHwIsp20::getFreeItem(void *mem_ctx)
         do {
             for (idx = 0; idx < FEC_MESH_BUF_NUM; idx++) {
                 if (mem_info_array[idx].state &&
-                    (0 == mem_info_array[idx].state[0])) {
+                        (0 == mem_info_array[idx].state[0])) {
                     return (void*)&mem_info_array[idx];
                 }
             }

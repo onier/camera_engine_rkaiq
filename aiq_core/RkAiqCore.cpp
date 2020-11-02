@@ -871,8 +871,11 @@ RkAiqCore::genIspAhdrResult(RkAiqFullParams* params)
         isp_param->ahdr_proc_res.isHdrGlobalTmo =
             ahdr_rk->AhdrProcRes.isHdrGlobalTmo;
 
-        isp_param->ahdr_proc_res.isTmoOn =
-            ahdr_rk->AhdrProcRes.isTmoOn;
+        isp_param->ahdr_proc_res.bTmoEn =
+            ahdr_rk->AhdrProcRes.bTmoEn;
+
+        isp_param->ahdr_proc_res.isLinearTmo =
+            ahdr_rk->AhdrProcRes.isLinearTmo;
 
     }
 

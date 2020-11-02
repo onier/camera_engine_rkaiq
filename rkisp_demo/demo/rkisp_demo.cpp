@@ -656,11 +656,11 @@ void test_imgproc(const demo_context_t* demo_ctx) {
        rk_aiq_uapi_setLdchEn(ctx, false);
        break;
     case 'S':
-       printf("test fec correct level100\n");
+       printf("test ldch correct level100\n");
        rk_aiq_uapi_setLdchCorrectLevel(ctx, 100);
        break;
     case 'T':
-       printf("test fec correct level255\n");
+       printf("test ldch correct level255\n");
        rk_aiq_uapi_setLdchCorrectLevel(ctx, 255);
        break;
     case 'U':
@@ -1671,7 +1671,10 @@ static void rkisp_routine(demo_context_t *ctx)
             if (ctx->writeFileSync)
                 rk_aiq_uapi_debug_captureRawYuvSync(ctx->aiq_ctx, CAPTURE_RAW_AND_YUV_SYNC);
 
-            // rk_aiq_uapi_setFecEn(ctx->aiq_ctx, true);
+            /*
+             * rk_aiq_uapi_setFecEn(ctx->aiq_ctx, true);
+             * rk_aiq_uapi_setFecCorrectDirection(ctx->aiq_ctx, FEC_CORRECT_DIRECTION_Y);
+             */
             XCamReturn ret = rk_aiq_uapi_sysctl_prepare(ctx->aiq_ctx, ctx->width, ctx->height, work_mode);
 
             if (ret != XCAM_RETURN_NO_ERROR)

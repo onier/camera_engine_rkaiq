@@ -621,6 +621,19 @@ Isp20Params::convertAiqAwbToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
 void Isp20Params::convertAiqMergeToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
         const rk_aiq_isp_hdr_t& ahdr_data)
 {
+    if(ahdr_data.bTmoEn)
+    {
+        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRMGE_ID;
+        isp_cfg.module_ens |= 1LL << RK_ISP2X_HDRMGE_ID;
+        isp_cfg.module_cfg_update |= 1LL << RK_ISP2X_HDRMGE_ID;
+    }
+    else
+    {
+        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRMGE_ID;
+        isp_cfg.module_ens &= ~(1LL << RK_ISP2X_HDRMGE_ID);
+        isp_cfg.module_cfg_update &= ~(1LL << RK_ISP2X_HDRMGE_ID);
+    }
+
     isp_cfg.others.hdrmge_cfg.mode         = ahdr_data.MgeProcRes.sw_hdrmge_mode;
     isp_cfg.others.hdrmge_cfg.gain0_inv    = ahdr_data.MgeProcRes.sw_hdrmge_gain0_inv;
     isp_cfg.others.hdrmge_cfg.gain0         = ahdr_data.MgeProcRes.sw_hdrmge_gain0;
@@ -661,6 +674,18 @@ void Isp20Params::convertAiqMergeToIsp20Params(struct isp2x_isp_params_cfg& isp_
 void Isp20Params::convertAiqTmoToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
         const rk_aiq_isp_hdr_t& ahdr_data)
 {
+    if(ahdr_data.bTmoEn)
+    {
+        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRTMO_ID;
+        isp_cfg.module_ens |= 1LL << RK_ISP2X_HDRTMO_ID;
+        isp_cfg.module_cfg_update |= 1LL << RK_ISP2X_HDRTMO_ID;
+    }
+    else
+    {
+        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRTMO_ID;
+        isp_cfg.module_ens &= ~(1LL << RK_ISP2X_HDRTMO_ID);
+        isp_cfg.module_cfg_update &= ~(1LL << RK_ISP2X_HDRTMO_ID);
+    }
 
     isp_cfg.others.hdrtmo_cfg.cnt_vsize     = ahdr_data.TmoProcRes.sw_hdrtmo_cnt_vsize;
     isp_cfg.others.hdrtmo_cfg.gain_ld_off2  = ahdr_data.TmoProcRes.sw_hdrtmo_gain_ld_off2;
@@ -1953,46 +1978,8 @@ Isp20Params::convertAiqResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg
 
     convertAiqHistToIsp20Params(isp_cfg, aiq_results->data()->hist_meas);
     convertAiqAeToIsp20Params(isp_cfg, aiq_results->data()->aec_meas);
-
-    if (_working_mode != RK_AIQ_WORKING_MODE_NORMAL)
-    {
-        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRMGE_ID;
-        isp_cfg.module_ens |= 1LL << RK_ISP2X_HDRMGE_ID;
-        isp_cfg.module_cfg_update |= 1LL << RK_ISP2X_HDRMGE_ID;
-
-        isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRTMO_ID;
-        isp_cfg.module_ens |= 1LL << RK_ISP2X_HDRTMO_ID;
-        isp_cfg.module_cfg_update |= 1LL << RK_ISP2X_HDRTMO_ID;
-
-        convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-        convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-    }
-    else {
-        bool IsTmoOn = aiq_results->data()->ahdr_proc_res.isTmoOn;
-        if(IsTmoOn)
-        {
-            isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRMGE_ID;
-            isp_cfg.module_ens &= ~(1LL << RK_ISP2X_HDRMGE_ID);
-            isp_cfg.module_cfg_update &= ~(1LL << RK_ISP2X_HDRMGE_ID);
-
-            isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRTMO_ID;
-            isp_cfg.module_ens |= 1LL << RK_ISP2X_HDRTMO_ID;
-            isp_cfg.module_cfg_update |= 1LL << RK_ISP2X_HDRTMO_ID;
-
-            convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-        }
-        else
-        {
-            isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRMGE_ID;
-            isp_cfg.module_ens &= ~(1LL << RK_ISP2X_HDRMGE_ID);
-            isp_cfg.module_cfg_update &= ~(1LL << RK_ISP2X_HDRMGE_ID);
-
-            isp_cfg.module_en_update |= 1LL << RK_ISP2X_HDRTMO_ID;
-            isp_cfg.module_ens &= ~(1LL << RK_ISP2X_HDRTMO_ID);
-            isp_cfg.module_cfg_update &= ~(1LL << RK_ISP2X_HDRTMO_ID);
-        }
-
-    }
+    convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
+    convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
     convertAiqAwbGainToIsp20Params(isp_cfg, aiq_results->data()->awb_gain, aiq_results->data()->blc,
                                    aiq_results->data()->awb_gain_update);
     convertAiqAwbToIsp20Params(isp_cfg, aiq_results->data()->awb_cfg_v200, aiq_results->data()->awb_cfg_update);

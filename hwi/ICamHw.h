@@ -108,6 +108,8 @@ public:
     virtual XCamReturn offlineRdJobDone() = 0;
     virtual XCamReturn setSensorFlip(bool mirror, bool flip, int skip_frm_cnt) = 0;
     virtual XCamReturn getSensorFlip(bool& mirror, bool& flip) = 0;
+    virtual XCamReturn getSensorCrop(rk_aiq_rect_t& rect) = 0;
+    virtual XCamReturn setSensorCrop(rk_aiq_rect_t& rect) = 0;
     virtual XCamReturn getZoomPosition(int& position) = 0;
     virtual XCamReturn getLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg) = 0;
     virtual XCamReturn setLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg) = 0;

@@ -25,7 +25,17 @@ cc_library_shared {
 		"include/algos",
 		"include/common/mediactl",
     ],
-	
+
+    header_libs: [
+        "gl_headers",
+    ],
+
+    shared_libs: [
+        "libutils",
+        "libcutils",
+        "liblog",
+    ],
+
 	srcs: [
         // AIQ_CORE_SRC
         "aiq_core/RkAiqHandle.cpp",
@@ -125,6 +135,7 @@ cc_library_shared {
 		"-Wno-extern-c-compat",
 		"-fno-strict-aliasing",
 		"-frtti",
+        "-DANDROID_OS",
     ],
 	
     cppflags: [
@@ -151,7 +162,26 @@ cc_library_shared {
 		"-Wno-missing-field-initializers",
 		"-frtti",
 		"-std=c++11",
+        "-DANDROID_OS",
     ],
-	
+
+    export_include_dirs: [
+        "xcore",
+        "xcore/base",
+        "aiq_core",
+        "algos",
+        "hwi",
+        "iq_parser",
+        "uAPI",
+        "common",
+        "include",
+        "include/iq_parser",
+        "include/uAPI",
+        "include/xcore",
+        "include/common",
+        "include/common/mediactl",
+        "include/xcore/base",
+        "include/algos",
+    ],
 	//min_sdk_version: "29",
 }

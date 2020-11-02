@@ -7874,7 +7874,7 @@ bool RkAiqCalibParser::parseEntrySensorDpccExpertMode
             int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_Enable, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_GRAYSCALE_MODE_TAG_ID)) {
-            int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.grayscale_mode, tag.Size());
+            int no = ParseUcharArray(pchild, &mCalibDb->dpcc.expert.grayscale_mode, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_OUT_SEL_TAG_ID)) {
             int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.rk_out_sel, tag.Size());
@@ -7897,14 +7897,14 @@ bool RkAiqCalibParser::parseEntrySensorDpccExpertMode
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_FIX_SET_TAG_ID)) {
             int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_fix_set, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_SET3_TAG_ID)) {
-            int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_set3, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_SET1_TAG_ID)) {
+            int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_set1, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_SET2_TAG_ID)) {
             int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_set2, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        }  else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_SET1_TAG_ID)) {
-            int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_set1, tag.Size());
+        }  else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_STAGE1_USE_SET3_TAG_ID)) {
+            int no = ParseUcharArray(pchild, mCalibDb->dpcc.expert.stage1_use_set3, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_TAG_ID)) {
             if (!parseEntryCell(pchild->ToElement(), tag.Size(),
@@ -7951,34 +7951,280 @@ bool RkAiqCalibParser::parseEntrySensorDpccSetCell
         std::string tagname(pchild->ToElement()->Name());
         XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
 
-        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RED_BLUE_ENABLE_TAG_ID)) {
-            unsigned char enable = mCalibDb->lut3d.enable;
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].red_blue_enable, tag.Size());
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_RK_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellRK(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell RK (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_LC_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellLC(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell LC (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_PG_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellPG(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell PG (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_RND_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellRND(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell RND (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_RG_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellRG(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell RG (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_SET_CELL_RO_TAG_ID)) {
+            if (!parseEntrySensorDpccSetCellRO(pchild->ToElement(), index)) {
+                LOGE("parse error in dpcc set cell RO (%s)", tagname.c_str());
+                return (false);
+            }
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellRK
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_RK_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.rb_enable, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-            mCalibDb->lut3d.enable = enable;
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_GREEN_ENABLE_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].green_enable, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.g_enable, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LINE_THRESH_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].line_thresh, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_RED_BLUE_SW_MINDIS_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.rb_sw_mindis, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LINE_MAD_FAC_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].line_mad_fac, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_GREEN_SW_MINDIS_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.g_sw_mindis, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_PG_FAC_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].pg_fac, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_SW_DIS_SCALE_MIN_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.sw_dis_scale_min, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_THRESH_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd_thresh, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RK_SW_DIS_SCALE_MAX_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rk.sw_dis_scale_max, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_FAC_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rg_fac, tag.Size());
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellLC
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_LC_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.rb_enable, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_LIM_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].ro_lim, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.g_enable, tag.Size());
             DCT_ASSERT((no == tag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_OFFS_TAG_ID)) {
-            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd_offs, tag.Size());
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_RED_BLUE_LINE_MAD_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.rb_line_mad_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_GREEN_LINE_MAD_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.g_line_mad_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_RED_BLUE_LINE_THR_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.rb_line_thr, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_LC_GREEN_LINE_THR_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].lc.g_line_thr, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellPG
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_PG_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_PG_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].pg.rb_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_PG_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].pg.g_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_PG_RED_BLUE_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].pg.rb_pg_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_PG_GREEN_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].pg.g_pg_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellRND
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_RND_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.rb_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.g_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_RED_BLUE_THR_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.rb_rnd_thr, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_GREEN_THR_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.g_rnd_thr, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_RED_BLUE_OFFS_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.rb_rnd_offs, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RND_GREEN_OFFS_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rnd.g_rnd_offs, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellRG
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_RG_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rg.rb_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rg.g_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_RED_BLUE_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rg.rb_rg_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RG_GREEN_FAC_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].rg.g_rg_fac, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD( "%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorDpccSetCellRO
+(
+    const XMLElement*   pelement,
+    int index
+) {
+    LOGD( "%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_DPCC_SET_CELL_RO_TAG_ID, CALIB_SENSOR_DPCC_SET_CELL_TAG_ID);
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RO_RED_BLUE_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].ro.rb_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RO_GREEN_ENABLE_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].ro.g_enable, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RO_RED_BLUE_LIM_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].ro.rb_ro_lim, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_DPCC_RO_GREEN_LIM_TAG_ID)) {
+            int no = ParseUcharArray(pchild, (uint8_t *)mCalibDb->dpcc.expert.set[index].ro.g_ro_lim, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         }
 
@@ -8765,7 +9011,8 @@ bool RkAiqCalibParser::parseEntrySensorRKDM
 bool RkAiqCalibParser::parseEntrySensorlumaCCMGAC
 (
     const XMLElement*   pelement,
-    void*                param
+    void*                param,
+    int         index
 ) {
     LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
     autoTabForward();
@@ -8780,17 +9027,17 @@ bool RkAiqCalibParser::parseEntrySensorlumaCCMGAC
         XML_CHECK_WHILE_SUBTAG_MARK((char *)(subsubTagname.c_str()), subsubTag.Type(), subsubTag.Size());
 
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_GAIN_TAG_ID)) {
-            no1 = ParseFloatArray(psubsubchild, mCalibDb->ccm.luma_ccm.alpha_gain, subsubTag.Size());
+            no1 = ParseFloatArray(psubsubchild, mCalibDb->ccm.mode_cell[index].luma_ccm.alpha_gain, subsubTag.Size());
             DCT_ASSERT((no1 == subsubTag.Size()));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_SCALE_TAG_ID)) {
-            no2 = ParseFloatArray(psubsubchild, mCalibDb->ccm.luma_ccm.alpha_scale, subsubTag.Size());
+            no2 = ParseFloatArray(psubsubchild, mCalibDb->ccm.mode_cell[index].luma_ccm.alpha_scale, subsubTag.Size());
             DCT_ASSERT((no2 == subsubTag.Size()));
         }
         psubsubchild = psubsubchild->NextSibling();
     }
     DCT_ASSERT(no1 == no2);
-    mCalibDb->ccm.luma_ccm.gain_scale_cure_size = no1;
+    mCalibDb->ccm.mode_cell[index].luma_ccm.gain_scale_cure_size = no1;
     XML_CHECK_END();
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     autoTabBackward();
@@ -8801,12 +9048,13 @@ bool RkAiqCalibParser::parseEntrySensorlumaCCMGAC
 bool RkAiqCalibParser::parseEntrySensorlumaCCM
 (
     const XMLElement*   pelement,
-    void*                param
+    void*                param,
+    int         index
 ) {
     LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
     autoTabForward();
 
-    XML_CHECK_START(CALIB_SENSOR_CCM_LUMA_CCM_TAG_ID, CALIB_SENSOR_CCM_TAG_ID);
+    XML_CHECK_START(CALIB_SENSOR_CCM_LUMA_CCM_TAG_ID, CALIB_SENSOR_CCM_MODE_CELL_TAG_ID);
 
     const XMLNode* psubchild = pelement->FirstChild();
     while (psubchild) {
@@ -8814,22 +9062,22 @@ bool RkAiqCalibParser::parseEntrySensorlumaCCM
         std::string subTagname(psubchild->ToElement()->Name());
         XML_CHECK_WHILE_SUBTAG_MARK((char *)(subTagname.c_str()), subTag.Type(), subTag.Size());
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_RGB2Y_PARA_TAG_ID)) {
-            int no = ParseFloatArray(psubchild, mCalibDb->ccm.luma_ccm.rgb2y_para, subTag.Size());
+            int no = ParseFloatArray(psubchild, mCalibDb->ccm.mode_cell[index].luma_ccm.rgb2y_para, subTag.Size());
             DCT_ASSERT((no == subTag.Size()));
 
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_LOW_BOUND_POS_BIT_TAG_ID)) {
-            int no = ParseFloatArray(psubchild, &mCalibDb->ccm.luma_ccm.low_bound_pos_bit, subTag.Size());
+            int no = ParseFloatArray(psubchild, &mCalibDb->ccm.mode_cell[index].luma_ccm.low_bound_pos_bit, subTag.Size());
             DCT_ASSERT((no == subTag.Size()));
 
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_Y_ALPHA_CURVE_TAG_ID)) {
-            int no = ParseFloatArray(psubchild, mCalibDb->ccm.luma_ccm.y_alpha_curve, subTag.Size());
+            int no = ParseFloatArray(psubchild, mCalibDb->ccm.mode_cell[index].luma_ccm.y_alpha_curve, subTag.Size());
             DCT_ASSERT((no == subTag.Size()));
 
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_GAIN_ALPHASCALE_CURVE_TAG_ID)) {
-            if (!parseEntrySensorlumaCCMGAC(psubchild->ToElement())) {
+            if (!parseEntrySensorlumaCCMGAC(psubchild->ToElement(), param, index)) {
                 LOGE("parse error in CCM lumaCCM (%s)\n", subTagname.c_str());
                 return (false);
             }
@@ -8841,6 +9089,84 @@ bool RkAiqCalibParser::parseEntrySensorlumaCCM
 
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     autoTabBackward();
+    return (true);
+}
+
+bool RkAiqCalibParser::parseEntrySensorCCMModeCell
+(
+    const XMLElement*   pelement,
+    void*               param
+) {
+    (void)param;
+
+    LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    autoTabForward();
+
+    XML_CHECK_START(CALIB_SENSOR_CCM_MODE_CELL_TAG_ID, CALIB_SENSOR_CCM_TAG_ID);
+
+    int index = *((int*)param);
+    bool indexValid = false;
+    mCalibDb->ccm.mode_cell[index].matrixAllNum = 0;
+
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MODE_NAME_TAG_ID)) {
+            char mode[CCM_PROFILE_NAME];
+            //ParseString(pchild,  mode, sizeof(mode));
+            ParseString(pchild, mCalibDb->ccm.mode_cell[index].name, sizeof(mCalibDb->ccm.mode_cell[index].name));
+            indexValid = true;
+            if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "normal")){
+                index = CCM_FOR_MODE_NORMAL;
+            }
+            else if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "hdr")){
+                index = CCM_FOR_MODE_HDR;
+            }
+            else {
+                LOGE("mode: %s in CCM ModeCell is invalid. instead normal or hdr\n", mCalibDb->ccm.mode_cell[index].name);
+                return(false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_DAMP_ENABLE_TAG_ID) && indexValid) {
+            uint8_t uValue = mCalibDb->ccm.mode_cell[index].damp_enable;
+            int no = ParseUcharArray(pchild, &uValue, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+            mCalibDb->ccm.mode_cell[index].damp_enable = (bool)uValue;
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_TAG_ID) && indexValid) {
+            INFO_PRINT(tagname.c_str());
+            if (!parseEntrySensorlumaCCM(pchild->ToElement(), param, index)) {
+                LOGE("parse error in CCM lumaCCM (%s)\n", tagname.c_str());
+                return (false);
+            }
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_TAG_ID) && indexValid) {
+            if (!parseEntrySensorCcmAccmCof(pchild->ToElement(), param, index)) {
+                LOGE("parse error in CCM aCCmCof (%s)\n", tagname.c_str());
+                return (false);
+            }
+        }
+       else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID) && indexValid) {
+            if (!parseEntryCell2(pchild->ToElement(), tag.Size(),
+                                &RkAiqCalibParser::parseEntrySensorCcmMatrixAll,
+                                &mCalibDb->ccm.mode_cell[index],
+                                (uint32_t)CALIB_SENSOR_CCM_MATRIXALL_TAG_ID,
+                                (uint32_t)CALIB_SENSOR_CCM_MODE_CELL_TAG_ID)) {
+                LOGE("parse error in CCM matrixall (%s)\n", tagname.c_str());
+                return (false);
+            }
+        }
+        pchild = pchild->NextSibling();
+    }
+    DCT_ASSERT((indexValid == true));
+    XML_CHECK_END();
+    mCalibDb->ccm.modecellNum++;
+    mCalibDb->ccm.mode_cell[index].valid = true;
+    LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     return (true);
 }
 
@@ -8856,7 +9182,7 @@ bool RkAiqCalibParser::parseEntrySensorCCM
 
     XML_CHECK_START(CALIB_SENSOR_CCM_TAG_ID, CALIB_SENSOR_TAG_ID);
 
-    mCalibDb->ccm.matrixAllNum = 0;
+    mCalibDb->ccm.modecellNum = 0;
     const XMLNode* pchild = pelement->FirstChild();
     while (pchild) {
         XmlTag tag = XmlTag(pchild->ToElement());
@@ -8869,32 +9195,13 @@ bool RkAiqCalibParser::parseEntrySensorCCM
             DCT_ASSERT((no == tag.Size()));
             mCalibDb->ccm.enable = (bool)uValue;
         }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_DAMP_ENABLE_TAG_ID)) {
-            uint8_t uValue = mCalibDb->ccm.damp_enable;
-            int no = ParseUcharArray(pchild, &uValue, tag.Size());
-            DCT_ASSERT((no == tag.Size()));
-            mCalibDb->ccm.damp_enable = (bool)uValue;
-        }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_LUMA_CCM_TAG_ID)) {
-            INFO_PRINT(tagname.c_str());
-            if (!parseEntrySensorlumaCCM(pchild->ToElement())) {
-                LOGE("parse error in CCM lumaCCM (%s)\n", tagname.c_str());
-                return (false);
-            }
-        }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_TAG_ID)) {
-            if (!parseEntrySensorCcmAccmCof(pchild->ToElement())) {
-                LOGE("parse error in CCM aCCmCof (%s)\n", tagname.c_str());
-                return (false);
-            }
-        }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID)) {
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MODE_CELL_TAG_ID)) {
             if (!parseEntryCell(pchild->ToElement(), tag.Size(),
-                                &RkAiqCalibParser::parseEntrySensorCcmMatrixAll,
+                                &RkAiqCalibParser::parseEntrySensorCCMModeCell,
                                 param,
-                                (uint32_t)CALIB_SENSOR_CCM_MATRIXALL_TAG_ID,
+                                (uint32_t)CALIB_SENSOR_CCM_MODE_CELL_TAG_ID,
                                 (uint32_t)CALIB_SENSOR_CCM_TAG_ID)) {
-                LOGE("parse error in CCM matrixall (%s)\n", tagname.c_str());
+                LOGE("parse error in ccm mode cell (%s)", tagname.c_str());
                 return (false);
             }
         }
@@ -8910,16 +9217,17 @@ bool RkAiqCalibParser::parseEntrySensorCCM
 bool RkAiqCalibParser::parseEntrySensorCcmAccmCof
 (
     const XMLElement*   pelement,
-    void*               param
+    void*               param,
+    int         index
 ) {
     (void)param;
 
     LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
     autoTabForward();
 
-    XML_CHECK_START(CALIB_SENSOR_CCM_ACCMCOF_TAG_ID, CALIB_SENSOR_CCM_TAG_ID);
+    XML_CHECK_START(CALIB_SENSOR_CCM_ACCMCOF_TAG_ID, CALIB_SENSOR_CCM_MODE_CELL_TAG_ID);
 
-    mCalibDb->ccm.aCcmCof.illuNum = 0;
+    mCalibDb->ccm.mode_cell[index].aCcmCof.illuNum = 0;
 
     const XMLNode* pchild = pelement->FirstChild();
     while (pchild) {
@@ -8928,9 +9236,9 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCof
         XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
 
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID)) {
-            if (!parseEntryCell(pchild->ToElement(), tag.Size(),
+            if (!parseEntryCell2(pchild->ToElement(), tag.Size(),
                                 &RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll,
-                                param,
+                                &mCalibDb->ccm.mode_cell[index],
                                 (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID,
                                 (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_TAG_ID)) {
                 LOGE("parse error in LSC aCcmCof illAll (%s)", tagname.c_str());
@@ -8949,14 +9257,19 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCof
 bool RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll
 (
     const XMLElement*   pelement,
-    void*                param
+    void*                param,
+    int                 index
 ) {
+    (void)param;
+
     LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    CalibDb_Ccm_ModeCell_t *pModeCell = (CalibDb_Ccm_ModeCell_t *)param;
 
     XML_CHECK_START(CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID, CALIB_SENSOR_CCM_ACCMCOF_TAG_ID);
 
 
-    int index = *((int*)param);
+    //int index = *((int*)param);
     const XMLNode* pchild = pelement->FirstChild();
     int no1 = 0;
     int no2 = 0;
@@ -8967,27 +9280,27 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll
         XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_NAME_TAG_ID)) {
             ParseString(pchild,
-                        mCalibDb->ccm.aCcmCof.illAll[index].illuName,
-                        sizeof(mCalibDb->ccm.aCcmCof.illAll[index].illuName));
+                        pModeCell->aCcmCof.illAll[index].illuName,
+                        sizeof(pModeCell->aCcmCof.illAll[index].illuName));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_WBGAIN_TAG_ID)) {
-            int no = ParseFloatArray(pchild, mCalibDb->ccm.aCcmCof.illAll[index].awbGain, tag.Size());
+            int no = ParseFloatArray(pchild, pModeCell->aCcmCof.illAll[index].awbGain, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_MATRIXUSED_TAG_ID)) {
             char* ccm_profiles = Toupper(value);
-            int no = ParseLscProfileArray(pchild, mCalibDb->ccm.aCcmCof.illAll[index].matrixUsed, CCM_PROFILES_NUM_MAX);
+            int no = ParseLscProfileArray(pchild, pModeCell->aCcmCof.illAll[index].matrixUsed, CCM_PROFILES_NUM_MAX);
             DCT_ASSERT((no <= CCM_PROFILES_NUM_MAX));
-            mCalibDb->ccm.aCcmCof.illAll[index].matrixUsedNO = no;
+            pModeCell->aCcmCof.illAll[index].matrixUsedNO = no;
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_GAINS_TAG_ID)) {
-            no1 = ParseFloatArray(pchild, mCalibDb->ccm.aCcmCof.illAll[index].saturationCurve.pSensorGain, tag.Size());
-            mCalibDb->ccm.aCcmCof.illAll[index].saturationCurve.arraySize = no1;
+            no1 = ParseFloatArray(pchild, pModeCell->aCcmCof.illAll[index].saturationCurve.pSensorGain, tag.Size());
+            pModeCell->aCcmCof.illAll[index].saturationCurve.arraySize = no1;
             DCT_ASSERT((no1 == tag.Size()));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_SAT_TAG_ID)) {
-            no2 = ParseFloatArray(pchild, mCalibDb->ccm.aCcmCof.illAll[index].saturationCurve.pSaturation, tag.Size());
-            mCalibDb->ccm.aCcmCof.illAll[index].saturationCurve.arraySize = no2;
+            no2 = ParseFloatArray(pchild, pModeCell->aCcmCof.illAll[index].saturationCurve.pSaturation, tag.Size());
+            pModeCell->aCcmCof.illAll[index].saturationCurve.arraySize = no2;
             DCT_ASSERT((no2 == tag.Size()));
         }
         pchild = pchild->NextSibling();
@@ -8995,7 +9308,7 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll
     XML_CHECK_END();
 
     DCT_ASSERT(no1 == no2);
-    mCalibDb->ccm.aCcmCof.illuNum++;
+    pModeCell->aCcmCof.illuNum++;
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     return (true);
 }
@@ -9004,13 +9317,18 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll
 bool RkAiqCalibParser::parseEntrySensorCcmMatrixAll
 (
     const XMLElement*   pelement,
-    void*                param
+    void*                param,
+    int                 index
 ) {
+    (void)param;
+
     LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
 
-    XML_CHECK_START(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID, CALIB_SENSOR_CCM_TAG_ID);
+    CalibDb_Ccm_ModeCell_t *pModeCell = (CalibDb_Ccm_ModeCell_t *)param;
 
-    int index = *((int*)param);
+    XML_CHECK_START(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID, CALIB_SENSOR_CCM_MODE_CELL_TAG_ID);
+
+//    int index = *((int*)param);
     const XMLNode* pchild = pelement->FirstChild();
     while (pchild) {
         XmlTag tag = XmlTag(pchild->ToElement());
@@ -9020,35 +9338,35 @@ bool RkAiqCalibParser::parseEntrySensorCcmMatrixAll
 
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_NAME_TAG_ID)) {
             ParseString(pchild,
-                        mCalibDb->ccm.matrixAll[index].name,
-                        sizeof(mCalibDb->ccm.matrixAll[index].name));
+                        pModeCell->matrixAll[index].name,
+                        sizeof(pModeCell->matrixAll[index].name));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_ILLUMINATION_TAG_ID)) {
             ParseString(pchild,
-                        mCalibDb->ccm.matrixAll[index].illumination,
-                        sizeof(mCalibDb->ccm.matrixAll[index].illumination));
+                        pModeCell->matrixAll[index].illumination,
+                        sizeof(pModeCell->matrixAll[index].illumination));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_SAT_TAG_ID)) {
-            int no = ParseFloatArray(pchild, &mCalibDb->ccm.matrixAll[index].saturation, 1);
+            int no = ParseFloatArray(pchild, &pModeCell->matrixAll[index].saturation, 1);
             DCT_ASSERT((no == 1));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_MATRIX_TAG_ID)) {
-            int i = (sizeof(mCalibDb->ccm.matrixAll[index].CrossTalkCoeff)
-                     / sizeof(mCalibDb->ccm.matrixAll[index].CrossTalkCoeff.fCoeff[0]));
-            int no = ParseFloatArray(pchild, mCalibDb->ccm.matrixAll[index].CrossTalkCoeff.fCoeff, i);
+            int i = (sizeof(pModeCell->matrixAll[index].CrossTalkCoeff)
+                     / sizeof(pModeCell->matrixAll[index].CrossTalkCoeff.fCoeff[0]));
+            int no = ParseFloatArray(pchild, pModeCell->matrixAll[index].CrossTalkCoeff.fCoeff, i);
             DCT_ASSERT((no == tag.Size()));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_OFFSET_TAG_ID))
         {
-            int i = (sizeof(mCalibDb->ccm.matrixAll[index].CrossTalkOffset)
-                     / sizeof(mCalibDb->ccm.matrixAll[index].CrossTalkOffset.fCoeff[0]));
-            int no = ParseFloatArray(pchild, mCalibDb->ccm.matrixAll[index].CrossTalkOffset.fCoeff, i);
+            int i = (sizeof(pModeCell->matrixAll[index].CrossTalkOffset)
+                     / sizeof(pModeCell->matrixAll[index].CrossTalkOffset.fCoeff[0]));
+            int no = ParseFloatArray(pchild, pModeCell->matrixAll[index].CrossTalkOffset.fCoeff, i);
             DCT_ASSERT((no == tag.Size()));
         }
         pchild = pchild->NextSibling();
     }
     XML_CHECK_END();
-    mCalibDb->ccm.matrixAllNum++;
+    pModeCell->matrixAllNum++;
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     return (true);
 }
@@ -9383,10 +9701,6 @@ bool RkAiqCalibParser::parseEntrySensorGamma
             int no = ParseUcharArray(pchild, &mCalibDb->gamma.gamma_en, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_GAMMA_GAMMA_OUT_MODE_TAG_ID)) {
-            int no = ParseUcharArray(pchild, &mCalibDb->gamma.gamma_out_mode, tag.Size());
-            DCT_ASSERT((no == tag.Size()));
-        }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_GAMMA_GAMMA_OUT_SEGNUM_TAG_ID)) {
             int no = ParseUcharArray(pchild, &mCalibDb->gamma.gamma_out_segnum, tag.Size());
             DCT_ASSERT((no == tag.Size()));
@@ -9405,14 +9719,6 @@ bool RkAiqCalibParser::parseEntrySensorGamma
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_GAMMA_CURVE_NIGHT_TAG_ID)) {
             int no = ParseFloatArray(pchild, mCalibDb->gamma.curve_night, tag.Size());
-            DCT_ASSERT((no == tag.Size()));
-        }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_GAMMA_CURVE_USER1_TAG_ID)) {
-            int no = ParseFloatArray(pchild, mCalibDb->gamma.curve_user1, tag.Size());
-            DCT_ASSERT((no == tag.Size()));
-        }
-        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_GAMMA_CURVE_USER2_TAG_ID)) {
-            int no = ParseFloatArray(pchild, mCalibDb->gamma.curve_user2, tag.Size());
             DCT_ASSERT((no == tag.Size()));
         }
 
@@ -11301,12 +11607,6 @@ bool RkAiqCalibParser::parseEntrySensorAfContrastAf
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_OUT_FOCUS_POS_TAG_ID)) {
             int no = ParseUshortArray(psecsubchild, &mCalibDb->af.contrast_af.OutFocusPos, secsubtag.Size());
             DCT_ASSERT((no == secsubtag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_GAMMA_Y_TAG_ID)) {
-            int no = ParseUshortArray(psecsubchild, mCalibDb->af.contrast_af.gammaY, secsubtag.Size());
-            DCT_ASSERT((no == secsubtag.Size()));
-        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_GAUSS_WEIGHT_TAG_ID)) {
-            int no = ParseUcharArray(psecsubchild, mCalibDb->af.contrast_af.gaussWeight, secsubtag.Size());
-            DCT_ASSERT((no == secsubtag.Size()));
         }
         psecsubchild = psecsubchild->NextSibling();
     }
@@ -11422,6 +11722,48 @@ bool RkAiqCalibParser::parseEntrySensorAfVcmCfg
     return (true);
 }
 
+bool RkAiqCalibParser::parseEntrySensorAfMeasISO
+(
+    const XMLElement*   pelement,
+    void*                param
+) {
+
+    LOGD("%s(%d): (enter)\n", __FUNCTION__, __LINE__);
+
+    XML_CHECK_START(CALIB_SENSOR_AF_MEAS_ISO_TAG_ID, CALIB_SENSOR_AF_TAG_ID);
+
+    int index = *((int*)param);
+    const XMLNode* pchild = pelement->FirstChild();
+    while (pchild) {
+        XmlTag tag = XmlTag(pchild->ToElement());
+        const char* value = tag.Value();
+        std::string tagname(pchild->ToElement()->Name());
+        XML_CHECK_WHILE_SUBTAG_MARK((char *)(tagname.c_str()), tag.Type(), tag.Size());
+
+        if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_MEAS_ISO_ISO_TAG_ID)) {
+            int no = ParseIntArray(pchild, &mCalibDb->af.measiso_cfg[index].iso, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_MEAS_ISO_AFMTHRES_TAG_ID)) {
+            int no = ParseUshortArray(pchild, &mCalibDb->af.measiso_cfg[index].afmThres, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_MEAS_ISO_GAMMA_Y_TAG_ID)) {
+            int no = ParseUshortArray(pchild, mCalibDb->af.measiso_cfg[index].gammaY, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_MEAS_ISO_GAUSS_WEIGHT_TAG_ID)) {
+            int no = ParseUcharArray(pchild, mCalibDb->af.measiso_cfg[index].gaussWeight, tag.Size());
+            DCT_ASSERT((no == tag.Size()));
+        }
+        pchild = pchild->NextSibling();
+    }
+    XML_CHECK_END();
+    LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
+    return (true);
+}
+
+
 bool RkAiqCalibParser::parseEntrySensorAf
 (
     const XMLElement*   pelement,
@@ -11478,6 +11820,15 @@ bool RkAiqCalibParser::parseEntrySensorAf
         } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_VCM_TAG_ID)) {
             if (!parseEntrySensorAfVcmCfg(pchild->ToElement())) {
                 LOGE("parse error in Af (%s)", tagname.c_str());
+                return (false);
+            }
+        } else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AF_MEAS_ISO_TAG_ID)) {
+            if (!parseEntryCell(pchild->ToElement(), tag.Size(),
+                                &RkAiqCalibParser::parseEntrySensorAfMeasISO,
+                                param,
+                                (uint32_t)CALIB_SENSOR_AF_MEAS_ISO_TAG_ID,
+                                (uint32_t)CALIB_SENSOR_AF_TAG_ID)) {
+                LOGE("parse error in Af meas_iso (%s)", tagname.c_str());
                 return (false);
             }
         }
