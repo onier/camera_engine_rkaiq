@@ -94,17 +94,33 @@ char* timeString();
 #define XCAM_MODULE_LOG_WARNING(module, submodules, format, ...)   \
     xcam_print_log (module, submodules, XCORE_LOG_LEVEL_WARNING, "XCAM WARNING %s:%d: " format "\n", __BI_FILENAME__, __LINE__, ## __VA_ARGS__)
 
+#ifdef BUILD_TYPE_DEBUG
 #define XCAM_MODULE_LOG_INFO(module, submodules, format, ...)   \
     xcam_print_log (module, submodules, XCORE_LOG_LEVEL_INFO, "XCAM INFO %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
+#else
+#define XCAM_MODULE_LOG_INFO(module, submodules, format, ...)
+#endif
 
+#ifdef BUILD_TYPE_DEBUG
 #define XCAM_MODULE_LOG_VERBOSE(module, submodules, format, ...)   \
     xcam_print_log (module, submodules, XCORE_LOG_LEVEL_VERBOSE, "XCAM VERBOSE %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
+#else
+#define XCAM_MODULE_LOG_VERBOSE(module, submodules, format, ...)
+#endif
 
+#ifdef BUILD_TYPE_DEBUG
 #define XCAM_MODULE_LOG_DEBUG(module, submodules, format, ...)   \
       xcam_print_log (module, submodules, XCORE_LOG_LEVEL_DEBUG, "XCAM DEBUG %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
+#else
+#define XCAM_MODULE_LOG_DEBUG(module, submodules, format, ...)
+#endif
 
+#ifdef BUILD_TYPE_DEBUG
 #define XCAM_MODULE_LOG_LOW1(module, submodules, format, ...)   \
       xcam_print_log (module, submodules, XCORE_LOG_LEVEL_LOW1, "XCAM LOW1 %s:%d: " format "\n", __BI_FILENAME__, __LINE__, ## __VA_ARGS__)
+#else
+#define XCAM_MODULE_LOG_LOW1(module, submodules, format, ...)
+#endif
 
 // generic/xcore
 #define XCAM_LOG_ERROR(format, ...) XCAM_MODULE_LOG_ERROR(XCORE_LOG_MODULE_XCORE, 0xff, format, ##__VA_ARGS__)
