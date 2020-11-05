@@ -1420,7 +1420,7 @@ CamHwIsp20::setupPipelineFmt()
         struct v4l2_format mipi_tx_fmt;
         memset(&mipi_tx_fmt, 0, sizeof(mipi_tx_fmt));
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "vicap get_crop %dx%d@%d,%d\n",
-            _crop_rect.width, _crop_rect.height, _crop_rect.left, _crop_rect.top);
+                        _crop_rect.width, _crop_rect.height, _crop_rect.left, _crop_rect.top);
         ret = _mipi_tx_devs[0]->get_format(mipi_tx_fmt);
         mipi_tx_fmt.fmt.pix.width = _crop_rect.width;
         mipi_tx_fmt.fmt.pix.height = _crop_rect.height;
@@ -2484,16 +2484,40 @@ CamHwIsp20::overrideExpRatioToAiqResults(const sint32_t frameId,
 
         //merge
         // shadow resgister,needs to set a frame before, for gain0/1/2 reg
-        aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0 = (int)(64 * nextRatioLS);
-        if(nextRatioLS == 1)
-            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0_inv = (int)(4096 * (1 / nextRatioLS) - 1);
+        if(aiq_results->data()->ahdr_proc_res.isLinearTmo == false) {
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0 = (int)(64 * nextRatioLS);
+            if(nextRatioLS == 1)
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0_inv = (int)(4096 * (1 / nextRatioLS) - 1);
+            else
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0_inv = (int)(4096 * (1 / nextRatioLS));
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1 = (int)(64 * nextRatioLM);
+            if(nextRatioLM == 1)
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1_inv = (int)(4096 * (1 / nextRatioLM) - 1);
+            else
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1_inv = (int)(4096 * (1 / nextRatioLM));
+        }
         else
-            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0_inv = (int)(4096 * (1 / nextRatioLS));
-        aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1 = (int)(64 * nextRatioLM);
-        if(nextRatioLM == 1)
-            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1_inv = (int)(4096 * (1 / nextRatioLM) - 1);
-        else
-            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1_inv = (int)(4096 * (1 / nextRatioLM));
+        {
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0 = 0x40;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain0_inv = 0xfff;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1 = 0x40;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain1_inv = 0xfff;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_gain2 = 0x40;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_lm_dif_0p9 = 230;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_ms_dif_0p8 = 205;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_lm_dif_0p15 = 38;
+            aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_ms_dif_0p15 = 38;
+
+            int a[17] = {0, 0, 0, 0, 0x1, 0x4, 0xd, 0x2b, 0x89, 0x168, 0x29e, 0x379, 0x3d6, 0x3f3, 0x3fc, 0x3ff, 0x3ff};
+            int b[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0x4, 0x2a, 0x162, 0x376, 0x3f3, 0x3ff, 0x3ff, 0x3ff, 0x3ff};
+            for(int i = 0; i < 17; i++)
+            {
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_l0_y[i] = a[i];
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_l1_y[i] = a[i];
+                aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_e_y[i] = b[i];
+            }
+
+        }
 
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sw_hdrtmo_expl_lgratio:%d sw_hdrtmo_lgscl_ratio:%d "
                         "sw_hdrtmo_lgmax:%d sw_hdrtmo_set_lgmax:%d sw_hdrtmo_lgscl:%d sw_hdrtmo_lgscl_inv:%d\n",
@@ -2833,12 +2857,12 @@ CamHwIsp20::setIspParamsSync(int frameId)
 
     _mutex.unlock();
 
-    if (RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode) != RK_AIQ_WORKING_MODE_NORMAL) {
-        ret = overrideExpRatioToAiqResults(frameId, RK_ISP2X_HDRTMO_ID, aiq_results);
-        if (ret != XCAM_RETURN_NO_ERROR) {
-            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "convertExpRatioToAiqResults error!\n");
-        }
+
+    ret = overrideExpRatioToAiqResults(frameId, RK_ISP2X_HDRTMO_ID, aiq_results);
+    if (ret != XCAM_RETURN_NO_ERROR) {
+        LOGE_CAMHW_SUBM(ISP20HW_SUBM, "convertExpRatioToAiqResults error!\n");
     }
+
 
     ret = convertAiqResultsToIsp20Params(update_params, aiq_results, _last_aiq_results);
     if (ret != XCAM_RETURN_NO_ERROR) {
