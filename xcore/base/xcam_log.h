@@ -85,24 +85,26 @@ char* timeString();
 #endif
 #define LOG_TAG "rkisp"
 
+#define __BI_FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+
 // module debug
 #define XCAM_MODULE_LOG_ERROR(module, submodules, format, ...)    \
-    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_ERR, "XCAM ERROR %s:%d: " format "\n", basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_ERR, "XCAM ERROR %s:%d: " format "\n", __BI_FILENAME__, __LINE__, ## __VA_ARGS__)
 
 #define XCAM_MODULE_LOG_WARNING(module, submodules, format, ...)   \
-    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_WARNING, "XCAM WARNING %s:%d: " format "\n", basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_WARNING, "XCAM WARNING %s:%d: " format "\n", __BI_FILENAME__, __LINE__, ## __VA_ARGS__)
 
 #define XCAM_MODULE_LOG_INFO(module, submodules, format, ...)   \
-    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_INFO, "XCAM INFO (%d) %s:%d: " format "\n", getpid(), basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_INFO, "XCAM INFO %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
 
 #define XCAM_MODULE_LOG_VERBOSE(module, submodules, format, ...)   \
-    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_VERBOSE, "XCAM VERBOSE (%d) %s:%d: " format "\n", getpid(), basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+    xcam_print_log (module, submodules, XCORE_LOG_LEVEL_VERBOSE, "XCAM VERBOSE %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
 
 #define XCAM_MODULE_LOG_DEBUG(module, submodules, format, ...)   \
-      xcam_print_log (module, submodules, XCORE_LOG_LEVEL_DEBUG, "XCAM DEBUG %s:%d: " format "\n", basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+      xcam_print_log (module, submodules, XCORE_LOG_LEVEL_DEBUG, "XCAM DEBUG %s:%d: " format "\n", __BI_FILENAME__ , __LINE__, ## __VA_ARGS__)
 
 #define XCAM_MODULE_LOG_LOW1(module, submodules, format, ...)   \
-      xcam_print_log (module, submodules, XCORE_LOG_LEVEL_LOW1, "XCAM LOW1 %s:%d: " format "\n", basename((char*)__FILE__), __LINE__, ## __VA_ARGS__)
+      xcam_print_log (module, submodules, XCORE_LOG_LEVEL_LOW1, "XCAM LOW1 %s:%d: " format "\n", __BI_FILENAME__, __LINE__, ## __VA_ARGS__)
 
 // generic/xcore
 #define XCAM_LOG_ERROR(format, ...) XCAM_MODULE_LOG_ERROR(XCORE_LOG_MODULE_XCORE, 0xff, format, ##__VA_ARGS__)
