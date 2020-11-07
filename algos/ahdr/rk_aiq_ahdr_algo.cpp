@@ -93,7 +93,7 @@ float GetCurrPara
     else if (inPara >= inMatrixX[AHDR_MAX_IQ_DOTS - 1])
         outPara = inMatrixY[AHDR_MAX_IQ_DOTS - 1];
     else
-        for(int i = 0; i < AHDR_MAX_IQ_DOTS - 2; i++)
+        for(int i = 0; i < AHDR_MAX_IQ_DOTS - 1; i++)
         {
             if(inPara >= inMatrixX[i] && inPara < inMatrixX[i + 1])
             {
