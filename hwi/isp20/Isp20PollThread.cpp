@@ -859,9 +859,8 @@ Isp20PollThread::trigger_readback()
                 .frame_timestamp = 0,
                 .frame_id = sequence,
                 .times = 0,
-                .mode = _mipi_dev_max == 1 ? T_START_X1 :
-                _mipi_dev_max == 2 ? T_START_X2 : T_START_X3,
-                /* .mode = T_START_X2, */
+                .mode = _mipi_dev_max == 1 ? T_START_X1 : _mipi_dev_max == 2 ? T_START_X2 : T_START_X3,
+                /* mode : T_START_X2, */
             };
 
             if (_first_trigger)
