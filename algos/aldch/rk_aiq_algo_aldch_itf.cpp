@@ -60,7 +60,7 @@ static XCamReturn get_ldch_buf(LDCHContext_t* ldchCtx)
 
     return XCAM_RETURN_NO_ERROR;
 }
-
+#if GENMESH_ONLINE
 static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
 {
     if (ldchCtx->genLdchMeshInit) {
@@ -88,7 +88,7 @@ static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
 
     return XCAM_RETURN_NO_ERROR;
 }
-
+#endif
 static XCamReturn
 create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
 {

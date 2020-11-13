@@ -297,7 +297,7 @@ ANRresult_t selsec_hdr_parmas_by_ISO(RKAnr_Bayernr_Params_t *stBayerNrParams, RK
     }
 
     if(framenum <= 1 ) {
-        stBayerNrParamsSelected->gausskparsq = int((1 * 1) * float(1 << (FIXNLMCALC))) * (1 << 7);
+        stBayerNrParamsSelected->gausskparsq = int((1 * 1) * float(1 << (FIXNLMCALC)));// * (1 << 7);
     } else {
         stBayerNrParamsSelected->gausskparsq = int((1 * 1) * float(1 << (FIXNLMCALC)));
     }
@@ -307,6 +307,12 @@ ANRresult_t selsec_hdr_parmas_by_ISO(RKAnr_Bayernr_Params_t *stBayerNrParams, RK
     stBayerNrParamsSelected->pix_diff = FIXDIFMAX - 1;
     stBayerNrParamsSelected->log_bypass = 0;    //0 is none, 1 is G and RB all en,  2 only en G, 3 only RB;
 
+	if(framenum <= 1 ) {
+		stBayerNrParamsSelected->filtPar[1] = stBayerNrParamsSelected->filtPar[0];
+		stBayerNrParamsSelected->filtPar[2] = stBayerNrParamsSelected->filtPar[0];
+		stBayerNrParamsSelected->sw_dgain[1] = stBayerNrParamsSelected->sw_dgain[0];
+		stBayerNrParamsSelected->sw_dgain[2] = stBayerNrParamsSelected->sw_dgain[0];
+	}
     return ANR_RET_SUCCESS;
 }
 

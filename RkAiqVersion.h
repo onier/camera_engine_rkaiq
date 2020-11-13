@@ -286,10 +286,18 @@
  * - fix ldch/fec memleak of aiq v1.3.0 
  * - Open merge and tmo when mode is linear
  * - rk_aiq_uapi_sysctl_preInit
+ * v1.0x23.1
+ * - calib db: v1.4.2 magic code: 1089142, same as v1.0x23.0
+ * - isp driver v1.0x2.1
+ * - fix some bugs introduced by v1.0x23.0
+ *   - fix normal mode noise reduction regression compared to v1.0x23.0
+ *   - Add a strategy to avoid flicker in global Tmo cuased by Tmo algo
+ *   - Fix bug that the wrong interpolation between dot=12 and dot=13 in AHDR
+ * - some cpu usage optimization
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x23.0"
-#define RK_AIQ_RELEASE_DATE "2020-11-02"
+#define RK_AIQ_VERSION_REAL_V "v1.0x23.1"
+#define RK_AIQ_RELEASE_DATE "2020-11-13"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 
