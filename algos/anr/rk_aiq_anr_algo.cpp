@@ -352,7 +352,7 @@ ANRresult_t ANRGetProcResult(ANRContext_t *pANRCtx, ANRProcResult_t* pANRResult)
     //transfer to reg value
     bayernr_fix_tranfer(&pANRResult->stBayernrParamSelect, &pANRResult->stBayernrFix, pANRCtx->fRawnr_SF_Strength);
     mfnr_fix_transfer(&pANRResult->stMfnrParamSelect, &pANRResult->stMfnrFix, &pANRCtx->stExpInfo, pANRCtx->stGainState.ratio, pANRCtx->fLuma_TF_Strength,  pANRCtx->fChroma_TF_Strength);
-    ynr_fix_transfer(&pANRResult->stYnrParamSelect, &pANRResult->stYnrFix, pANRCtx->fLuma_SF_Strength);
+    ynr_fix_transfer(&pANRResult->stYnrParamSelect, &pANRResult->stYnrFix, pANRCtx->stGainState.ratio, pANRCtx->fLuma_SF_Strength);
     uvnr_fix_transfer(&pANRResult->stUvnrParamSelect, &pANRResult->stUvnrFix, &pANRCtx->stExpInfo, pANRCtx->stGainState.ratio, pANRCtx->fChroma_SF_Strength);
     gain_fix_transfer(&pANRResult->stMfnrParamSelect, &pANRResult->stGainFix, &pANRCtx->stExpInfo, pANRCtx->stGainState.ratio);
     pANRResult->stBayernrFix.rawnr_en = pANRResult->bayernrEn;
@@ -434,12 +434,14 @@ ANRresult_t ANRGainRatioProcess(ANRGainState_t *pGainState, ANRExpInfo_t *pExpIn
     else
         pGainState->ratio = 1.0 / 16;
 
-    LOGD_ANR("%s:%d gain_cur:%f th: %f %f ratio:%f \n",
+	pGainState->gainState = gain_stat;
+    LOGD_ANR("%s:%d gain_cur:%f th: %f %f ratio:%f gain_state:%d \n",
              __FUNCTION__, __LINE__,
              gain_cur,
              gain_th0,
              gain_th1,
-             pGainState->ratio);
+             pGainState->ratio,
+             pGainState->gainState);
 
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 

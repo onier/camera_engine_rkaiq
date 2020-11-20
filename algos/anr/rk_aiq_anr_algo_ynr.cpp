@@ -583,7 +583,7 @@ int  find_top_one_pos(int data)
     return pos;
 }
 
-ANRresult_t ynr_fix_transfer(RKAnr_Ynr_Params_Select_t* ynr, RKAnr_Ynr_Fix_t *pNrCfg, float fStrength)
+ANRresult_t ynr_fix_transfer(RKAnr_Ynr_Params_Select_t* ynr, RKAnr_Ynr_Fix_t *pNrCfg, float gain_ratio, float fStrength)
 {
     LOGI_ANR("%s:(%d) enter \n", __FUNCTION__, __LINE__);
 
@@ -634,7 +634,10 @@ ANRresult_t ynr_fix_transfer(RKAnr_Ynr_Params_Select_t* ynr, RKAnr_Ynr_Fix_t *pN
         tmp = ynr->noiseSigma[i] * (1 << FIX_BIT_NOISE_SIGMA);
         tmp = (int)(rate * tmp);
         //clip sigma be 10bit;
-        pNrCfg->ynr_lsgm_y[i] = tmp / (1 << (12 - YNR_SIGMA_BITS));
+        pNrCfg->ynr_lsgm_y[i] = MIN(tmp / ((1 << (12 - YNR_SIGMA_BITS)) * sqrt(gain_ratio)), (1 << (FIX_BIT_NOISE_SIGMA + 9)) - 1);
+      //  pNrCfg->ynr_lsgm_y[i] = tmp / (1 << (12 - YNR_SIGMA_BITS));
+     //   if(i==0)
+        //    printf("pNrCfg->ynr_lsgm_y[i] %d, tmp %d\n", pNrCfg->ynr_lsgm_y[i], tmp);
     }
 
 
@@ -707,7 +710,9 @@ ANRresult_t ynr_fix_transfer(RKAnr_Ynr_Params_Select_t* ynr, RKAnr_Ynr_Fix_t *pN
         tmp = ynr->noiseSigma[i] * (1 << FIX_BIT_NOISE_SIGMA);
         tmp = (int)(rate * tmp);
         //clip sigma be 10bit;
-        pNrCfg->ynr_hsgm_y[i] = tmp / (1 << (12 - YNR_SIGMA_BITS));
+
+        pNrCfg->ynr_hsgm_y[i] = MIN(tmp / ((1 << (12 - YNR_SIGMA_BITS)) * sqrt(gain_ratio)), (1 << (FIX_BIT_NOISE_SIGMA + 9)) - 1);
+      //  pNrCfg->ynr_hsgm_y[i] = tmp / (1 << (12 - YNR_SIGMA_BITS));
     }
 
     //0x0168
@@ -828,7 +833,7 @@ ANRresult_t ynr_fix_transfer(RKAnr_Ynr_Params_Select_t* ynr, RKAnr_Ynr_Fix_t *pN
     //0x01c0 - 0x01e0
     for(i = 0; i < 17; i++) {
         tmp = (int)(ynr->noiseSigma[i] * (1 << FIX_BIT_NOISE_SIGMA));
-        pNrCfg->ynr_hstv_y[i] = tmp / (1 << (12 - YNR_SIGMA_BITS));
+        pNrCfg->ynr_hstv_y[i] = tmp / ((1 << (12 - YNR_SIGMA_BITS)) * sqrt(gain_ratio));
     }
 
     //0x01e4  - 0x01e8
