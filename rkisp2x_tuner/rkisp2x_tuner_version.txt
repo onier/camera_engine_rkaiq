@@ -1,4 +1,4 @@
-Current Version: v1.3.0
+Current Version: v1.3.1
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
 v0.1.0 - 2020.07.15
@@ -29,5 +29,9 @@ v1.3.0 - 2020.11.02
   - gamma support zoom in/out, mouse drag
   - ccm support normal/hdr
   - adapt to dpcc/dehaze/hdr AIQ changes
+        
+v1.3.1 - 2020.12.01
+  - update AIQ to v1.0x23.1
+  - fix some bugs
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
