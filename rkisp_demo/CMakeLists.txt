@@ -107,3 +107,7 @@ link_directories("${LIBRARY_OUTPUT_PATH}" "${RK_AIQ_LIB_DIR}" "${RK_DRM_LIB_DIR}
 #add executable file
 ADD_EXECUTABLE(rkisp_demo ${DIR_SRCS})
 target_link_libraries(rkisp_demo ${RK_AIQ_LIB} ${RK_DRM_LIB} ${RK_RGA_LIB} ${LINK_ASAN} pthread)
+
+install(TARGETS rkisp_demo
+    RUNTIME DESTINATION bin
+)

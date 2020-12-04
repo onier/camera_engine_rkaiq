@@ -102,4 +102,7 @@ set_target_properties(rkisp_api PROPERTIES CXX_VISIBILITY_PRESET default)
 
 target_link_libraries(rkisp_api ${RK_AIQ_LIB} pthread)
 
+install(TARGETS rkisp_api
+    LIBRARY DESTINATION lib
+)
 install(FILES rkisp_api.h DESTINATION include/rkaiq)
