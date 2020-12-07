@@ -216,7 +216,7 @@ typedef struct CalibDb_HdrAeRange_s {
 
 typedef struct CalibDb_AeFrmRateAttr_s {
     bool             isFpsFix;
-    uint8_t          FpsValue;
+    float            FpsValue;
 } CalibDb_AeFrmRateAttr_t;
 
 typedef struct CalibDb_AntiFlickerAttr_s {

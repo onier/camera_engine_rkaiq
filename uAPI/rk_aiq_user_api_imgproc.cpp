@@ -484,7 +484,8 @@ XCamReturn rk_aiq_uapi_setHLCStrength(const rk_aiq_sys_ctx_t* ctx, int strength)
         RKAIQ_IMGPROC_CHECK_RET(ret, "getLinExpAttr error!");
         if(0 == lineExpAttr.OverExpCtrl.enable)
             RKAIQ_IMGPROC_CHECK_RET(ret, "hlc mode is not enabled!");
-        lineExpAttr.OverExpCtrl.StrBias = strength;
+        for(int i = 0; i < 6; i++)
+            lineExpAttr.OverExpCtrl.HighLightWeight.fCoeff[i] = (float)strength / 100.0f * lineExpAttr.OverExpCtrl.MaxWeight;
         ret = rk_aiq_user_api_ae_setLinExpAttr(ctx, lineExpAttr);
         RKAIQ_IMGPROC_CHECK_RET(ret, "setHLCStrength error!");
     }
@@ -2431,7 +2432,7 @@ XCamReturn rk_aiq_uapi_setFecCorrectLevel(const rk_aiq_sys_ctx_t* ctx, int corre
 }
 
 XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
-                                              const fec_correct_direction_t direction)
+        const fec_correct_direction_t direction)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     IMGPROC_FUNC_ENTER

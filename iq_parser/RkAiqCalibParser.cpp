@@ -4839,7 +4839,7 @@ bool RkAiqCalibParser::parseEntrySensorAecFrameRateMode
             DCT_ASSERT((no == subTag.Size()));
         }
         else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_AEC_FPSVALUE_TAG_ID)) {
-            int no = ParseUcharArray(psubchild, &mCalibDb->aec.CommCtrl.stAuto.stFrmRate.FpsValue, subTag.Size());
+            int no = ParseFloatArray(psubchild, &mCalibDb->aec.CommCtrl.stAuto.stFrmRate.FpsValue, subTag.Size());
             DCT_ASSERT((no == subTag.Size()));
         }
         else {
@@ -9120,10 +9120,10 @@ bool RkAiqCalibParser::parseEntrySensorCCMModeCell
             //ParseString(pchild,  mode, sizeof(mode));
             ParseString(pchild, mCalibDb->ccm.mode_cell[index].name, sizeof(mCalibDb->ccm.mode_cell[index].name));
             indexValid = true;
-            if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "normal")){
+            if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "normal")) {
                 index = CCM_FOR_MODE_NORMAL;
             }
-            else if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "hdr")){
+            else if (0 == strcmp(mCalibDb->ccm.mode_cell[index].name, "hdr")) {
                 index = CCM_FOR_MODE_HDR;
             }
             else {
@@ -9150,12 +9150,12 @@ bool RkAiqCalibParser::parseEntrySensorCCMModeCell
                 return (false);
             }
         }
-       else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID) && indexValid) {
+        else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_MATRIXALL_TAG_ID) && indexValid) {
             if (!parseEntryCell2(pchild->ToElement(), tag.Size(),
-                                &RkAiqCalibParser::parseEntrySensorCcmMatrixAll,
-                                &mCalibDb->ccm.mode_cell[index],
-                                (uint32_t)CALIB_SENSOR_CCM_MATRIXALL_TAG_ID,
-                                (uint32_t)CALIB_SENSOR_CCM_MODE_CELL_TAG_ID)) {
+                                 &RkAiqCalibParser::parseEntrySensorCcmMatrixAll,
+                                 &mCalibDb->ccm.mode_cell[index],
+                                 (uint32_t)CALIB_SENSOR_CCM_MATRIXALL_TAG_ID,
+                                 (uint32_t)CALIB_SENSOR_CCM_MODE_CELL_TAG_ID)) {
                 LOGE("parse error in CCM matrixall (%s)\n", tagname.c_str());
                 return (false);
             }
@@ -9237,10 +9237,10 @@ bool RkAiqCalibParser::parseEntrySensorCcmAccmCof
 
         if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID)) {
             if (!parseEntryCell2(pchild->ToElement(), tag.Size(),
-                                &RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll,
-                                &mCalibDb->ccm.mode_cell[index],
-                                (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID,
-                                (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_TAG_ID)) {
+                                 &RkAiqCalibParser::parseEntrySensorCcmAccmCofIllAll,
+                                 &mCalibDb->ccm.mode_cell[index],
+                                 (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_IllALL_TAG_ID,
+                                 (uint32_t)CALIB_SENSOR_CCM_ACCMCOF_TAG_ID)) {
                 LOGE("parse error in LSC aCcmCof illAll (%s)", tagname.c_str());
                 return (false);
             }

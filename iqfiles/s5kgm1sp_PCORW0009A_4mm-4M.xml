@@ -383,10 +383,10 @@
                             D65
                         </name>
                         <lightURegion index="1" type="double" size="[1 5]">
-                            [88.1792 114.1858 126.9392 123.5337 88.1792 ]
+                            [88.1792 114.8747 127.1694 126.4940 88.1792 ]
                         </lightURegion>
                         <lightVRegion index="1" type="double" size="[1 5]">
-                            [52.8235 39.9635 118.9118 115.5191 52.8235 ]
+                            [52.8235 40.2259 119.8236 120.6379 52.8235 ]
                         </lightVRegion>
                         <lightXYRegion index="1" type="struct" size="[1 1]">
                             <normal index="1" type="double" size="[1 4]">
@@ -1696,16 +1696,89 @@
             <HistStatsMode index="1" type="char" size="[1 3]">Y</HistStatsMode>
             <RawStatsMode index="1" type="char" size="[1 3]">G</RawStatsMode>
             <YRangeMode index="1" type="char" size="[1 10]">FULL</YRangeMode>
-	<AecSyncTest index="1" type="struct" size="[1 1]">	   <Enable index="1" type="double" size="[1 1]">	         [0]	   </Enable>	   <IntervalFrm index="1" type="double" size="[1 1]">	         [60]	   </IntervalFrm>	   <AlterExp index="1" type="struct" size="[1 1]">	            <LinearAE index="1" type="cell" size="[1 2]">			<cell index="1" type="struct" size="[1 1]">	                  <TimeValue index="1" type="double" size="[1 1]">	                     [0.02]	                  </TimeValue>		         <GainValue index="1" type="double" size="[1 1]">	                     [1]	                  </GainValue>		         <IspDgainValue index="1" type="double" size="[1 1]">	                     [1]	                  </IspDgainValue>
-		         <DcgMode index="1" type="double" size="[1 1]">	                     [0]	                  </DcgMode>		         <PIrisGainValue index="1" type="double" size="[1 1]">	                     [1]	                  </PIrisGainValue>
-			</cell>			<cell index="1" type="struct" size="[1 1]">	                  <TimeValue index="1" type="double" size="[1 1]">	                     [0.020]	                  </TimeValue>		         <GainValue index="1" type="double" size="[1 1]">	                     [6]	                  </GainValue>		         <IspDgainValue index="1" type="double" size="[1 1]">	                     [1]	                  </IspDgainValue>
-		         <DcgMode index="1" type="double" size="[1 1]">	                     [0]	                  </DcgMode>		         <PIrisGainValue index="1" type="double" size="[1 1]">	                     [29]	                  </PIrisGainValue>
-			</cell>	            </LinearAE>	            <HdrAE index="1" type="cell" size="[1 2]">			<cell index="1" type="struct" size="[1 1]">	                  <TimeValue index="1" type="double" size="[1 3]">	                     [0.01 0.02 0.03]	                  </TimeValue>		         <GainValue index="1" type="double" size="[1 3]">	                     [1 1 1]	                  </GainValue>		         <IspDgainValue index="1" type="double" size="[1 3]">	                     [1 1 1]	                  </IspDgainValue>
-		         <DcgMode index="1" type="double" size="[1 3]">	                     [0 0 0]	                  </DcgMode>		         <PIrisGainValue index="1" type="double" size="[1 1]">	                     [1]	                  </PIrisGainValue>
-			</cell>
-			<cell index="1" type="struct" size="[1 1]">	                  <TimeValue index="1" type="double" size="[1 3]">	                     [0.01 0.02 0.03]	                  </TimeValue>		         <GainValue index="1" type="double" size="[1 3]">	                     [6 6 1]	                  </GainValue>		         <IspDgainValue index="1" type="double" size="[1 3]">	                     [1 1 1]	                  </IspDgainValue>
-		         <DcgMode index="1" type="double" size="[1 3]">	                     [0 0 0]	                  </DcgMode>		         <PIrisGainValue index="1" type="double" size="[1 1]">	                     [29]	                  </PIrisGainValue>
-			</cell>	            </HdrAE>             </AlterExp>         </AecSyncTest>            <AecSpeed index="1" type="struct" size="[1 1]">
+            <AecSyncTest index="1" type="struct" size="[1 1]">
+                <Enable index="1" type="double" size="[1 1]">
+                        [0 ]
+                    </Enable>
+                <IntervalFrm index="1" type="double" size="[1 1]">
+                        [60 ]
+                    </IntervalFrm>
+                <AlterExp index="1" type="struct" size="[1 1]">
+                    <LinearAE index="1" type="cell" size="[1 2]">
+                        <cell index="1" type="struct" size="[1 1]">
+                            <TimeValue index="1" type="double" size="[1 1]">
+                                    [0.0200 ]
+                                </TimeValue>
+                            <GainValue index="1" type="double" size="[1 1]">
+                                    [1.0000 ]
+                                </GainValue>
+                            <IspDgainValue index="1" type="double" size="[1 1]">
+                                    [1.0000 ]
+                                </IspDgainValue>
+                            <DcgMode index="1" type="double" size="[1 1]">
+                                    [0 ]
+                                </DcgMode>
+                            <PIrisGainValue index="1" type="double" size="[1 1]">
+                                    [1 ]
+                                </PIrisGainValue>
+                        </cell>
+                        <cell index="1" type="struct" size="[1 1]">
+                            <TimeValue index="1" type="double" size="[1 1]">
+                                    [0.0200 ]
+                                </TimeValue>
+                            <GainValue index="1" type="double" size="[1 1]">
+                                    [6.0000 ]
+                                </GainValue>
+                            <IspDgainValue index="1" type="double" size="[1 1]">
+                                    [1.0000 ]
+                                </IspDgainValue>
+                            <DcgMode index="1" type="double" size="[1 1]">
+                                    [0 ]
+                                </DcgMode>
+                            <PIrisGainValue index="1" type="double" size="[1 1]">
+                                    [29 ]
+                                </PIrisGainValue>
+                        </cell>
+                    </LinearAE>
+                    <HdrAE index="1" type="cell" size="[1 2]">
+                        <cell index="1" type="struct" size="[1 1]">
+                            <TimeValue index="1" type="double" size="[1 3]">
+                                    [0.0100 0.0200 0.0300 ]
+                                </TimeValue>
+                            <GainValue index="1" type="double" size="[1 3]">
+                                    [1.0000 1.0000 1.0000 ]
+                                </GainValue>
+                            <IspDgainValue index="1" type="double" size="[1 3]">
+                                    [1.0000 1.0000 1.0000 ]
+                                </IspDgainValue>
+                            <DcgMode index="1" type="double" size="[1 3]">
+                                    [0 0 0 ]
+                                </DcgMode>
+                            <PIrisGainValue index="1" type="double" size="[1 1]">
+                                    [1 ]
+                                </PIrisGainValue>
+                        </cell>
+                        <cell index="1" type="struct" size="[1 1]">
+                            <TimeValue index="1" type="double" size="[1 3]">
+                                    [0.0100 0.0200 0.0300 ]
+                                </TimeValue>
+                            <GainValue index="1" type="double" size="[1 3]">
+                                    [6.0000 6.0000 1.0000 ]
+                                </GainValue>
+                            <IspDgainValue index="1" type="double" size="[1 3]">
+                                    [1.0000 1.0000 1.0000 ]
+                                </IspDgainValue>
+                            <DcgMode index="1" type="double" size="[1 3]">
+                                    [0 0 0 ]
+                                </DcgMode>
+                            <PIrisGainValue index="1" type="double" size="[1 1]">
+                                    [29 ]
+                                </PIrisGainValue>
+                        </cell>
+                    </HdrAE>
+                </AlterExp>
+            </AecSyncTest>
+            <AecSpeed index="1" type="struct" size="[1 1]">
                 <DampOver index="1" type="double" size="[1 1]">
                         [0.15000 ]
                     </DampOver>
@@ -1729,7 +1802,7 @@
             </AecDelayFrmNum>
             <AecFrameRateMode index="1" type="struct" size="[1 1]">
                 <isFpsFix index="1" type="double" size="[1 1]">
-                        [1 ]
+                        [0 ]
                     </isFpsFix>
                 <FpsValue index="1" type="double" size="[1 1]">
                         [18 ]
@@ -1754,9 +1827,11 @@
                             [1.0000 ]
                         </InitIspDgainValue>
                     <InitPIrisGainValue index="1" type="double" size="[1 1]">
-                            [1 ]                        </InitPIrisGainValue>
+                            [1 ]
+                        </InitPIrisGainValue>
                     <InitDCIrisDutyValue index="1" type="double" size="[1 1]">
-                            [30 ]                        </InitDCIrisDutyValue>
+                            [30 ]
+                        </InitDCIrisDutyValue>
                 </LinearAE>
                 <HdrAE index="1" type="struct" size="[1 1]">
                     <InitTimeValue index="1" type="double" size="[1 3]">
@@ -1769,9 +1844,11 @@
                             [1.0000 1.0000 1.0000 ]
                         </InitIspDgainValue>
                     <InitPIrisGainValue index="1" type="double" size="[1 1]">
-                            [1 ]                        </InitPIrisGainValue>
+                            [1 ]
+                        </InitPIrisGainValue>
                     <InitDCIrisDutyValue index="1" type="double" size="[1 1]">
-                            [30 ]                        </InitDCIrisDutyValue>
+                            [30 ]
+                        </InitDCIrisDutyValue>
                 </HdrAE>
             </AecInitValue>
             <AecGridWeight index="1" type="struct" size="[1 1]">
@@ -1958,13 +2035,24 @@
                     </CurveCoeff>
             </AecEnvLvCalib>
 	<AecIrisCtrl index="1" type="struct" size="[1 1]">
-               <Enable index="1" type="double" size="[1 1]">                  [0]               </Enable>
-               <IrisType index="1" type="char" size="[1 3]">                  DC               </IrisType>
+               <Enable index="1" type="double" size="[1 1]">
+                  [0]
+               </Enable>
+               <IrisType index="1" type="char" size="[1 3]">
+                  DC
+               </IrisType>
 	      <PIrisAttr index="1" type="struct" size="[1 1]">
-               	 <TotalStep index="1" type="double" size="[1 1]">                       [81]                   </TotalStep>
-                   <EffcStep index="1" type="double" size="[1 1]">                       [44]                   </EffcStep>
-                   <ZeroIsMax index="1" type="double" size="[1 1]">                       [1]                   </ZeroIsMax>
-                   <StepTable index="1" type="double" size="[1 81]">                       [512 511 506	499 491 483 474 465 456
+               	 <TotalStep index="1" type="double" size="[1 1]">
+                       [81]
+                   </TotalStep>
+                   <EffcStep index="1" type="double" size="[1 1]">
+                       [44]
+                   </EffcStep>
+                   <ZeroIsMax index="1" type="double" size="[1 1]">
+                       [1]
+                   </ZeroIsMax>
+                   <StepTable index="1" type="double" size="[1 81]">
+                       [512 511 506	499 491 483 474 465 456
                         446 437 427 417 408 398 388 378 368
                         359 349 339 329 319 309 300 290 280
                         271 261 252 242 233 224 214 205 196
@@ -1972,14 +2060,34 @@
                         112 105 98 90 83 77 70 64 58
                         52 46 41 36 31 27 23 19 16
                         13 10 8 6 4 3 1 1 0
-                        0 0 0 0 0 0 0 0 0]                   </StepTable>	       </PIrisAttr>	      <DCIrisAttr index="1" type="struct" size="[1 1]">
-                    <Kp index="1" type="double" size="[1 1]">                            [1.0000 ]                        </Kp>
-                    <Ki index="1" type="double" size="[1 1]">                            [0.2000 ]                        </Ki>
-                    <Kd index="1" type="double" size="[1 1]">                            [0.5000 ]                        </Kd>
-                   <MinPwmDuty index="1" type="double" size="[1 1]">                       [0]                   </MinPwmDuty>
-                   <MaxPwmDuty index="1" type="double" size="[1 1]">                       [100]                   </MaxPwmDuty>
-                   <OpenPwmDuty index="1" type="double" size="[1 1]">                       [40]                   </OpenPwmDuty>
-                   <ClosePwmDuty index="1" type="double" size="[1 1]">                       [22]                   </ClosePwmDuty>	       </DCIrisAttr>         </AecIrisCtrl>            <AecManualCtrl index="1" type="struct" size="[1 1]">
+                        0 0 0 0 0 0 0 0 0]
+                   </StepTable>
+	       </PIrisAttr>
+	      <DCIrisAttr index="1" type="struct" size="[1 1]">
+                    <Kp index="1" type="double" size="[1 1]">
+                            [1.0000 ]
+                        </Kp>
+                    <Ki index="1" type="double" size="[1 1]">
+                            [0.2000 ]
+                        </Ki>
+                    <Kd index="1" type="double" size="[1 1]">
+                            [0.5000 ]
+                        </Kd>
+                    <MinPwmDuty index="1" type="double" size="[1 1]">
+                            [0 ]
+                        </MinPwmDuty>
+                    <MaxPwmDuty index="1" type="double" size="[1 1]">
+                            [100 ]
+                        </MaxPwmDuty>
+                    <OpenPwmDuty index="1" type="double" size="[1 1]">
+                            [40 ]
+                        </OpenPwmDuty>
+                    <ClosePwmDuty index="1" type="double" size="[1 1]">
+                            [22 ]
+                        </ClosePwmDuty>
+                </DCIrisAttr>
+            </AecIrisCtrl>
+            <AecManualCtrl index="1" type="struct" size="[1 1]">
                 <LinearAE index="1" type="struct" size="[1 1]">
                     <ManualTimeEn index="1" type="double" size="[1 1]">
                             [1 ]
@@ -2005,9 +2113,9 @@
                     <PIrisGainValue index="1" type="double" size="[1 1]">
                             [1 ]
                         </PIrisGainValue>
-	         <DCIrisValue index="1" type="double" size="[1 1]">
-                     [30]
-                  </DCIrisValue>
+                    <DCIrisValue index="1" type="double" size="[1 1]">
+                            [30 ]
+                        </DCIrisValue>
                 </LinearAE>
                 <HdrAE index="1" type="struct" size="[1 1]">
                     <ManualTimeEn index="1" type="double" size="[1 1]">
@@ -2034,9 +2142,9 @@
                     <PIrisGainValue index="1" type="double" size="[1 1]">
                             [1 ]
                         </PIrisGainValue>
-	         <DCIrisValue index="1" type="double" size="[1 1]">
-                     [30]
-                  </DCIrisValue>
+                    <DCIrisValue index="1" type="double" size="[1 1]">
+                            [30 ]
+                        </DCIrisValue>
                 </HdrAE>
             </AecManualCtrl>
             <LinearAECtrl index="1" type="struct" size="[1 1]">
@@ -2050,7 +2158,7 @@
                         [35.0000 ]
                     </NightSetpoint>
                 <DySetPointEn index="1" type="double" size="[1 1]">
-                        [1 ]
+                        [1]
                     </DySetPointEn>
                 <DynamicSetpoint index="1" type="cell" size="[1 2]">
                     <cell index="1" type="struct" size="[1 1]">
@@ -2098,7 +2206,7 @@
                             [150.0000 ]
                         </OEROILowTh>
                     <LvHighTh index="1" type="double" size="[1 1]">
-                            [7.5000 ]
+                            [7.5000]
                         </LvHighTh>
                     <LvLowTh index="1" type="double" size="[1 1]">
                             [0.3125 ]
@@ -2499,20 +2607,20 @@
                     [0 ]
                 </enable>
             </pdaf>
-          <vcmConfig index="1" type="struct" size="[1 1]">
-            <startCurrent index="1" type="double" size="[1 1]">
-               [-1]
-            </startCurrent>
-            <ratedCurrent index="1" type="double" size="[1 1]">
-               [-1]
-            </ratedCurrent>
-            <stepMode index="1" type="double" size="[1 1]">
-               [-1]
-            </stepMode>
-            <extraDelay index="1" type="double" size="[1 1]">
-               [0]
-            </extraDelay>
-         </vcmConfig>
+            <vcmConfig index="1" type="struct" size="[1 1]">
+                <startCurrent index="1" type="double" size="[1 1]">
+                    [-1 ]
+                </startCurrent>
+                <ratedCurrent index="1" type="double" size="[1 1]">
+                    [-1 ]
+                </ratedCurrent>
+                <stepMode index="1" type="double" size="[1 1]">
+                    [-1 ]
+                </stepMode>
+                <extraDelay index="1" type="double" size="[1 1]">
+                    [0 ]
+                </extraDelay>
+            </vcmConfig>
         </AF>
         <MERGE index="1" type="struct" size="[1 1]">
                 <EnvLv index="1" type="double" size="[1 13]">
@@ -2549,7 +2657,7 @@
                 [0.3000 ]
             </MDCurveMS_damp>
         </MERGE>
-         <TMO index="1" type="struct" size="[1 1]">
+        <TMO index="1" type="struct" size="[1 1]">
 		<Enable index="1" type="cell" size="[1 3]">
                    <cell index="1" type="struct" size="[1 1]">
 		<Name index="1" type="char" size="[1 8]">
@@ -2594,13 +2702,13 @@
                         [0.0000 ]
                     </Tolerance>
                     <GlobalLuma index="1" type="double" size="[1 13]">
-                        [0.2500 0.1700 0.1300 0.2500 0.0800 0.07 0.05 0.05 0.05 0.05 0.05 0.05 0.05]
+                        [0.2500 0.1700 0.1300 0.0800 0.0650 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05]
                     </GlobalLuma>
-		</cell>
+                </cell>
 		<cell index="2" type="struct" size="[1 1]">
 		<Name index="1" type="char" size="[1 8]">
-                  HDR
-                  </Name>
+                        HDR
+                    </Name>
                     <GlobalLumaMode index="1" type="double" size="[1 1]">
                         [1.0000 ]
                     </GlobalLumaMode>
@@ -2614,13 +2722,13 @@
                         [0.0000 ]
                     </Tolerance>
                     <GlobalLuma index="1" type="double" size="[1 13]">
-                        [0.2500 0.2500 0.2500 0.2500 0.1700 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1]
+                        [0.2500 0.2500 0.2500 0.1700 0.1400 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1]
                     </GlobalLuma>
-		</cell>
-		<cell index="3" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  night
-                  </Name>
+                </cell>
+                <cell index="3" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 5]">
+                        night
+                    </Name>
                     <GlobalLumaMode index="1" type="double" size="[1 1]">
                         [1.0000 ]
                     </GlobalLumaMode>
@@ -2634,15 +2742,15 @@
                         [0.0000 ]
                     </Tolerance>
                     <GlobalLuma index="1" type="double" size="[1 13]">
-                        [0.2500 0.2500 0.2500 0.2500 0.1700 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1]
+                        [0.2500 0.2500 0.2500 0.1700 0.1400 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1]
                     </GlobalLuma>
 		</cell>
-                </GlobalLuma>
-                <DetailsHighLight index="1" type="cell" size="[1 3]">
-		<cell index="1" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  normal
-                  </Name>
+            </GlobalLuma>
+            <DetailsHighLight index="1" type="cell" size="[1 3]">
+                <cell index="1" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 6]">
+                        normal
+                    </Name>
                     <DetailsHighLightMode index="1" type="double" size="[1 1]">
                         [0.0000 ]
                     </DetailsHighLightMode>
@@ -2658,11 +2766,11 @@
                     <DetailsHighLight index="1" type="double" size="[1 13]">
                         [0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45]
                     </DetailsHighLight>
-                   </cell>
-		<cell index="2" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  HDR
-                  </Name>
+                </cell>
+                <cell index="2" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 3]">
+                        HDR
+                    </Name>
                     <DetailsHighLightMode index="1" type="double" size="[1 1]">
                         [0.0000 ]
                     </DetailsHighLightMode>
@@ -2679,10 +2787,10 @@
                         [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5]
                     </DetailsHighLight>
                    </cell>
-		<cell index="3" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  night
-                  </Name>
+                <cell index="3" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 5]">
+                        night
+                    </Name>
                     <DetailsHighLightMode index="1" type="double" size="[1 1]">
                         [0.0000 ]
                     </DetailsHighLightMode>
@@ -2699,12 +2807,12 @@
                         [0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25]
                     </DetailsHighLight>
                    </cell>
-                </DetailsHighLight>
-                <DetailsLowLight index="1" type="cell" size="[1 3]">
-		<cell index="1" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  normal
-                  </Name>
+            </DetailsHighLight>
+            <DetailsLowLight index="1" type="cell" size="[1 3]">
+                <cell index="1" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 6]">
+                        normal
+                    </Name>
                     <DetailsLowLightMode index="1" type="double" size="[1 1]">
                         [2.0000 ]
                     </DetailsLowLightMode>
@@ -2721,11 +2829,11 @@
                         [0.0000 ]
                     </Tolerance>
                     <DetailsLowLight index="1" type="double" size="[1 13]">
-                        [2.8 2.8 2.8 2.5 2.3 2 2 2 2 2 2 2 2]
+                        [2.8 2.8 2.8 2.3 2 2 2 2 2 2 2 2 2]
                     </DetailsLowLight>
-		</cell>
-		<cell index="2" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
+                </cell>
+                <cell index="2" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 3]">
                   HDR
                   </Name>
                     <DetailsLowLightMode index="1" type="double" size="[1 1]">
@@ -2746,10 +2854,10 @@
                     <DetailsLowLight index="1" type="double" size="[1 13]">
                         [1 1 1 1 1 1 1 1 1 1 1 1 1]
                     </DetailsLowLight>
-		</cell>
-		<cell index="3" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  night
+                </cell>
+                <cell index="3" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 5]">
+                        night
                   </Name>
                     <DetailsLowLightMode index="1" type="double" size="[1 1]">
                         [2.0000 ]
@@ -2769,12 +2877,12 @@
                     <DetailsLowLight index="1" type="double" size="[1 13]">
                         [1 1 1 1 1 1 1 1 1 1 1 1 1]
                     </DetailsLowLight>
-		</cell>
-                </DetailsLowLight>
-         <GlobalTMO index="1" type="cell" size="[1 3]">
-		<cell index="1" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  normal
+                </cell>
+            </DetailsLowLight>
+            <GlobalTMO index="1" type="cell" size="[1 3]">
+                <cell index="1" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 6]">
+                        normal
                   </Name>
 		<Enable index="1" type="double" size="[1 1]">
            	   [0]
@@ -2797,11 +2905,11 @@
                  <GlobalTMOStrength index="1" type="double" size="[1 13]">
                     [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5]
                  </GlobalTMOStrength>
-		</cell>
-		<cell index="2" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  HDR
-                  </Name>
+                </cell>
+                <cell index="2" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 3]">
+                        HDR
+                    </Name>
 		<Enable index="1" type="double" size="[1 1]">
            	   [0]
                  </Enable>
@@ -2823,12 +2931,12 @@
                  <GlobalTMOStrength index="1" type="double" size="[1 13]">
                     [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5]
                  </GlobalTMOStrength>
-		</cell>
-		<cell index="3" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  night
-                  </Name>
-		<Enable index="1" type="double" size="[1 1]">
+                </cell>
+                <cell index="3" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 5]">
+                        night
+                    </Name>
+                    <Enable index="1" type="double" size="[1 1]">
            	   [0]
                  </Enable>
 		<IIR index="1" type="double" size="[1 1]">
@@ -2849,11 +2957,11 @@
                  <GlobalTMOStrength index="1" type="double" size="[1 13]">
                     [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5]
                  </GlobalTMOStrength>
-		</cell>
-         </GlobalTMO>
-         <LocalTMO index="1" type="cell" size="[1 3]">
-		<cell index="1" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
+                </cell>
+            </GlobalTMO>
+            <LocalTMO index="1" type="cell" size="[1 3]">
+                <cell index="1" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 6]">
                   normal
                   </Name>
                 <LocalTMOMode index="1" type="double" size="[1 1]">
@@ -2871,10 +2979,10 @@
                  <LocalTMOStrength index="1" type="double" size="[1 13]">
                     [0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6]
                  </LocalTMOStrength>
-		</cell>
-		<cell index="2" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  HDR
+                </cell>
+                <cell index="2" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 3]">
+                        HDR
                   </Name>
                 <LocalTMOMode index="1" type="double" size="[1 1]">
                     [0]
@@ -2890,12 +2998,12 @@
                  </Tolerance>
                  <LocalTMOStrength index="1" type="double" size="[1 13]">
                     [0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3]
-                 </LocalTMOStrength>
-		</cell>
-		<cell index="3" type="struct" size="[1 1]">
-		<Name index="1" type="char" size="[1 8]">
-                  night
-                  </Name>
+                    </LocalTMOStrength>
+                </cell>
+                <cell index="3" type="struct" size="[1 1]">
+                    <Name index="1" type="char" size="[1 5]">
+                        night
+                    </Name>
                 <LocalTMOMode index="1" type="double" size="[1 1]">
                     [0]
                  </LocalTMOMode> 
@@ -2911,12 +3019,12 @@
                  <LocalTMOStrength index="1" type="double" size="[1 13]">
                     [0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3]
                  </LocalTMOStrength>
-		</cell>
-         </LocalTMO>
-	<Damp index="1" type="double" size="[1 1]">
-              [0.3]
-	</Damp>
-            </TMO>
+                </cell>
+            </LocalTMO>
+            <Damp index="1" type="double" size="[1 1]">
+                [0.3000 ]
+            </Damp>
+        </TMO>
         <BLC index="1" type="struct" size="[1 1]">
             <Enable index="1" type="double" size="[1 1]">
                 [1 ]
@@ -2930,10 +3038,10 @@
                         [50.0000 100.0000 200.0000 400.0000 800.0000 1600.0000 3200.0000 6400.0000 10000.0000 12800.0000 17600.0000 102400.0000 204800.0000 ]
                     </ISO>
                     <black_level index="1" type="double" size="[4 13]">
-                        [255.0000 255.1250 254.0625 256.3125 256.0625 256.5625 256.7500 256.8750 256.8750 256.4375 200.0000 200.0000 200.0000 
-                        256.0000 256.1250 254.7500 256.3750 255.6875 255.2500 256.5000 256.0625 256.5625 256.8125 200.0000 200.0000 200.0000 
-                        256.0000 256.1250 254.8125 256.4375 255.7500 255.2500 256.5625 256.6875 256.1875 256.7500 200.0000 200.0000 200.0000 
-                        255.0000 255.1250 254.0625 256.3125 256.0625 256.6250 256.9375 256.0000 256.3750 256.3125 200.0000 200.0000 200.0000 ]
+                        [255.0000 255.1250 254.0625 256.3125 256.0625 256.5625 270.7500 270.8750 550.8750 650.4375 650.0000 650.0000 200.0000 
+                        256.0000 256.1250 254.7500 256.3750 255.6875 255.2500 270.5000 270.0625 550.5625 650.8125 650.0000 650.0000 200.0000 
+                        256.0000 256.1250 254.8125 256.4375 255.7500 255.2500 270.5625 270.6875 550.1875 650.7500 650.0000 650.0000 200.0000 
+                        255.0000 255.1250 254.0625 256.3125 256.0625 256.6250 270.9375 270.0000 550.3750 650.3125 650.0000 650.0000 200.0000 ]
                     </black_level>
                 </cell>
                 <cell index="1" type="struct" size="[1 1]">
@@ -3919,7 +4027,7 @@
                             [1.0000 16.0000 64.0000 150.0000 ]
                         </gains>
                         <vig index="1" type="double" size="[1 4]">
-                            [100.0000 100.0000 100.0000 100.0000 ]
+                            [100.0000 100.0000 90.0000 80.0000 ]
                         </vig>
                     </cell>
                     <cell index="2" type="struct" size="[1 1]">
@@ -3970,7 +4078,7 @@
                             D75
                         </name>
                         <wbGain index="1" type="double" size="[1 2]">
-                            [2.0790 1.3811 ]
+                            [2.021088  1.405978]
                         </wbGain>
                         <tableUsed index="1" type="char" size="[1 21]">
                             D75_100 D75_70 D75_40 
@@ -5068,82 +5176,83 @@
                     <vignetting index="1" type="double" size="[1 1]">
                         [100.0000 ]
                     </vignetting>
-                    <LSC_SAMPLES_red index="1" type="double" size="[17 17]">
-                        [3205 2731 2458 2153 1878 1715 1594 1520 1505 1544 1638 1715 1903 2122 2437 2681 2949 
-                        3009 2633 2268 1966 1755 1612 1512 1418 1391 1418 1505 1612 1766 1993 2286 2633 2891 
-                        2809 2542 2185 1867 1695 1520 1411 1340 1323 1353 1432 1528 1676 1867 2153 2521 2863 
-                        2809 2458 2092 1777 1620 1467 1347 1266 1260 1277 1353 1453 1603 1798 2062 2458 2782 
-                        2731 2378 1966 1715 1528 1385 1293 1209 1194 1224 1293 1385 1512 1725 1993 2340 2731 
-                        2657 2234 1890 1685 1475 1328 1234 1157 1126 1161 1234 1334 1489 1666 1928 2251 2657 
-                        2657 2201 1867 1620 1446 1277 1194 1092 1072 1109 1194 1293 1432 1620 1867 2234 2587 
-                        2542 2169 1843 1594 1404 1277 1161 1069 1024 1069 1161 1266 1404 1603 1867 2218 2610 
-                        2610 2218 1820 1586 1378 1250 1152 1053 1024 1050 1157 1250 1391 1577 1832 2153 2542 
-                        2657 2185 1867 1586 1398 1266 1157 1072 1028 1053 1143 1260 1404 1569 1809 2169 2610 
-                        2564 2218 1878 1629 1418 1282 1180 1088 1050 1076 1170 1277 1418 1620 1855 2185 2564 
-                        2706 2268 1915 1657 1446 1323 1209 1139 1100 1126 1219 1311 1439 1638 1878 2234 2610 
-                        2706 2304 1940 1685 1497 1353 1266 1180 1152 1184 1260 1359 1497 1695 1928 2304 2587 
-                        2756 2398 2006 1766 1569 1425 1305 1239 1219 1234 1311 1404 1544 1766 2006 2359 2681 
-                        2836 2499 2122 1832 1612 1475 1365 1293 1266 1311 1378 1475 1612 1820 2107 2437 2731 
-                        2949 2610 2218 1903 1725 1569 1453 1378 1353 1365 1460 1544 1695 1915 2201 2587 2863 
-                        3040 2731 2304 2062 1832 1648 1544 1460 1453 1467 1536 1666 1777 1966 2304 2610 2949 ]
+   <LSC_SAMPLES_red index="1" type="double" size="[17 17]">
+                        [2971 2520 2219 1910 1722 1584 1460 1401 1389 1408 1480 1553 1695 1899 2203 2500 2863 
+                        2763 2405 2087 1801 1617 1480 1377 1330 1303 1319 1383 1501 1608 1812 2073 2405 2739 
+                        2625 2300 1970 1704 1530 1408 1308 1251 1237 1261 1319 1401 1523 1677 1946 2317 2625 
+                        2561 2219 1876 1642 1480 1342 1256 1204 1186 1199 1256 1330 1466 1625 1865 2188 2480 
+                        2461 2129 1801 1576 1414 1308 1213 1164 1139 1151 1213 1292 1401 1568 1781 2115 2480 
+                        2405 2073 1732 1523 1371 1256 1181 1118 1084 1126 1172 1242 1353 1523 1732 2046 2442 
+                        2369 2007 1695 1494 1336 1237 1147 1080 1044 1065 1134 1208 1319 1480 1677 1995 2369 
+                        2317 1958 1668 1460 1308 1204 1130 1055 1024 1044 1114 1199 1298 1460 1650 1970 2300 
+                        2334 1970 1659 1460 1308 1195 1110 1037 1024 1041 1107 1195 1287 1453 1650 1946 2317 
+                        2334 1958 1677 1453 1308 1204 1118 1044 1027 1055 1114 1186 1292 1453 1650 1958 2283 
+                        2317 1995 1668 1473 1319 1222 1134 1065 1041 1073 1134 1208 1308 1453 1677 1995 2351 
+                        2369 2033 1722 1501 1359 1246 1164 1107 1084 1099 1164 1237 1353 1487 1713 2033 2369 
+                        2424 2101 1781 1553 1401 1282 1195 1151 1122 1143 1199 1266 1377 1545 1761 2087 2442 
+                        2461 2188 1865 1608 1453 1336 1242 1186 1172 1190 1232 1308 1446 1600 1854 2173 2500 
+                        2603 2283 1958 1677 1530 1389 1308 1232 1222 1246 1292 1371 1494 1668 1933 2251 2540 
+                        2670 2369 2060 1791 1600 1473 1359 1298 1287 1303 1359 1433 1568 1732 2033 2334 2670 
+                        2715 2461 2173 1876 1677 1553 1433 1377 1359 1383 1433 1523 1642 1843 2173 2442 2812 ]
                     </LSC_SAMPLES_red>
                     <LSC_SAMPLES_greenR index="1" type="double" size="[17 17]">
-                        [3178 2726 2434 2122 1836 1681 1569 1489 1417 1485 1545 1681 1826 2086 2434 2751 3007 
-                        2978 2644 2263 1960 1758 1585 1453 1378 1369 1394 1467 1589 1747 1953 2263 2621 2921 
-                        2853 2514 2145 1859 1640 1485 1369 1297 1289 1316 1372 1485 1653 1853 2160 2535 2814 
-                        2751 2434 2051 1768 1565 1413 1297 1237 1229 1257 1308 1410 1569 1773 2058 2424 2751 
-                        2690 2341 1972 1728 1500 1345 1244 1186 1175 1196 1247 1345 1500 1699 1966 2350 2726 
-                        2644 2280 1911 1658 1453 1300 1198 1125 1115 1138 1207 1294 1453 1653 1911 2272 2633 
-                        2644 2231 1876 1618 1420 1265 1164 1093 1074 1088 1166 1270 1423 1606 1859 2214 2577 
-                        2577 2206 1853 1585 1391 1242 1136 1063 1040 1061 1140 1249 1394 1573 1820 2160 2588 
-                        2610 2191 1831 1585 1388 1234 1123 1052 1024 1052 1123 1242 1375 1573 1804 2175 2577 
-                        2588 2206 1847 1573 1375 1237 1121 1052 1033 1059 1130 1237 1372 1581 1820 2145 2545 
-                        2655 2222 1876 1597 1400 1252 1151 1072 1050 1080 1157 1249 1404 1597 1831 2167 2621 
-                        2667 2272 1917 1631 1433 1283 1196 1111 1093 1117 1186 1286 1440 1636 1876 2222 2621 
-                        2714 2359 1972 1690 1489 1331 1232 1166 1142 1155 1224 1325 1478 1681 1917 2297 2690 
-                        2788 2424 2038 1743 1553 1391 1283 1217 1203 1219 1281 1378 1533 1743 1985 2341 2679 
-                        2893 2504 2137 1809 1602 1457 1351 1278 1267 1286 1339 1433 1614 1804 2093 2453 2726 
-                        3007 2588 2231 1929 1709 1541 1410 1360 1333 1351 1410 1530 1694 1887 2199 2556 2840 
-                        3037 2667 2377 2072 1794 1649 1515 1436 1407 1436 1492 1618 1768 2011 2341 2633 2853 ]
+                        [3207 2767 2433 2063 1847 1672 1554 1476 1449 1473 1540 1668 1833 2051 2400 2735 3164 
+                        3068 2652 2298 1949 1729 1575 1452 1389 1354 1373 1446 1578 1712 1938 2247 2623 2952 
+                        2903 2547 2151 1852 1637 1476 1359 1292 1274 1292 1354 1470 1633 1814 2119 2493 2856 
+                        2856 2433 2051 1764 1568 1400 1287 1233 1214 1231 1292 1397 1564 1751 2039 2408 2800 
+                        2767 2336 1971 1704 1495 1352 1238 1168 1151 1172 1227 1339 1488 1684 1933 2313 2714 
+                        2693 2269 1897 1648 1452 1295 1194 1120 1092 1120 1186 1290 1431 1641 1881 2247 2633 
+                        2623 2219 1857 1604 1414 1267 1159 1077 1047 1076 1145 1258 1389 1585 1833 2198 2604 
+                        2594 2164 1814 1571 1383 1244 1125 1055 1027 1045 1123 1233 1365 1564 1804 2158 2556 
+                        2604 2171 1800 1561 1378 1231 1120 1047 1024 1042 1115 1229 1362 1557 1795 2138 2538 
+                        2594 2178 1818 1571 1386 1240 1125 1050 1033 1050 1122 1236 1373 1571 1800 2151 2556 
+                        2594 2191 1842 1593 1403 1260 1147 1080 1055 1067 1145 1251 1389 1585 1833 2178 2566 
+                        2673 2247 1886 1626 1431 1287 1182 1113 1097 1116 1180 1280 1437 1637 1881 2226 2623 
+                        2724 2306 1944 1692 1492 1334 1229 1172 1151 1162 1227 1331 1479 1672 1933 2313 2724 
+                        2789 2416 2027 1759 1571 1392 1285 1221 1210 1223 1283 1381 1534 1738 2033 2376 2745 
+                        2845 2502 2125 1828 1648 1473 1362 1297 1271 1292 1346 1455 1618 1814 2125 2467 2811 
+                        2965 2604 2254 1933 1721 1561 1440 1370 1359 1367 1434 1544 1696 1912 2247 2584 2940 
+                        3122 2724 2368 2063 1809 1641 1544 1467 1458 1464 1534 1641 1791 2045 2352 2693 3081 ]
                     </LSC_SAMPLES_greenR>
                     <LSC_SAMPLES_greenB index="1" type="double" size="[17 17]">
-                        [3011 2705 2426 2058 1847 1684 1588 1524 1473 1521 1580 1675 1841 2072 2388 2658 2968 
-                        2925 2579 2256 1941 1732 1580 1466 1389 1374 1402 1487 1588 1732 1941 2264 2569 2830 
-                        2754 2465 2115 1841 1648 1491 1377 1312 1309 1315 1393 1487 1657 1847 2101 2465 2792 
-                        2729 2360 2018 1747 1552 1402 1301 1243 1230 1250 1306 1412 1559 1737 2011 2360 2693 
-                        2681 2290 1947 1675 1473 1347 1237 1173 1169 1192 1253 1344 1484 1675 1935 2281 2613 
-                        2613 2199 1847 1630 1422 1298 1196 1124 1114 1136 1208 1284 1432 1622 1870 2215 2547 
-                        2505 2160 1809 1584 1399 1253 1156 1090 1063 1090 1164 1263 1399 1605 1830 2145 2558 
-                        2516 2123 1772 1564 1368 1235 1132 1071 1034 1059 1141 1253 1362 1559 1793 2138 2505 
-                        2537 2108 1762 1532 1355 1230 1128 1052 1024 1052 1126 1235 1371 1544 1793 2108 2475 
-                        2516 2115 1798 1544 1362 1233 1124 1056 1031 1056 1132 1243 1362 1544 1777 2094 2475 
-                        2547 2160 1798 1556 1377 1250 1156 1074 1047 1067 1156 1248 1380 1576 1793 2094 2475 
-                        2537 2191 1841 1609 1418 1282 1185 1109 1082 1116 1185 1274 1412 1592 1825 2153 2537 
-                        2646 2281 1916 1626 1463 1323 1235 1162 1138 1164 1230 1309 1456 1630 1893 2239 2558 
-                        2705 2351 1985 1703 1528 1374 1290 1225 1192 1218 1284 1377 1513 1717 1966 2316 2613 
-                        2741 2436 2072 1798 1588 1463 1338 1276 1258 1284 1341 1438 1592 1772 2072 2426 2681 
-                        2870 2547 2191 1893 1693 1536 1435 1362 1329 1359 1425 1548 1684 1870 2160 2516 2792 
-                        3135 2635 2360 2031 1809 1643 1524 1452 1425 1470 1521 1626 1767 1991 2316 2658 2911 ]
+                        [3192 2778 2433 2075 1847 1696 1578 1501 1479 1498 1575 1692 1837 2063 2408 2724 3122 
+                        3028 2643 2269 1949 1729 1585 1467 1400 1373 1400 1470 1589 1733 1949 2240 2604 2928 
+                        2868 2520 2132 1842 1645 1485 1375 1307 1285 1311 1367 1482 1629 1833 2106 2476 2822 
+                        2767 2400 2022 1759 1561 1405 1299 1240 1214 1240 1302 1400 1564 1738 2010 2384 2714 
+                        2714 2298 1928 1684 1492 1344 1242 1174 1151 1176 1238 1329 1479 1676 1922 2276 2662 
+                        2652 2219 1857 1618 1428 1304 1200 1116 1101 1127 1194 1295 1431 1604 1852 2205 2575 
+                        2584 2158 1814 1575 1403 1258 1160 1080 1045 1077 1151 1258 1383 1578 1795 2138 2556 
+                        2538 2119 1773 1544 1367 1242 1132 1056 1027 1045 1132 1233 1365 1551 1773 2112 2511 
+                        2520 2094 1764 1544 1362 1225 1122 1048 1024 1047 1122 1229 1354 1537 1759 2106 2493 
+                        2538 2100 1768 1544 1362 1233 1134 1050 1035 1053 1129 1233 1359 1554 1764 2125 2502 
+                        2520 2138 1791 1564 1383 1260 1153 1080 1051 1077 1155 1253 1389 1571 1791 2125 2529 
+                        2594 2198 1857 1600 1417 1283 1188 1118 1090 1115 1182 1290 1422 1614 1837 2191 2575 
+                        2643 2261 1912 1664 1482 1334 1227 1172 1151 1170 1229 1326 1467 1652 1912 2269 2604 
+                        2714 2344 1993 1733 1551 1397 1287 1227 1206 1229 1285 1383 1534 1725 2004 2344 2683 
+                        2789 2458 2100 1823 1645 1473 1365 1295 1278 1295 1357 1464 1607 1800 2094 2433 2745 
+                        2903 2594 2240 1917 1717 1564 1455 1373 1367 1378 1443 1551 1700 1902 2219 2538 2915 
+                        3122 2683 2368 2063 1814 1656 1547 1476 1464 1488 1557 1656 1800 2045 2360 2662 3028 ]
                     </LSC_SAMPLES_greenB>
                     <LSC_SAMPLES_blue index="1" type="double" size="[17 17]">
-                        [2700 2408 2101 1848 1668 1531 1460 1358 1350 1354 1410 1495 1644 1833 2101 2344 2575 
-                        2620 2273 1998 1754 1568 1428 1338 1280 1276 1280 1326 1419 1536 1720 1980 2250 2517 
-                        2545 2184 1904 1650 1495 1350 1269 1214 1210 1227 1273 1354 1460 1638 1887 2194 2475 
-                        2421 2121 1811 1585 1428 1284 1207 1185 1166 1194 1220 1280 1414 1580 1789 2082 2408 
-                        2357 2053 1726 1515 1354 1244 1169 1131 1122 1139 1166 1237 1342 1515 1726 2007 2332 
-                        2332 2007 1687 1475 1314 1201 1145 1092 1092 1092 1136 1210 1310 1456 1675 1971 2308 
-                        2250 1945 1656 1451 1287 1185 1108 1071 1043 1056 1119 1182 1284 1437 1626 1945 2250 
-                        2296 1945 1632 1419 1269 1169 1092 1041 1038 1048 1100 1166 1265 1414 1620 1895 2238 
-                        2261 1937 1620 1432 1269 1169 1076 1029 1024 1038 1089 1163 1258 1419 1602 1895 2261 
-                        2308 1945 1644 1414 1273 1160 1089 1036 1026 1041 1086 1166 1273 1405 1614 1887 2238 
-                        2332 1954 1644 1432 1276 1169 1100 1048 1029 1051 1089 1172 1255 1414 1597 1904 2238 
-                        2332 1962 1675 1451 1306 1182 1122 1086 1053 1063 1122 1182 1280 1423 1638 1937 2273 
-                        2332 2025 1707 1490 1330 1214 1145 1097 1100 1103 1142 1204 1318 1485 1687 1980 2284 
-                        2344 2082 1782 1541 1388 1255 1157 1136 1133 1145 1178 1251 1346 1515 1726 2034 2320 
-                        2447 2131 1848 1591 1451 1314 1220 1172 1169 1178 1217 1306 1410 1558 1796 2131 2344 
-                        2575 2227 1928 1662 1520 1383 1284 1244 1241 1241 1269 1354 1485 1644 1864 2216 2447 
-                        2733 2296 2043 1782 1597 1432 1350 1314 1295 1314 1354 1456 1552 1713 1971 2261 2488 ]
+                        [2940 2548 2209 1928 1722 1570 1471 1415 1403 1407 1476 1556 1677 1907 2172 2486 2859 
+                        2797 2439 2093 1807 1614 1488 1381 1331 1307 1321 1373 1484 1584 1794 2059 2372 2723 
+                        2653 2319 1988 1716 1537 1407 1307 1253 1241 1247 1297 1381 1519 1672 1928 2278 2561 
+                        2613 2228 1872 1645 1480 1338 1247 1201 1176 1195 1238 1310 1459 1614 1852 2181 2511 
+                        2523 2163 1800 1570 1411 1284 1198 1150 1129 1147 1187 1272 1388 1551 1775 2093 2451 
+                        2451 2076 1751 1533 1362 1244 1163 1105 1082 1105 1150 1226 1345 1510 1734 2043 2405 
+                        2405 2035 1728 1501 1334 1215 1129 1069 1043 1060 1120 1203 1310 1476 1688 2003 2340 
+                        2417 2003 1694 1471 1314 1201 1108 1051 1028 1045 1103 1184 1294 1455 1666 1973 2340 
+                        2383 1988 1688 1467 1310 1192 1098 1041 1024 1036 1094 1179 1284 1447 1650 1957 2319 
+                        2372 2003 1677 1467 1300 1201 1101 1047 1032 1047 1101 1187 1287 1459 1661 1980 2329 
+                        2394 2019 1694 1484 1324 1209 1117 1064 1038 1053 1112 1198 1310 1459 1688 2003 2361 
+                        2439 2051 1722 1510 1345 1229 1142 1089 1066 1084 1134 1212 1334 1488 1699 2027 2372 
+                        2486 2110 1775 1546 1392 1265 1179 1132 1112 1132 1168 1244 1359 1528 1757 2068 2405 
+                        2548 2190 1839 1614 1447 1314 1223 1176 1168 1165 1215 1294 1419 1584 1839 2145 2451 
+                        2586 2248 1936 1666 1515 1373 1278 1229 1220 1229 1272 1352 1471 1650 1921 2209 2535 
+                        2680 2372 2035 1769 1580 1451 1352 1297 1291 1297 1341 1426 1551 1739 2019 2329 2639 
+                        2782 2475 2190 1865 1683 1519 1438 1381 1373 1381 1426 1519 1635 1865 2118 2439 2752 ]
                     </LSC_SAMPLES_blue>
+
                 </cell>
                 <cell index="8" type="struct" size="[1 1]">
                     <name index="1" type="char" size="[1 16]">
@@ -7806,7 +7915,7 @@
                     [38.0000 75.0000 15.0000 ]
                 </RGB2Y_para>
                 <low_bound_pos_bit index="1" type="double" size="[1 1]">
-                    [8.0000 ]
+                    [0.0000 ]
                 </low_bound_pos_bit>
                 <y_alpha_curve index="1" type="double" size="[1 17]">
                     [0.0000 64.0000 128.0000 192.0000 256.0000 320.0000 384.0000 448.0000 512.0000 576.0000 640.0000 704.0000 768.0000 832.0000 896.0000 960.0000 1024.0000 ]
@@ -7816,7 +7925,7 @@
                         [1.0000 2.0000 4.0000 8.0000 16.0000 32.0000 64.0000 128.0000 256.0000 ]
                     </gain>
                     <scale index="1" type="double" size="[1 9]">
-                        [1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 1.0000 ]
+                        [1.0000 1.0000 0.7500  0.7000 0.7000 0.7000 0.7000 0.4000 0.1000 ]
                     </scale>
                 </gain_alphaScale_curve>
             </lumaCCM>
@@ -7836,7 +7945,7 @@
                             [1.0000 4.0000 8.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [88.0000 88.0000 88.0000 88.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="2" type="struct" size="[1 1]">
@@ -7853,7 +7962,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [92.0000 92.0000 92.0000 92.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="3" type="struct" size="[1 1]">
@@ -7870,7 +7979,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [100.0000 100.0000 100.0000 100.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="4" type="struct" size="[1 1]">
@@ -7887,7 +7996,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [100.0000 100.0000 100.0000 100.0000 ]
+                           [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="5" type="struct" size="[1 1]">
@@ -7904,7 +8013,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [98.0000 98.0000 98.0000 98.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="6" type="struct" size="[1 1]">
@@ -7921,7 +8030,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [96.0000 96.0000 96.0000 96.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                     <cell index="4" type="struct" size="[1 1]">
@@ -7938,7 +8047,7 @@
                             [1.0000 4.0000 6.0000 32.0000 ]
                         </gains>
                         <sat index="1" type="double" size="[1 4]">
-                            [85.0000 85.0000 85.0000 85.0000 ]
+                            [100 100 100 100 ]
                         </sat>
                     </cell>
                 </illAll>
@@ -7993,9 +8102,9 @@
                         [100.0000 ]
                     </saturation>
                     <ccMatrix index="1" type="double" size="[3 3]">
-                        [1.7073 -0.5816 -0.1257 
-                        -0.2542 1.4689 -0.2147 
-                        -0.0693 -0.6271 1.6964 ]
+                        [1.69 -0.7  0.01
+                        -0.2344 1.5859  -0.3008 
+                        0.1133 -0.8633 1.8008 ]
                     </ccMatrix>
                     <ccOffsets index="1" type="double" size="[1 3]">
                         [0.0000 0.0000 0.0000 ]
@@ -8074,7 +8183,7 @@
                         -0.0298 -0.5110 1.5408 ]
                     </ccMatrix>
                     <ccOffsets index="1" type="double" size="[1 3]">
-                        [0.0000 0.0000 0.0000 ]
+                        [-50.0000 0.0000 0.0000 ]
                     </ccOffsets>
                 </cell>
                 <cell index="8" type="struct" size="[1 5]">
@@ -8145,9 +8254,9 @@
                         [100.0000 ]
                     </saturation>
                     <ccMatrix index="1" type="double" size="[3 3]">
-                        [1.8175 -0.6934 -0.1241 
-                        -0.3546 1.5422 -0.1876 
-                        -0.1228 -0.7136 1.8364 ]
+                        [ 1.7  -0.71   0.01
+                        -0.1546 1.5422 -0.3876 
+                        0.0625 -0.6836  1.6211 ]
                     </ccMatrix>
                     <ccOffsets index="1" type="double" size="[1 3]">
                         [0.0000 0.0000 0.0000 ]
@@ -10161,7 +10270,7 @@
                                         [0.2000 ]
                                     </lo_directionStrength>
                                     <lo_bfScale index="1" type="double" size="[1 4]">
-                                        [1.8000 1.8000 1.8500 1.8500 ]
+                                        [0.2500 0.5000 2.0000 1.0000 ]
                                     </lo_bfScale>
                                     <imerge_ratio index="1" type="double" size="[1 1]">
                                         [0.3000 ]
@@ -10170,28 +10279,28 @@
                                         [1.2500 ]
                                     </imerge_bound>
                                     <denoise_weight index="1" type="double" size="[1 4]">
-                                        [0.6000 0.6000 0.7500 0.7500 ]
+                                        [0.3000 0.8500 0.2000 0.3000]
                                     </denoise_weight>
                                     <hi_lumaPoint index="1" type="double" size="[1 6]">
                                         [0.0000 32.0000 64.0000 128.0000 192.0000 256.0000 ]
                                     </hi_lumaPoint>
                                     <hi_lumaRatio index="1" type="double" size="[1 6]">
-                                        [1.5000 1.5000 1.5000 1.5000 1.0000 1.0000 ]
+                                        [2.0000 2.5000 1.5000 1.5000 1.0000 1.0000 ]
                                     </hi_lumaRatio>
                                     <hi_bfScale index="1" type="double" size="[1 4]">
-                                        [1.8000 1.8000 1.8000 1.1000 ]
+                                        [1.2000 1.1000 0.8600 0.9000 ]
                                     </hi_bfScale>
                                     <hwith_d index="1" type="double" size="[1 4]">
                                         [0.7500 0.7000 0.6600 0.3600 ]
                                     </hwith_d>
                                     <hi_denoiseStrength index="1" type="double" size="[1 1]">
-                                        [1.8000 ]
+                                        [1.2000 ]
                                     </hi_denoiseStrength>
                                     <hi_detailMinAdjDnW index="1" type="double" size="[1 1]">
                                         [0.2000 ]
                                     </hi_detailMinAdjDnW>
                                     <hi_denoiseWeight index="1" type="double" size="[1 4]">
-                                        [0.7500 0.7500 0.7500 0.7500 ]
+                                        [0.7500 0.7000 0.6600 0.3600 ]
                                     </hi_denoiseWeight>
                                     <y_luma_point index="1" type="double" size="[1 6]">
                                         [64.0000 128.0000 192.0000 256.0000 384.0000 512.0000 ]
@@ -16841,9 +16950,21 @@
                         normal
                     </Name>
                     <Dynamic index="1" type="struct" size="[1 1]">
-                        <Enable index="1" type="double" size="[1 1]">                            [0 ]                        </Enable>                        <LowTh_iso index="1" type="double" size="[1 1]">                            [50.0000 ]                        </LowTh_iso>
-                        <LowTh_time index="1" type="double" size="[1 1]">                            [0.0100 ]                        </LowTh_time>                        <HighTh_iso index="1" type="double" size="[1 1]">                            [50.0000 ]                        </HighTh_iso>
-                        <HighTh_time index="1" type="double" size="[1 1]">                            [0.0250 ]                        </HighTh_time>
+                        <Enable index="1" type="double" size="[1 1]">
+                            [0 ]
+                        </Enable>
+                        <LowTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </LowTh_iso>
+                        <LowTh_time index="1" type="double" size="[1 1]">
+                            [0.0100 ]
+                        </LowTh_time>
+                        <HighTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </HighTh_iso>
+                        <HighTh_time index="1" type="double" size="[1 1]">
+                            [0.0250 ]
+                        </HighTh_time>
                     </Dynamic>
                     <Setting index="1" type="cell" size="[1 2]">
                         <cell index="1" type="struct" size="[1 1]">
@@ -17514,16 +17635,16 @@
                                         [1600.0000 ]
                                     </iso>
                                     <weight_limit_y index="1" type="double" size="[1 4]">
-                                        [4.0000 4.0000 4.0000 4.0000 ]
+                                        [12.0000 12.0000 12.0000 12.0000 ]
                                     </weight_limit_y>
                                     <weight_limit_uv index="1" type="double" size="[1 3]">
-                                        [32.0000 32.0000 32.0000 ]
+                                        [8.0000 8.0000 16.0000 ]
                                     </weight_limit_uv>
                                     <ratio_frq index="1" type="double" size="[1 4]">
-                                        [0.5000 2.0000 0.5000 2.0000 ]
+                                        [3.5000 4.0000 3.5000 4.0000 ]
                                     </ratio_frq>
                                     <luma_w_in_chroma index="1" type="double" size="[1 3]">
-                                        [0.7500 0.7500 0.7500 ]
+                                        [0.8500 0.8500 0.8500 ]
                                     </luma_w_in_chroma>
                                     <noise_curve index="1" type="double" size="[1 5]">
                                         [-3.7644034250684596e-012 3.5863417760281201e-008 -1.1564500746348600e-004 1.2093131007890200e-001 5.8607607923495401e+001 ]
@@ -17544,10 +17665,10 @@
                                         [1.2000 1.2000 1.2000 1.2000 ]
                                     </y_hi_denoiseweight>
                                     <y_lo_bfscale index="1" type="double" size="[1 4]">
-                                        [0.3000 0.3500 0.3500 0.3400 ]
+                                        [0.3500 0.3500 0.3500 0.3400 ]
                                     </y_lo_bfscale>
                                     <y_hi_bfscale index="1" type="double" size="[1 4]">
-                                        [0.3000 0.3500 0.3500 0.3500 ]
+                                        [0.3500 0.3500 0.3500 0.3500 ]
                                     </y_hi_bfscale>
                                     <y_lumanrpoint index="1" type="double" size="[1 6]">
                                         [0.0000 32.0000 64.0000 192.0000 224.0000 256.0000 ]
@@ -17556,7 +17677,7 @@
                                         [1.3000 1.3000 1.3000 1.3000 1.2000 1.1000 ]
                                     </y_lumanrcurve>
                                     <y_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.0000 ]
+                                        [1.5000 ]
                                     </y_denoisestrength>
                                     <y_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17607,7 +17728,7 @@
                                         [1.3000 1.3000 1.3000 1.3000 1.3000 1.3000 ]
                                     </uv_lumanrcurve>
                                     <uv_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.5000 ]
+                                        [1.5000 ]
                                     </uv_denoisestrength>
                                     <uv_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17645,16 +17766,16 @@
                                         [3200.0000 ]
                                     </iso>
                                     <weight_limit_y index="1" type="double" size="[1 4]">
-                                        [4.0000 4.0000 4.0000 4.0000 ]
+                                        [128.0000 128.0000 128.0000 128.0000 ]
                                     </weight_limit_y>
                                     <weight_limit_uv index="1" type="double" size="[1 3]">
-                                        [32.0000 32.0000 64.0000 ]
+                                        [128.0000 128.0000 128.0000 ]
                                     </weight_limit_uv>
                                     <ratio_frq index="1" type="double" size="[1 4]">
                                         [0.5000 2.0000 0.5000 2.0000 ]
                                     </ratio_frq>
                                     <luma_w_in_chroma index="1" type="double" size="[1 3]">
-                                        [0.7500 0.7500 0.7500 ]
+                                        [0.5000 0.500 0.500 ]
                                     </luma_w_in_chroma>
                                     <noise_curve index="1" type="double" size="[1 5]">
                                         [-7.1116110258300301e-012 7.0650982166573598e-008 -2.3820286358444700e-004 2.6857101717311599e-001 8.4278497687773793e+001 ]
@@ -17675,19 +17796,19 @@
                                         [1.2000 1.2000 1.2000 1.2000 ]
                                     </y_hi_denoiseweight>
                                     <y_lo_bfscale index="1" type="double" size="[1 4]">
-                                        [0.3500 0.3500 0.3500 0.3500 ]
+                                        [0.35 0.35 0.35 0.35 ]
                                     </y_lo_bfscale>
                                     <y_hi_bfscale index="1" type="double" size="[1 4]">
-                                        [0.3500 0.3500 0.3500 0.3500 ]
+                                        [0.35 0.35 0.35 0.35 ]
                                     </y_hi_bfscale>
                                     <y_lumanrpoint index="1" type="double" size="[1 6]">
                                         [0.0000 32.0000 64.0000 192.0000 224.0000 256.0000 ]
                                     </y_lumanrpoint>
                                     <y_lumanrcurve index="1" type="double" size="[1 6]">
-                                        [1.3000 1.3000 1.3000 1.3000 1.2000 1.1000 ]
+                                        [1.1000 1.3000 1.3000 1.3000 1.2000 1.1000 ]
                                     </y_lumanrcurve>
                                     <y_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.8000 ]
+                                        [1.1000 ]
                                     </y_denoisestrength>
                                     <y_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17726,19 +17847,19 @@
                                         [1.0000 1.0000 1.0000 ]
                                     </uv_hi_denoiseweight>
                                     <uv_lo_bfscale index="1" type="double" size="[1 3]">
-                                        [0.3000 0.3500 0.3500 ]
+                                        [0.35 0.35 0.35 ]
                                     </uv_lo_bfscale>
                                     <uv_hi_bfscale index="1" type="double" size="[1 3]">
-                                        [0.3000 0.3500 0.3500 ]
+                                        [0.35 0.35 0.35 ]
                                     </uv_hi_bfscale>
                                     <uv_lumanrpoint index="1" type="double" size="[1 6]">
                                         [0.0000 32.0000 64.0000 192.0000 224.0000 256.0000 ]
                                     </uv_lumanrpoint>
                                     <uv_lumanrcurve index="1" type="double" size="[1 6]">
-                                        [1.2000 1.2000 1.2000 1.2000 1.1000 1.0000 ]
+                                        [1.000 1.2000 1.2000 1.2000 1.1000 1.0000 ]
                                     </uv_lumanrcurve>
                                     <uv_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.5000 ]
+                                        [1.1000 ]
                                     </uv_denoisestrength>
                                     <uv_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17776,16 +17897,16 @@
                                         [6400.0000 ]
                                     </iso>
                                     <weight_limit_y index="1" type="double" size="[1 4]">
-                                        [4.0000 4.0000 4.0000 4.0000 ]
+                                        [64.0000 64.0000 64.0000 64.0000 ]
                                     </weight_limit_y>
                                     <weight_limit_uv index="1" type="double" size="[1 3]">
-                                        [32.0000 32.0000 64.0000 ]
+                                        [64.0000 64.0000 64.0000 ]
                                     </weight_limit_uv>
                                     <ratio_frq index="1" type="double" size="[1 4]">
-                                        [3.5000 4.0000 0.5000 2.0000 ]
+                                        [3.5000 4.0000 3.5000 2.0000 ]
                                     </ratio_frq>
                                     <luma_w_in_chroma index="1" type="double" size="[1 3]">
-                                        [0.7500 0.7500 0.7500 ]
+                                        [0.800 0.800 0.800 ]
                                     </luma_w_in_chroma>
                                     <noise_curve index="1" type="double" size="[1 5]">
                                         [-7.6145347649357207e-012 8.0102743603758104e-008 -2.9491595597466703e-004 3.7234862126354101e-001 1.2938245164392001e+002 ]
@@ -17818,7 +17939,7 @@
                                         [1.2000 1.2000 1.2000 1.2000 1.2000 1.1000 ]
                                     </y_lumanrcurve>
                                     <y_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.8000 ]
+                                        [1.8000 ]
                                     </y_denoisestrength>
                                     <y_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17869,7 +17990,7 @@
                                         [1.2000 1.2000 1.2000 1.2000 1.2000 1.2000 ]
                                     </uv_lumanrcurve>
                                     <uv_denoisestrength index="1" type="double" size="[1 1]">
-                                        [2.8000 ]
+                                        [1.8000 ]
                                     </uv_denoisestrength>
                                     <uv_lo_lvl0_gfdelta index="1" type="double" size="[1 6]">
                                         [0.06250 0.03906 0.03906 0.03906 0.03906 0.03906 ]
@@ -17907,10 +18028,10 @@
                                         [12800.0000 ]
                                     </iso>
                                     <weight_limit_y index="1" type="double" size="[1 4]">
-                                        [1.0000 1.0000 1.0000 1.0000 ]
+                                        [128.0000 128.0000 128.0000 128.0000 ]
                                     </weight_limit_y>
                                     <weight_limit_uv index="1" type="double" size="[1 3]">
-                                        [32.0000 32.0000 64.0000 ]
+                                        [128.0000 128.0000 128.0000 ]
                                     </weight_limit_uv>
                                     <ratio_frq index="1" type="double" size="[1 4]">
                                         [3.5000 4.0000 0.5000 2.0000 ]
@@ -20278,11 +20399,23 @@
                     <Name index="1" type="char" size="[1 4]">
                         gray
                     </Name>
-             <Dynamic index="1" type="struct" size="[1 1]">
-                     <Enable index="1" type="double" size="[1 1]">	   	    [0]		   </Enable>	   	   <LowTh_iso index="1" type="double" size="[1 1]">	              [50]	        	  </LowTh_iso>
-		  <LowTh_time index="1" type="double" size="[1 1]">	              [0.01]	        	  </LowTh_time>	   	   <HighTh_iso index="1" type="double" size="[1 1]">	              [50]	        	  </HighTh_iso>
-		  <HighTh_time index="1" type="double" size="[1 1]">	              [0.025]	        	  </HighTh_time>
-             </Dynamic>
+                    <Dynamic index="1" type="struct" size="[1 1]">
+                        <Enable index="1" type="double" size="[1 1]">
+                            [0 ]
+                        </Enable>
+                        <LowTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </LowTh_iso>
+                        <LowTh_time index="1" type="double" size="[1 1]">
+                            [0.0100 ]
+                        </LowTh_time>
+                        <HighTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </HighTh_iso>
+                        <HighTh_time index="1" type="double" size="[1 1]">
+                            [0.0250 ]
+                        </HighTh_time>
+                    </Dynamic>
                     <Setting index="1" type="cell" size="[1 2]">
                         <cell index="1" type="struct" size="[1 1]">
                             <SNR_Mode index="1" type="char" size="[1 4]">
@@ -23717,9 +23850,21 @@
                         hdr
                     </Name>
                     <Dynamic index="1" type="struct" size="[1 1]">
-                        <Enable index="1" type="double" size="[1 1]">                            [0 ]                        </Enable>                        <LowTh_iso index="1" type="double" size="[1 1]">                            [50.0000 ]                        </LowTh_iso>
-                        <LowTh_time index="1" type="double" size="[1 1]">                            [0.0100 ]                        </LowTh_time>                        <HighTh_iso index="1" type="double" size="[1 1]">                            [50.0000 ]                        </HighTh_iso>
-                        <HighTh_time index="1" type="double" size="[1 1]">                            [0.0250 ]                        </HighTh_time>
+                        <Enable index="1" type="double" size="[1 1]">
+                            [0 ]
+                        </Enable>
+                        <LowTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </LowTh_iso>
+                        <LowTh_time index="1" type="double" size="[1 1]">
+                            [0.0100 ]
+                        </LowTh_time>
+                        <HighTh_iso index="1" type="double" size="[1 1]">
+                            [50.0000 ]
+                        </HighTh_iso>
+                        <HighTh_time index="1" type="double" size="[1 1]">
+                            [0.0250 ]
+                        </HighTh_time>
                     </Dynamic>
                     <Setting index="1" type="cell" size="[1 2]">
                         <cell index="1" type="struct" size="[1 1]">
@@ -35610,7 +35755,7 @@
         </EDGEFILTER>
         <DEHAZE index="1" type="struct" size="[1 1]">
 	<Enable index="1" type="double" size="[1 1]">
-               [1]
+               [0]
            </Enable>  
                     <cfg_alpha_normal index="1" type="double" size="[1 1]">
                         [0.0000 ]
@@ -35690,10 +35835,10 @@
                         [2.0000 2.0000 2.0000 2.0000 2.0000 2.0000 2.0000 2.0000 2.0000 ]
                     </air_thed>
                     <air_weitcur index="1" type="double" size="[1 9]">
-                        [0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400]
+                        [0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 0.1400 ]
                     </air_weitcur>
                     <stab_fnum index="1" type="double" size="[1 1]">
-	            [8.0]
+                        [8.0000 ]
                     </stab_fnum>
                     <sigma index="1" type="double" size="[1 1]">
                         [6.0000 ]
@@ -35707,7 +35852,7 @@
                     <tmax_sigma index="1" type="double" size="[1 1]">
                         [0.0100 ]
                     </tmax_sigma>
-		</cell>
+                </cell>
                 <cell index="2" type="struct" size="[1 1]">
                     <Name index="1" type="char" size="[1 3]">
                         HDR
@@ -35879,7 +36024,7 @@
                     <tmax_sigma index="1" type="double" size="[1 1]">
                         [0.0100 ]
                     </tmax_sigma>
-		</cell>
+                </cell>
             </Dehaze_Setting>
             <Enhance_Setting index="1" type="cell" size="[1 3]">
                 <cell index="1" type="struct" size="[1 1]">
@@ -36077,7 +36222,9 @@
             <CISIspDgainRange index="1" type="double" size="[1 2]">
                 [1.0000 1.0000 ]
             </CISIspDgainRange>
- 	<CISHdrGainIndSetEn index="1" type="double" size="[1 1]">            [1]         </CISHdrGainIndSetEn>
+            <CISHdrGainIndSetEn index="1" type="double" size="[1 1]">
+                [1 ]
+            </CISHdrGainIndSetEn>
             <SensorFlip index="1" type="char" size="[1 1]">
                 [0 ]
             </SensorFlip>
@@ -36117,13 +36264,22 @@
             <mesh_file index="1" type="char" size="[1 33]">
                 LDCH_mesh_s5kgm1sp_16mm_3840_2160
             </mesh_file>
-            <correct_level index="1" type="int" size="[1 1]">               [255]            </correct_level>
-            <correct_level_max index="1" type="int" size="[1 1]">                [255 ]            </correct_level_max>
-            <light_center index="1" type="double" size="[1 2]">                [1.9563909119999998e+003 1.1406355200000000e+003 ]            </light_center>            <distortion_coeff index="1" type="double" size="[1 4]">                [-2.8194072493821618e+003 3.1612658179199999e-005 6.8841014200000002e-008 -1.3068599999999999e-011 ]            </distortion_coeff>
+            <correct_level index="1" type="int" size="[1 1]">
+                [255 ]
+            </correct_level>
+            <correct_level_max index="1" type="int" size="[1 1]">
+                [255 ]
+            </correct_level_max>
+            <light_center index="1" type="double" size="[1 2]">
+                [1.9563909119999998e+003 1.1406355200000000e+003 ]
+            </light_center>
+            <distortion_coeff index="1" type="double" size="[1 4]">
+                [-2.8194072493821618e+003 3.1612658179199999e-005 6.8841014200000002e-008 -1.3068599999999999e-011 ]
+            </distortion_coeff>
         </LDCH>
         <FEC index="1" type="struct" size="[1 1]">
             <enable index="1" type="double" size="[1 1]">
-                [1 ]
+                [0 ]
             </enable>
             <mesh_file index="1" type="char" size="[1 31]">
                 FEC_mesh_s5kgm1sp_2mm_3840x2160
@@ -36177,9 +36333,11 @@
         </CPSL>
         <LUMADETECT index="1" type="struct" size="[1 1]">
             <enable index="1" type="double" size="[1 1]">
-                [1]
+                [1 ]
             </enable>
-            <fixed_times index="1" type="int" size="[1 1]">                [0]            </fixed_times>
+            <fixed_times index="1" type="int" size="[1 1]">
+                [0 ]
+            </fixed_times>
             <threshold index="1" type="double" size="[1 1]">
                 [0.0100 ]
             </threshold>
@@ -36198,7 +36356,9 @@
             <enable index="1" type="double" size="[1 1]">
                 [0 ]
             </enable>
-            <support_mode index="1" type="char" size="[1 4]">MODE_2_LINE</support_mode>
+            <support_mode index="1" type="char" size="[1 11]">
+                MODE_2_LINE
+            </support_mode>
             <line_mode index="1" type="char" size="[1 5]">STAGGER</line_mode>
         </HDR>
         <DCG_SETTING index="1" type="struct" size="[1 1]">

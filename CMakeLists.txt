@@ -215,7 +215,7 @@ endif()
 if(GENMESH_ONLINE)
     set (GENMESH_LIBS genMeshLib)
     set (GENMESH_LIBS_DIR
-        ${PROJECT_SOURCE_DIR}/common/gen_mesh/genMesh_static_32bit/
+        ${PROJECT_SOURCE_DIR}/common/gen_mesh/linux/genMesh_static_32bit/
         )
     add_compile_options(-DGENMESH_ONLINE)
 endif()

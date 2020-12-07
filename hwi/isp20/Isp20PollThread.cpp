@@ -138,10 +138,12 @@ const struct capture_fmt Isp20PollThread::csirx_fmts[] =
         .bpp = { 10 },
     }, {
         .fourcc = V4L2_PIX_FMT_SRGGB12,
+        .bayer_fmt = 3,
         .pcpp = 2,
         .bpp = { 12 },
     }, {
         .fourcc = V4L2_PIX_FMT_SGRBG12,
+        .bayer_fmt = 2,
         .pcpp = 2,
         .bpp = { 12 },
     }, {
@@ -854,6 +856,7 @@ Isp20PollThread::trigger_readback()
             }
 
             struct isp2x_csi_trigger tg = {
+                .frame_timestamp = 0,
                 .frame_id = sequence,
                 .times = 0,
                 .mode = _mipi_dev_max == 1 ? T_START_X1 :

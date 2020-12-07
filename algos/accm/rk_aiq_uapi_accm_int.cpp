@@ -9,7 +9,6 @@ rk_aiq_uapi_accm_SetAttrib(RkAiqAlgoContext *ctx,
     accm_context_t* ccm_contex = (accm_context_t*)ctx->accm_para;
     ccm_contex->mNewAtt = attr;
     ccm_contex->updateAtt = true;
-
     return XCAM_RETURN_NO_ERROR;
 }
 

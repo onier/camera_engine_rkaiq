@@ -1,4 +1,4 @@
-Current Version: v1.3.1
+Current Version: v1.3.2
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
 v0.1.0 - 2020.07.15
@@ -33,5 +33,16 @@ v1.3.0 - 2020.11.02
 v1.3.1 - 2020.12.01
   - update AIQ to v1.0x23.1
   - fix some bugs
+
+v1.3.2 - 2020.12.07
+  - connection save function optimization
+  - add tuning_assistant ae exptime precision
+  - add enhance_value precision
+  - fix blc iso 10000 to 6400
+  - fix the bug that mfnr uapi initialize error
+  - tmo parameter rename
+  - fix the bug that enhance_value not update
+  - fix the bug that tmo get function using wrong structure
+  - other optimizations
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================

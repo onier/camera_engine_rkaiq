@@ -20,12 +20,10 @@
 #include "rk_aiq_algo_types_int.h"
 #include "adpcc/rk_aiq_algo_adpcc_itf.h"
 #include "adpcc/rk_aiq_adpcc_algo.h"
+#include "adpcc/rk_aiq_types_adpcc_algo_prvt.h"
+
 
 RKAIQ_BEGIN_DECLARE
-
-typedef struct _RkAiqAlgoContext {
-    void* place_holder[0];
-} RkAiqAlgoContext;
 
 
 static XCamReturn

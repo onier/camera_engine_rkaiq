@@ -19,6 +19,7 @@
 
 #ifndef _RK_AIQ_TYPES_ACCM_ALGO_INT_H_
 #define _RK_AIQ_TYPES_ACCM_ALGO_INT_H_
+#include "RkAiqCalibDbTypes.h"
 
 #include "accm/rk_aiq_types_accm_algo.h"
 
@@ -62,6 +63,7 @@ typedef enum rk_aiq_ccm_op_mode_s {
     RK_AIQ_CCM_MODE_INVALID                     = 0,        /**< initialization value */
     RK_AIQ_CCM_MODE_MANUAL                      = 1,        /**< run manual lens shading correction */
     RK_AIQ_CCM_MODE_AUTO                        = 2,        /**< run auto lens shading correction */
+    RK_AIQ_CCM_MODE_TOOL                        = 3,        /**< config from stTool  */
     RK_AIQ_CCM_MODE_MAX
 } rk_aiq_ccm_op_mode_t;
 
@@ -70,6 +72,8 @@ typedef struct rk_aiq_ccm_attrib_s {
     rk_aiq_ccm_op_mode_t mode;
     rk_aiq_ccm_mccm_attrib_t stManual;
     rk_aiq_ccm_accm_attrib_t stAuto;
+    float curr_wbgain[2];
+    CalibDb_Ccm_t stTool;
 } rk_aiq_ccm_attrib_t;
 
 typedef struct rk_aiq_ccm_querry_info_s {
