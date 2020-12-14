@@ -755,6 +755,16 @@ XCamReturn rk_aiq_uapi_setFecCorrectLevel(const rk_aiq_sys_ctx_t* ctx, int corre
 * Argument:
 *****************************
 */
+XCamReturn rk_aiq_uapi_setFecCorrectMode(const rk_aiq_sys_ctx_t* ctx,
+                                         const fec_correct_mode_t mode);
+
+/*
+*****************************
+*
+* Desc:
+* Argument:
+*****************************
+*/
 XCamReturn rk_aiq_uapi_setLdchEn(const rk_aiq_sys_ctx_t* ctx, bool en);
 /*
 *****************************

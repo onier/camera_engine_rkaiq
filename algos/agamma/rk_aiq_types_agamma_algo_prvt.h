@@ -24,10 +24,7 @@
 #include "RkAiqCalibDbTypes.h"
 #include "xcam_log.h"
 
-RKAIQ_BEGIN_DECLARE
-
 #define LIMIT_VALUE(value,max_value,min_value)      (value > max_value? max_value : value < min_value ? min_value : value)
-
 
 typedef struct AgammaHandle_s {
     rk_aiq_gamma_cfg_t  agamma_config;
@@ -36,9 +33,8 @@ typedef struct AgammaHandle_s {
     AgammaProcRes_t ProcRes;
     int working_mode;
     int Scene_mode;
+    int prepare_type;
 } AgammaHandle_t;
-
-RKAIQ_END_DECLARE
 
 #endif
 

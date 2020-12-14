@@ -306,10 +306,18 @@
  * - iq_parser: disable strict tag verification
  * - isp driver v1.0x2.1, same as v1.0x23.1
  * - uapi: add rk_aiq_uapi_sysctl_updateIq
+ * v1.0x34.0
+ * - calib db: v1.4.3 magic code: 1123951, same as v1.0x23.3
+ * - isp driver v1.0x3.0
+ * - Change mipi_rx buf type from USRPTR to DMABUF
+ * - Open tmo enable function
+ * - add exposure to ispparams
+ * - fix aie gray_mode error of v1.023.3
+ * - gen_mesh: v3.0.2
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x24.1"
-#define RK_AIQ_RELEASE_DATE "2020-12-14"
+#define RK_AIQ_VERSION_REAL_V "v1.0x34.0"
+#define RK_AIQ_RELEASE_DATE "2020-12-18"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

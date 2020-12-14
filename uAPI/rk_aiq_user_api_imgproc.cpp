@@ -2449,6 +2449,24 @@ XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
     return ret;
 }
 
+XCamReturn rk_aiq_uapi_setFecCorrectMode(const rk_aiq_sys_ctx_t* ctx,
+                                         const fec_correct_mode_t mode)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    if (ctx == NULL) {
+        ret = XCAM_RETURN_ERROR_PARAM;
+        RKAIQ_IMGPROC_CHECK_RET(ret, "param error!");
+    }
+    rk_aiq_fec_attrib_t fecAttr;
+    ret = rk_aiq_user_api_afec_GetAttrib(ctx, &fecAttr);
+    RKAIQ_IMGPROC_CHECK_RET(ret, "get fec attrib failed!");
+    fecAttr.mode = mode;
+    ret = rk_aiq_user_api_afec_SetAttrib(ctx, fecAttr);
+    IMGPROC_FUNC_EXIT
+    return ret;
+}
+
 XCamReturn rk_aiq_uapi_setLdchEn(const rk_aiq_sys_ctx_t* ctx, bool en)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;

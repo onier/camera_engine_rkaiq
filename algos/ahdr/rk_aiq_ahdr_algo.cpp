@@ -924,9 +924,9 @@ void AhdrApiManualUpdate
     //update tmo data in manual mode
     if (pAhdrCtx->hdrAttr.stManual.bUpdateTmo == true)
     {
-        pAhdrCtx->AhdrProcRes.bTmoEn = true;
-        pAhdrCtx->AhdrProcRes.isLinearTmo = pAhdrCtx->FrameNumber == 1;
-        pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight = pAhdrCtx->hdrAttr.stManual.stTmoManual.stDtlsLL * DETAILSLOWLIGHTMIN;
+        pAhdrCtx->AhdrProcRes.bTmoEn = pAhdrCtx->hdrAttr.stManual.stTmoManual.Enable;
+        pAhdrCtx->AhdrProcRes.isLinearTmo = pAhdrCtx->AhdrProcRes.bTmoEn && pAhdrCtx->FrameNumber == 1;
+        pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight = pAhdrCtx->hdrAttr.stManual.stTmoManual.stDtlsLL * DETAILSLOWLIGHTMIN ;
         pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight = LIMIT_VALUE(pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight
                 , DETAILSLOWLIGHTMAX, DETAILSLOWLIGHTMIN);
 
@@ -1054,7 +1054,7 @@ void AhdrSelectMode
     }
     else
     {
-        pAhdrCtx->AhdrConfig.tmo_para.bTmoEn = true;
+        pAhdrCtx->AhdrConfig.tmo_para.bTmoEn = pCalibDb->tmo.en[mode].en == 0 ? false : true;
         pAhdrCtx->AhdrConfig.tmo_para.isLinearTmo = pAhdrCtx->AhdrConfig.tmo_para.bTmoEn;
     }
     pAhdrCtx->AhdrProcRes.bTmoEn = pAhdrCtx->AhdrConfig.tmo_para.bTmoEn;
@@ -1327,8 +1327,8 @@ void AhdrUpdateConfig
         AhdrIQUpdate(pAhdrCtx, AecHdrPreResult, AfPreResult);
 
         //tmo en
-        pAhdrCtx->AhdrProcRes.bTmoEn = true;
-        pAhdrCtx->AhdrProcRes.isLinearTmo = pAhdrCtx->FrameNumber == 1 ? true : false;
+        pAhdrCtx->AhdrProcRes.bTmoEn = pAhdrCtx->AhdrConfig.tmo_para.bTmoEn;
+        pAhdrCtx->AhdrProcRes.isLinearTmo = pAhdrCtx->AhdrProcRes.bTmoEn && pAhdrCtx->FrameNumber == 1;
 
         //log after updating
         LOGD_AHDR("%s:	Current CurrEnvLv:%f OECurve_smooth:%f OECurve_offset:%f \n", __FUNCTION__,  pAhdrCtx->CurrHandleData.CurrEnvLv,

@@ -101,11 +101,15 @@ pre_process(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 {
     RkAiqAlgoContext *ctx = inparams->ctx;
     RkAiqAlgoPreAieInt* pAiePreParams = (RkAiqAlgoPreAieInt*)inparams;
-    if (pAiePreParams->rk_com.u.proc.gray_mode) {
+    // force gray_mode by aiq framework
+    if (pAiePreParams->rk_com.u.proc.gray_mode &&
+        ctx->params.mode !=  RK_AIQ_IE_EFFECT_BW) {
         ctx->last_params = ctx->params;
         ctx->params.mode = RK_AIQ_IE_EFFECT_BW;
         ctx->skip_frame = 10;
-    } else {
+    } else if (!pAiePreParams->rk_com.u.proc.gray_mode &&
+               ctx->params.mode == RK_AIQ_IE_EFFECT_BW) {
+        // force non gray_mode by aiq framework
         if (ctx->skip_frame && --ctx->skip_frame == 0)
             ctx->params = ctx->last_params;
     }

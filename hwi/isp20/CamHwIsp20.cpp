@@ -993,7 +993,7 @@ CamHwIsp20::init(const char* sns_ent_name)
 
     _mipi_rx_devs[0] = new V4l2Device (s_info->isp_info->rawrd2_s_path);//rkisp_rawrd2_s
     _mipi_rx_devs[0]->open();
-    _mipi_rx_devs[0]->set_mem_type(V4L2_MEMORY_USERPTR);
+    _mipi_rx_devs[0]->set_mem_type(V4L2_MEMORY_DMABUF);
     //mid frame
     if (_linked_to_isp)
         _mipi_tx_devs[1] = new V4l2Device (s_info->isp_info->rawwr0_path);//rkisp_rawwr0
@@ -1002,7 +1002,7 @@ CamHwIsp20::init(const char* sns_ent_name)
     _mipi_tx_devs[1]->open();
     _mipi_rx_devs[1] = new V4l2Device (s_info->isp_info->rawrd0_m_path);//rkisp_rawrd0_m
     _mipi_rx_devs[1]->open();
-    _mipi_rx_devs[1]->set_mem_type(V4L2_MEMORY_USERPTR);
+    _mipi_rx_devs[1]->set_mem_type(V4L2_MEMORY_DMABUF);
     //long frame
     if (_linked_to_isp)
         _mipi_tx_devs[2] = new V4l2Device (s_info->isp_info->rawwr1_path);//rkisp_rawwr1
@@ -1012,7 +1012,7 @@ CamHwIsp20::init(const char* sns_ent_name)
     _mipi_rx_devs[2] = new V4l2Device (s_info->isp_info->rawrd1_l_path);//rkisp_rawrd1_l
     _mipi_rx_devs[2]->open();
 
-    _mipi_rx_devs[2]->set_mem_type(V4L2_MEMORY_USERPTR);
+    _mipi_rx_devs[2]->set_mem_type(V4L2_MEMORY_DMABUF);
     for (int i = 0; i < 3; i++) {
         if (_linked_to_isp) {
             _mipi_tx_devs[i]->set_buffer_count(ISP_TX_BUF_NUM);
@@ -2895,6 +2895,37 @@ CamHwIsp20::setIspParamsSync(int frameId)
             isp_params = (struct isp2x_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
             *isp_params = _full_active_isp_params;
             isp_params->frame_id = frameId;
+
+            SmartPtr<SensorHw> mSensorSubdev = mSensorDev.dynamic_cast_ptr<SensorHw>();
+            if (mSensorSubdev.ptr()) {
+                memset(&isp_params->exposure, 0, sizeof(isp_params->exposure));
+                SmartPtr<RkAiqExpParamsProxy> expParam;
+
+                ret = mSensorSubdev->getEffectiveExpParams(expParam, frameId);
+                if (ret != XCAM_RETURN_NO_ERROR) {
+                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "frame_id(%d), get exposure failed!!!\n", frameId);
+                } else {
+                    if (RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode) == RK_AIQ_WORKING_MODE_NORMAL) {
+                        isp_params->exposure.linear_exp.analog_gain_code_global = \
+                            expParam->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global;
+                        isp_params->exposure.linear_exp.coarse_integration_time = \
+                            expParam->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time;
+                    } else {
+                        isp_params->exposure.hdr_exp[0].analog_gain_code_global = \
+                            expParam->data()->aecExpInfo.HdrExp[0].exp_sensor_params.analog_gain_code_global;
+                        isp_params->exposure.hdr_exp[0].coarse_integration_time = \
+                            expParam->data()->aecExpInfo.HdrExp[0].exp_sensor_params.coarse_integration_time;
+                        isp_params->exposure.hdr_exp[1].analog_gain_code_global = \
+                            expParam->data()->aecExpInfo.HdrExp[1].exp_sensor_params.analog_gain_code_global;
+                        isp_params->exposure.hdr_exp[1].coarse_integration_time = \
+                            expParam->data()->aecExpInfo.HdrExp[1].exp_sensor_params.coarse_integration_time;
+                        isp_params->exposure.hdr_exp[2].analog_gain_code_global = \
+                            expParam->data()->aecExpInfo.HdrExp[2].exp_sensor_params.analog_gain_code_global;
+                        isp_params->exposure.hdr_exp[2].coarse_integration_time = \
+                            expParam->data()->aecExpInfo.HdrExp[2].exp_sensor_params.coarse_integration_time;
+                    }
+                }
+            }
 
             if (mIspParamsDev->queue_buffer (v4l2buf) != 0) {
                 LOGE_CAMHW_SUBM(ISP20HW_SUBM, "RKISP1: failed to ioctl VIDIOC_QBUF for index %d, %d %s.\n",
