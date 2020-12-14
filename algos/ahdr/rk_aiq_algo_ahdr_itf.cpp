@@ -94,7 +94,10 @@ static XCamReturn AhdrPrepare(RkAiqAlgoCom* params)
     else
         pAhdrCtx->FrameNumber = 3;
 
-    AhdrConfig(pAhdrCtx); //set default para
+    if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB ))
+        LOGD_AHDR("%s: Ahdr Reload Para!\n", __FUNCTION__);
+    else
+        AhdrConfig(pAhdrCtx); //set default para
     memcpy(&pAhdrCtx->pCalibDB, &pCalibDb->ahdr, sizeof(CalibDb_Ahdr_Para_t));//load iq paras
     memcpy(&pAhdrCtx->hdrAttr.stTool, &pCalibDb->ahdr, sizeof(CalibDb_Ahdr_Para_t));//load iq paras to stTool
 

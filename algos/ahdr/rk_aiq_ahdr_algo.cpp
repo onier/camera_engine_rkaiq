@@ -306,11 +306,11 @@ void AhdrApiOffConfig
     pAhdrCtx->AhdrConfig.tmo_para.local.EnvLv[12] = 1.0 ;
     for(int i = 0; i < 13; ++i)
     {
-        pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[i] = 0.25 ;
-        pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[i] = 0.5;
-        pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[i] = 1;
+        pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[i] = 0.25 * GLOBELUMAMAX ;
+        pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[i] = 0.5 * DETAILSHIGHLIGHTMAX;
+        pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[i] = 1 * DETAILSLOWLIGHTMIN;
         pAhdrCtx->AhdrConfig.tmo_para.global.GlobalTmoStrength[i] = 0.5;
-        pAhdrCtx->AhdrConfig.tmo_para.local.LocalTmoStrength[i] = 0.5;
+        pAhdrCtx->AhdrConfig.tmo_para.local.LocalTmoStrength[i] = 0.5 * TMOCONTRASTMAX;
     }
 
     LOGI_AHDR( "%s:exit!\n", __FUNCTION__);
@@ -1326,8 +1326,8 @@ void AhdrUpdateConfig
         LOGD_AHDR("%s:  Ahdr api Tool!! Current Handle data:\n", __FUNCTION__);
         AhdrIQUpdate(pAhdrCtx, AecHdrPreResult, AfPreResult);
 
-		//tmo en
-		pAhdrCtx->AhdrProcRes.bTmoEn = true;
+        //tmo en
+        pAhdrCtx->AhdrProcRes.bTmoEn = true;
         pAhdrCtx->AhdrProcRes.isLinearTmo = pAhdrCtx->FrameNumber == 1 ? true : false;
 
         //log after updating

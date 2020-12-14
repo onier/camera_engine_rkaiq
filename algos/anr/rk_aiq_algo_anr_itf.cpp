@@ -79,8 +79,17 @@ prepare(RkAiqAlgoCom* params)
     LOGI_ANR("%s: (enter)\n", __FUNCTION__ );
 
     ANRContext_t* pAnrCtx = (ANRContext_t *)params->ctx;
-    RkAiqAlgoConfigAnrInt* pCfgParam = (RkAiqAlgoConfigAnrInt*)params;
+    RkAiqAlgoConfigAnrInt* pCfgParam = (RkAiqAlgoConfigAnrInt*)params;	
+	pAnrCtx->prepare_type = params->u.prepare.conf_type;
 
+	if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+        pAnrCtx->stBayernrCalib = pCfgParam->rk_com.u.prepare.calib->bayerNr;
+		pAnrCtx->stMfnrCalib = pCfgParam->rk_com.u.prepare.calib->mfnr;
+		pAnrCtx->stYnrCalib = pCfgParam->rk_com.u.prepare.calib->ynr;
+		pAnrCtx->stUvnrCalib = pCfgParam->rk_com.u.prepare.calib->uvnr;
+		pAnrCtx->isIQParaUpdate = true;
+    }
+	
     ANRresult_t ret = ANRPrepare(pAnrCtx, &pCfgParam->stANRConfig);
     if(ret != ANR_RET_SUCCESS) {
         result = XCAM_RETURN_ERROR_FAILED;

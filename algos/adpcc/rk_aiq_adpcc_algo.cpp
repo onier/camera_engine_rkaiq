@@ -2672,6 +2672,23 @@ void Sensor_dpcc_process(AdpccContext_t *pAdpccCtx)
 
 }
 
+AdpccResult_t AdpccReloadPara(AdpccContext_t *pAdpccCtx, CamCalibDbContext_t *pCalibDb)
+{
+    LOGI_ADPCC(" %s(%d): enter!\n", __FUNCTION__, __LINE__);
+    LOGD_ADPCC(" %s(%d): Adpcc Reload Para, prepare type is %d!\n", __FUNCTION__, __LINE__, pAdpccCtx->prepare_type);
+
+    //init fix param for algo
+    pAdpccCtx->stDpccCalib = pCalibDb->dpcc;
+    pAdpccCtx->stTool = pCalibDb->dpcc;
+    dpcc_expert_mode_basic_params_init(&pAdpccCtx->stAuto.stBasicParams, &pAdpccCtx->stDpccCalib);
+    dpcc_fast_mode_basic_params_init(&pAdpccCtx->stAuto.stFastMode, &pAdpccCtx->stDpccCalib);
+    dpcc_pdaf_params_init(&pAdpccCtx->stAuto.stPdafParams, &pAdpccCtx->stDpccCalib.pdaf);
+    dpcc_sensor_params_init(&pAdpccCtx->stAuto.stSensorDpcc, &pAdpccCtx->stDpccCalib);
+    memset(&pAdpccCtx->stAuto.stPdafParams, 0x00, sizeof(pAdpccCtx->stAuto.stPdafParams));
+
+    LOGI_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
+    return ADPCC_RET_SUCCESS;
+}
 
 AdpccResult_t AdpccInit(AdpccContext_t **ppAdpccCtx, CamCalibDbContext_t *pCalibDb)
 {

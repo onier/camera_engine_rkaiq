@@ -128,10 +128,14 @@
   * v1.4.2
  *  - magic code:1089142
  *  - ACCM: support Hdr/Normal mode
+ * v1.4.3
+ *  - magic code:1123951
+ *  - ACPROC: support hue/bright/saturation settings 
+ *  - AIE: support ie mode setting
  */
 
-#define RK_AIQ_CALIB_VERSION_REAL_V          "v1.4.2"
-#define RK_AIQ_CALIB_VERSION_MAGIC_V         "1089142"
+#define RK_AIQ_CALIB_VERSION_REAL_V          "v1.4.3"
+#define RK_AIQ_CALIB_VERSION_MAGIC_V         "1123951"
 
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/

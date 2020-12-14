@@ -142,6 +142,7 @@ public:
     XCamReturn start();
     XCamReturn stop(bool keep_ext_hw_st = false);
     XCamReturn deInit();
+    XCamReturn updateCalibDb(const CamCalibDbContext_t* newCalibDb);
     // from IsppStatsListener
     XCamReturn isppStatsCb(SmartPtr<VideoBuffer>& isppStats);
     // from IspLumaListener

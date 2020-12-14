@@ -23,7 +23,6 @@
 #include "adehaze/rk_aiq_types_adehaze_algo_int.h"
 #include "RkAiqCalibDbTypes.h"
 
-RKAIQ_BEGIN_DECLARE
 
 typedef struct AdehazeHandle_s {
     rk_aiq_dehaze_cfg_t adhaz_config;
@@ -33,11 +32,9 @@ typedef struct AdehazeHandle_s {
     int working_mode;
     int Dehaze_Scene_mode;
     adehaze_sw_t AdehazeAtrr;
+    int prepare_type;
 } AdehazeHandle_t;
 
-
-
-RKAIQ_END_DECLARE
 
 #endif
 

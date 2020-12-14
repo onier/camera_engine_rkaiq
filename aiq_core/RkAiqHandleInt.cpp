@@ -4543,6 +4543,64 @@ RkAiqAgicHandleInt::postProcess()
     return ret;
 }
 
+XCamReturn
+RkAiqAieHandleInt::updateConfig(bool needSync)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (needSync)
+        mCfgMutex.lock();
+    // if something changed
+    if (updateAtt) {
+        mCurAtt = mNewAtt;
+        updateAtt = false;
+        rk_aiq_uapi_aie_SetAttrib(mAlgoCtx, mCurAtt, false);
+        sendSignal();
+    }
+    if (needSync)
+        mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAieHandleInt::setAttrib(aie_attrib_t att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    mCfgMutex.lock();
+    // check if there is different between att & mCurAtt
+    // if something changed, set att to mNewAtt, and
+    // the new params will be effective later when updateConfig
+    // called by RkAiqCore
+    if (0 != memcmp(&mCurAtt, &att, sizeof(aie_attrib_t))) {
+        mNewAtt = att;
+        updateAtt = true;
+        waitSignal();
+    }
+
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAieHandleInt::getAttrib(aie_attrib_t *att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_aie_GetAttrib(mAlgoCtx, att);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
 void
 RkAiqAieHandleInt::init()
 {

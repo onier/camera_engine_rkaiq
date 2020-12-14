@@ -1560,10 +1560,34 @@ typedef struct CalibDb_MFNR_Dynamic_s {
     float highth_time;
 } CalibDb_MFNR_Dynamic_t;
 
+typedef struct CalibDb_MFNR_Motion_s {
+    int enable;
+    float iso[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float sigmaHScale[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float sigmaLScale[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float lightClp[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float uvWeight[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float mfnrSigmaScale[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float yuvnrGainScale0[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float yuvnrGainScale1[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float yuvnrGainScale2[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved0[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved1[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved2[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved3[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved4[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved5[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved6[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved7[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved8[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+	float reserved9[CALIBDB_NR_SHARP_MAX_ISO_LEVEL];
+} CalibDb_MFNR_Motion_t;
+
 typedef struct CalibDb_MFNR_ModeCell_s {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     CalibDb_MFNR_Setting_t setting[CALIBDB_NR_SHARP_SETTING_LEVEL];
     CalibDb_MFNR_Dynamic_t dynamic;
+	CalibDb_MFNR_Motion_t  motion;
 } CalibDb_MFNR_ModeCell_t;
 
 typedef struct CalibDb_MFNR_s {
@@ -1607,6 +1631,12 @@ typedef struct CalibDb_Sharp_Setting_s {
 
 typedef struct CalibDb_Sharp_ModeCell_s {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
+	float gauss_luma_coeff[9];
+	float pbf_coeff[9];
+	float rf_m_coeff[25];
+	float mbf_coeff[221];
+	float rf_h_coeff[25];
+	float hbf_coeff[9];
     CalibDb_Sharp_Setting_t setting[CALIBDB_NR_SHARP_SETTING_LEVEL];
 } CalibDb_Sharp_ModeCell_t;
 
@@ -1915,6 +1945,19 @@ typedef struct CalibDb_ColorAsGrey_s {
     int enable;
 } CalibDb_ColorAsGrey_t;
 
+typedef struct CalibDb_cProc_s {
+    uint8_t enable;
+    uint8_t brightness;
+    uint8_t contrast;
+    uint8_t saturation;
+    uint8_t hue;
+} CalibDb_cProc_t;
+
+typedef struct CalibDb_IE_s {
+    int enable;
+    int mode;
+} CalibDb_IE_t;
+
 typedef struct CamCalibDbContext_s {
     CalibDb_Header_t header;
     CalibDb_Awb_Para_t awb;
@@ -1944,6 +1987,8 @@ typedef struct CamCalibDbContext_s {
     CalibDb_Module_Info_t module;
     CalibDb_Cpsl_t cpsl;
     CalibDb_ColorAsGrey_t colorAsGrey;
+    CalibDb_cProc_t cProc;
+    CalibDb_IE_t    ie;
     CalibDb_System_t  sysContrl;
 } CamCalibDbContext_t;
 

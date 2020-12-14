@@ -35,6 +35,7 @@ typedef struct alut3d_context_s {
     rk_aiq_lut3d_attrib_t mCurAtt;
     rk_aiq_lut3d_attrib_t mNewAtt;
     bool updateAtt;
+    int prepare_type;
 } alut3d_context_t ;
 
 typedef alut3d_context_t* alut3d_handle_t ;

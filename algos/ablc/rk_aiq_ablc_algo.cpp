@@ -99,7 +99,14 @@ AblcResult_t Ablc_xml_params_init(AblcParams_t *pParams, CalibDb_Blc_t* pBlcCali
         pParams->blc_b[i] = (short int)(pBlcCalib->mode_cell[mode_idx].level[3][i]);
     }
 
-
+	LOGD_ABLC("%s(%d): Ablc en:%d blc:%d %d %d %d \n",
+              __FUNCTION__, __LINE__,
+              pParams->enable,
+              pParams->blc_r[0],
+              pParams->blc_gr[0],
+              pParams->blc_gb[0],
+              pParams->blc_gb[0]);
+	
     LOGI_ABLC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ret;
 }
@@ -307,6 +314,23 @@ AblcResult_t AblcRelease(AblcContext_t *pAblcCtx)
 
 }
 
+//anr reconfig
+AblcResult_t AblcIQParaUpdate(AblcContext_t *pAblcCtx)
+{
+    LOGI_ABLC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
+    //need todo what?
+
+	if(pAblcCtx->isIQParaUpdate){
+		LOGD_ABLC("IQ data reconfig\n");
+		Ablc_config_mode_param(&pAblcCtx->stAuto.stParams, &pAblcCtx->stBlcCalib, pAblcCtx->eParamMode);
+		pAblcCtx->isIQParaUpdate = false;
+	}
+
+    LOGI_ABLC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
+    return ABLC_RET_SUCCESS;
+}
+
+
 AblcResult_t AblcConfig(AblcContext_t *pAblcCtx, AblcConfig_t* pAblcConfig)
 {
     LOGI_ABLC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
@@ -324,7 +348,11 @@ AblcResult_t AblcConfig(AblcContext_t *pAblcCtx, AblcConfig_t* pAblcConfig)
     //pAblcCtx->eMode = pAblcConfig->eMode;
     //pAblcCtx->eState = pAblcConfig->eState;
 
-
+	//update calibdb
+	if(!!(pAblcCtx->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB)){	
+		AblcIQParaUpdate(pAblcCtx);
+	}
+	
     LOGI_ABLC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ABLC_RET_SUCCESS;
 

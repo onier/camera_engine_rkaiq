@@ -1065,6 +1065,16 @@
 #define    CALIB_SENSOR_COLOR_AS_GREY_ENABLE              "enable"
 
 /******************************************************************************
+* XML CPROC section
+*****************************************************************************/
+#define    CALIB_SENSOR_CPROC                             "CPROC"
+#define    CALIB_SENSOR_CPROC_ENABLE                      "enable"
+#define    CALIB_SENSOR_CPROC_BRIGHTNESS                  "brightness"
+#define    CALIB_SENSOR_CPROC_CONTRAST                    "contrast"
+#define    CALIB_SENSOR_CPROC_SATURATION                  "saturation"
+#define    CALIB_SENSOR_CPROC_HUE                         "hue"
+
+/******************************************************************************
  * XML system section
  *****************************************************************************/
 #define CALIB_SYSTEM_TAG                                    "system"

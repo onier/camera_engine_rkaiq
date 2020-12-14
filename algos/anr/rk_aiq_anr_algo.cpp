@@ -172,6 +172,12 @@ ANRresult_t ANRPrepare(ANRContext_t *pANRCtx, ANRConfig_t* pANRConfig)
     //pANRCtx->eMode = pANRConfig->eMode;
     //pANRCtx->eState = pANRConfig->eState;
     //pANRCtx->refYuvBit = pANRConfig->refYuvBit;
+
+	//update iq calibdb to context
+	if(!!(pANRCtx->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB)){	
+		ANRIQParaUpdate(pANRCtx);
+	}
+	
     ANRStart(pANRCtx);
 
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);

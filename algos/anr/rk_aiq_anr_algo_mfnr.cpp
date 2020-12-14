@@ -382,6 +382,12 @@ ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCali
     	}
 	#endif
 
+	LOGD_ANR("oyyf mfnr iso50: lbfscale:%f hbfscale:%f strength:%f %f\n",
+		pParams->scale[0][0][0],
+		pParams->scale[0][1][0],
+		pParams->dnstr[0][0],
+		pParams->dnstr[0][1]);
+	
     //memcpy(pParams->mfnr_ver_char, pCalibdb->version, sizeof(pParams->mfnr_ver_char));
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
@@ -431,7 +437,7 @@ ANRresult_t select_mfnr_params_by_ISO(RKAnr_Mfnr_Params_t *stmfnrParams,    RKAn
 
 #ifndef RK_SIMULATOR_HW
     for (i = 0; i < MAX_ISO_STEP - 1; i++) {
-        if(iso >= stmfnrParams->iso[i] && iso_low <= stmfnrParams->iso[i + 1]) {
+        if(iso >= stmfnrParams->iso[i] && iso <= stmfnrParams->iso[i + 1]) {
             iso_low = stmfnrParams->iso[i];
             iso_high = stmfnrParams->iso[i + 1];
             gain_low = i;

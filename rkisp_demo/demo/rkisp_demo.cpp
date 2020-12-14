@@ -36,6 +36,7 @@
 #define CAPTURE_RAW_PATH "/tmp"
 #define CAPTURE_CNT_FILENAME ".capture_cnt"
 #define ENABLE_UAPI_TEST
+#define IQFILE_PATH_MAX_LEN 256
 
 struct buffer {
     void *start;
@@ -128,6 +129,30 @@ char* get_dev_name(demo_context_t* ctx)
 char* get_sensor_name(demo_context_t* ctx)
 {
       return ctx->sns_name;
+}
+
+void test_update_iqfile(const rk_aiq_sys_ctx_t* ctx)
+{
+  char iqfile[IQFILE_PATH_MAX_LEN] = {0};
+  printf("\nspecial an new iqfile:\n");
+  printf("\t1) /oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-60IRC-4MP-F16.xml\n");
+  printf("\t2) /oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-40IRC-4MP-F16.xml\n");
+  printf("\ninput 1/2 use default xml or input full path end of ENTER\n");
+  fgets(iqfile, IQFILE_PATH_MAX_LEN, stdin);
+  if (iqfile[0] == '1') {
+    snprintf(iqfile, IQFILE_PATH_MAX_LEN, "%s",
+             "/oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-60IRC-4MP-F16.xml");
+  } else if (iqfile[0] == '2') {
+    snprintf(iqfile, IQFILE_PATH_MAX_LEN, "%s",
+             "/oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-40IRC-4MP-F16.xml");
+  } else if (!strstr(iqfile, "xml")) {
+    printf("[AIQ]input is not an valide xml:%s\n", iqfile);
+    return;
+  }
+
+  printf("[AIQ] appling new iq file:%s\n", iqfile);
+
+  rk_aiq_uapi_sysctl_updateIq(ctx, iqfile);
 }
 
 void test_imgproc(const demo_context_t* demo_ctx) {
@@ -324,26 +349,26 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         break;
     case 'C':
         paRect_t rect;
-        rect.x = -1000;
-        rect.y = -1000;
-        rect.w = 1000;
+        rect.x = 0;
+        rect.y = 0;
+        rect.w = 800;
         rect.h = 1000;
         rk_aiq_uapi_setFocusWin(ctx, &rect);
         printf("setFocusWin 0\n");
         break;
     case 'D':
-        rect.x = 0;
-        rect.y = 0;
-        rect.w = 1000;
-        rect.h = 1000;
+        rect.x = 1200;
+        rect.y = 1000;
+        rect.w = 600;
+        rect.h = 400;
         rk_aiq_uapi_setFocusWin(ctx, &rect);
         printf("setFocusWin 1\n");
         break;
     case 'E':
         rect.x = 0;
-        rect.y = -1000;
-        rect.w = 1000;
-        rect.h = 1000;
+        rect.y = 600;
+        rect.w = 550;
+        rect.h = 550;
         rk_aiq_uapi_setFocusWin(ctx, &rect);
         printf("setFocusWin 2\n");
         break;
@@ -669,6 +694,11 @@ void test_imgproc(const demo_context_t* demo_ctx) {
            printf("test to capture raw sync\n");
            rk_aiq_uapi_debug_captureRawSync(ctx, CAPTURE_RAW_SYNC, 5, "/tmp", output_dir);
            printf("Raw's storage directory is (%s)\n", output_dir);
+       }
+       break;
+    case 'V':
+       {
+         test_update_iqfile(ctx);
        }
        break;
     default:

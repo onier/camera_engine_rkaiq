@@ -29,7 +29,7 @@ RKAIQ_BEGIN_DECLARE
 static XCamReturn
 create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
     RkAiqAlgoContext *ctx = new RkAiqAlgoContext();
     if (ctx == NULL) {
         LOGE_A3DLUT( "%s: create 3dlut context fail!\n", __FUNCTION__);
@@ -39,48 +39,53 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
     Alut3dInit(&ctx->a3dlut_para, cfgInt->calib);
     *context = ctx;
 
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn
 destroy_context(RkAiqAlgoContext *context)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
 
     Alut3dRelease((alut3d_handle_t)context->a3dlut_para);
     delete context;
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn
 prepare(RkAiqAlgoCom* params)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
     alut3d_handle_t hAlut3d = (alut3d_handle_t)(params->ctx->a3dlut_para);
     RkAiqAlgoConfigA3dlutInt *para = (RkAiqAlgoConfigA3dlutInt*)params;
+    hAlut3d->prepare_type = params->u.prepare.conf_type;
+    if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+        RkAiqAlgoConfigA3dlutInt* confPara = (RkAiqAlgoConfigA3dlutInt*)params;
+        hAlut3d->calib_lut3d = &confPara->rk_com.u.prepare.calib->lut3d;
+    }
     Alut3dPrepare((alut3d_handle_t)(params->ctx->a3dlut_para));
 
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn
 pre_process(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
 
     Alut3dPreProc((alut3d_handle_t)(inparams->ctx->a3dlut_para));
 
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn
 processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
 
     RkAiqAlgoProcResA3dlutInt *proResAlut3d = (RkAiqAlgoProcResA3dlutInt*)outparams;
     alut3d_handle_t hAlut3d = (alut3d_handle_t)(inparams->ctx->a3dlut_para);
@@ -88,16 +93,16 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     Alut3dConfig(hAlut3d);
     memcpy(&proResAlut3d->a3dlut_proc_res_com.lut3d_hw_conf, &hAlut3d->lut3d_hw_conf, sizeof(rk_aiq_lut3d_cfg_t));
 
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn
 post_process(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 {
-    LOGI_A3DLUT( "%s: (enter)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (enter)\n", __FUNCTION__);
 
-    LOGI_A3DLUT( "%s: (exit)\n", __FUNCTION__);
+    LOG1_A3DLUT( "%s: (exit)\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
 
 }

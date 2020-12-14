@@ -35,6 +35,7 @@ typedef struct accm_sw_info_s {
     bool grayMode;
     bool awbConverged;
     int hdr_mode;
+    int prepare_type;
 } accm_sw_info_t;
 
 typedef struct rk_aiq_ccm_mccm_attrib_s {
@@ -63,7 +64,7 @@ typedef enum rk_aiq_ccm_op_mode_s {
     RK_AIQ_CCM_MODE_INVALID                     = 0,        /**< initialization value */
     RK_AIQ_CCM_MODE_MANUAL                      = 1,        /**< run manual lens shading correction */
     RK_AIQ_CCM_MODE_AUTO                        = 2,        /**< run auto lens shading correction */
-    RK_AIQ_CCM_MODE_TOOL                        = 3,        /**< config from stTool  */
+    //RK_AIQ_CCM_MODE_TOOL                        = 3,        /**< config from stTool  */
     RK_AIQ_CCM_MODE_MAX
 } rk_aiq_ccm_op_mode_t;
 

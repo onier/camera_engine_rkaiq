@@ -511,6 +511,7 @@ endif()
 # ----------------------------------------------------------------------------
 set (AIE_SRC
 	aie/rk_aiq_algo_aie_itf.cpp
+	aie/rk_aiq_algo_aie_int.cpp
     )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/algos/aie/rk_aiq_algo_aie_itf.cpp")

@@ -135,7 +135,7 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
 
 	CalibDb_Sharp_Setting_t *pSetting = &pCalibdb->mode_cell[mode_idx].setting[setting_idx];
     for (i = 0; i < max_iso_step; i++) {
-#ifndef RK_SIMULATOR_HW
+		#ifndef RK_SIMULATOR_HW
 		pParams->iso[i] = pSetting->sharp_iso[i].iso;
 		#endif
 		pParams->lratio[i] = pSetting->sharp_iso[i].lratio;
@@ -236,61 +236,102 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
         0.156250, 0.25, 0.156250
     };
 
+	float* p_gaus_luma_kernel = gaus_luma_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].gauss_luma_coeff[RKSHAPRENHW_GAU_DIAM * RKSHAPRENHW_GAU_DIAM / 2] != 0){
+		p_gaus_luma_kernel = pCalibdb->mode_cell[mode_idx].gauss_luma_coeff;
+	}
+	#endif
+				
 	for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_GAU_DIAM;
         int w = RKSHAPRENHW_GAU_DIAM;
         for(int m = 0; m < h; m++){
-            for(int n = 0; n < w; n++){
-                pParams->gaus_luma_kernel[i][m * w + n] = gaus_luma_coeff[m * w + n];
+            for(int n = 0; n < w; n++){				
+                pParams->gaus_luma_kernel[i][m * w + n] = p_gaus_luma_kernel[m * w + n];
 			}
         }
     }
 
+	float* p_kernel_pbf = pbf_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].pbf_coeff[RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM / 2] != 0){
+		p_kernel_pbf = pCalibdb->mode_cell[mode_idx].pbf_coeff;
+	}
+	#endif
     for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_PBF_DIAM;
         int w = RKSHAPRENHW_PBF_DIAM;
         for(int m = 0; m < h; m++){
             for(int n = 0; n < w; n++)
-                pParams->kernel_pbf[i][m * w + n] = pbf_coeff[m * w + n];
+                pParams->kernel_pbf[i][m * w + n] = p_kernel_pbf[m * w + n];
         }
     }
 
+	float* p_h_rf_m = rf_m_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].rf_m_coeff[RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM / 2] != 0){
+		p_h_rf_m = pCalibdb->mode_cell[mode_idx].rf_m_coeff;
+	}
+	#endif
     for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_MRF_DIAM;
         int w = RKSHAPRENHW_MRF_DIAM;
         for(int m = 0; m < h; m++){
             for(int n = 0; n < w; n++)
-                pParams->h_rf_m[i][m * w + n] = rf_m_coeff[m * w + n];
+                pParams->h_rf_m[i][m * w + n] = p_h_rf_m[m * w + n];
         }
     }
 
+	float* p_kernel_mbf= mbf_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].mbf_coeff[RKSHAPRENHW_MBF_DIAM_Y * RKSHAPRENHW_MBF_DIAM_X / 2 - 1] != 0){
+		p_kernel_mbf = pCalibdb->mode_cell[mode_idx].mbf_coeff;
+	}
+	#endif
 	for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_MBF_DIAM_Y;
         int w = RKSHAPRENHW_MBF_DIAM_X;
         for(int m = 0; m < h; m++){
             for(int n = 0; n < w; n++)
-                pParams->kernel_mbf[i][m * w + n] = mbf_coeff[m * w + n];
+                pParams->kernel_mbf[i][m * w + n] = p_kernel_mbf[m * w + n];
         }
     }
 
+	float* p_h_rf_h= rf_h_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].rf_h_coeff[RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM / 2] != 0){
+		p_h_rf_h = pCalibdb->mode_cell[mode_idx].rf_h_coeff;
+	}
+	#endif
     for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_HRF_DIAM;
         int w = RKSHAPRENHW_HRF_DIAM;
         for(int m = 0; m < h; m++){
             for(int n = 0; n < w; n++)
-                pParams->h_rf_h[i][m * w + n] = rf_h_coeff[m * w + n];
+                pParams->h_rf_h[i][m * w + n] = p_h_rf_h[m * w + n];
         }
     }
 
+	float* p_kernel_hbf= hbf_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].hbf_coeff[RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM / 2] != 0){
+		p_kernel_hbf = pCalibdb->mode_cell[mode_idx].hbf_coeff;
+	}
+	#endif
     for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_HBF_DIAM;
         int w = RKSHAPRENHW_HBF_DIAM;
         for(int m = 0; m < h; m++){
             for(int n = 0; n < w; n++)
-                pParams->kernel_hbf[i][m * w + n] = hbf_coeff[m * w + n];
+                pParams->kernel_hbf[i][m * w + n] = p_kernel_hbf[m * w + n];
         }
     }
 
+	LOGD_ASHARP("oyyf sharp iso50 lratio:%f hratio:%f\n", 
+			pParams->lratio[0],
+			pParams->hratio[0]);
+	
 	return res;
 
 }

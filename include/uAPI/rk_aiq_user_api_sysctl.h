@@ -356,6 +356,15 @@ rk_aiq_uapi_sysctl_setCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t rect);
 XCamReturn
 rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t rect);
 
+/*!
+ * \brief apply an new iq file when stream on
+ *
+ * \param[in] iqfile       iqfile which will be applied
+ */
+
+XCamReturn
+rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile);
+
 RKAIQ_END_DECLARE
 
 #endif

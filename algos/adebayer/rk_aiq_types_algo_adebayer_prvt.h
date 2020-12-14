@@ -44,7 +44,7 @@ typedef struct _RkAiqAlgoContext {
     AdebayerContext_t adebayerCtx;
 } RkAiqAlgoContext;
 
-XCamReturn AdebayerInit(AdebayerContext_t *ppAdebayerCtx);
+XCamReturn AdebayerInit(AdebayerContext_t *ppAdebayerCtx, CamCalibDbContext_t *pCalibDb);
 
 XCamReturn AdebayerRelease(AdebayerContext_t *pAdebayerCtx);
 

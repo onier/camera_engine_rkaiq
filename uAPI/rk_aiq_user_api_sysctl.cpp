@@ -413,6 +413,7 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_asd.cpp"
 #include "rk_aiq_user_api_aldch.cpp"
 #include "rk_aiq_user_api_acp.cpp"
+#include "rk_aiq_user_api_aie.cpp"
 
 #define RK_AIQ_ALGO_TYPE_MODULES (RK_AIQ_ALGO_TYPE_MAX + 1)
 
@@ -703,6 +704,34 @@ rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t* rect)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ret = sys_ctx->_camHw->getSensorCrop(*rect);
+
+    return ret;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    LOGI("applying new iq file:%s\n", iqfile);
+
+    if (!sys_ctx) {
+      LOGE("%s: sys_ctx is invalied\n", __func__);
+      return XCAM_RETURN_ERROR_FAILED;
+    }
+
+    auto newCalibDb = RkAiqCalibDb::createCalibDb(iqfile);
+    if (!newCalibDb) {
+      LOGE("failed to create new CalibDb for:%s\n", iqfile);
+      return XCAM_RETURN_ERROR_FAILED;
+    }
+
+    ret = sys_ctx->_rkAiqManager->updateCalibDb(newCalibDb);
+
+    if (ret) {
+      LOGE("failed to update iqfile\n");
+      ret = XCAM_RETURN_ERROR_FAILED;
+    }
 
     return ret;
 }

@@ -300,10 +300,16 @@
  * - add some new iqfiles
  * - update rkisp2x_tuner v1.3.2
  * - fix some API bugs of ahdr/adpcc/adehaze
+ * v1.0x24.1
+ * - calib db: v1.4.3 magic code: 1123951
+ *   - add cpie settings
+ * - iq_parser: disable strict tag verification
+ * - isp driver v1.0x2.1, same as v1.0x23.1
+ * - uapi: add rk_aiq_uapi_sysctl_updateIq
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x24.0"
-#define RK_AIQ_RELEASE_DATE "2020-12-07"
+#define RK_AIQ_VERSION_REAL_V "v1.0x24.1"
+#define RK_AIQ_RELEASE_DATE "2020-12-14"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

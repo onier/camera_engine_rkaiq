@@ -34,7 +34,6 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
     LOGI_ADPCC("%s: (enter)\n", __FUNCTION__ );
     AlgoCtxInstanceCfgInt *cfgInt = (AlgoCtxInstanceCfgInt*)cfg;
 
-#if 1
     AdpccContext_t* pAdpccCtx = NULL;
     AdpccResult_t ret = AdpccInit(&pAdpccCtx, cfgInt->calib);//load iq paras
     if(ret != ADPCC_RET_SUCCESS) {
@@ -43,7 +42,7 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
     } else {
         *context = (RkAiqAlgoContext *)(pAdpccCtx);
     }
-#endif
+
 
     LOGI_ADPCC("%s: (exit)\n", __FUNCTION__ );
     return result;
@@ -76,18 +75,18 @@ prepare(RkAiqAlgoCom* params)
 
     LOGI_ADPCC("%s: (enter)\n", __FUNCTION__ );
 
-#if 1
     AdpccContext_t* pAdpccCtx = (AdpccContext_t *)params->ctx;
     RkAiqAlgoConfigAdpccInt* pCfgParam = (RkAiqAlgoConfigAdpccInt*)params;
     AdpccConfig_t* pAdpccConfig = &pCfgParam->stAdpccConfig;
+    pAdpccCtx->prepare_type = params->u.prepare.conf_type;
 
-    AdpccResult_t ret = AdpccConfig(pAdpccCtx, pAdpccConfig);
-    if(ret != ADPCC_RET_SUCCESS) {
-        result = XCAM_RETURN_ERROR_FAILED;
-        LOGE_ADPCC("%s: config Adpcc failed (%d)\n", __FUNCTION__, ret);
+    if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
+        AdpccResult_t ret = AdpccReloadPara(pAdpccCtx, pCfgParam->rk_com.u.prepare.calib);
+        if(ret != ADPCC_RET_SUCCESS) {
+            result = XCAM_RETURN_ERROR_FAILED;
+            LOGE_ADPCC("%s: Adpcc Reload Para failed (%d)\n", __FUNCTION__, ret);
+        }
     }
-
-#endif
 
     LOGI_ADPCC("%s: (exit)\n", __FUNCTION__ );
     return result;

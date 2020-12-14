@@ -220,6 +220,8 @@ typedef struct ANRContext_s {
 	bool isIQParaUpdate;
 	bool isGrayMode;
 	ANRParamMode_t eParamMode;
+
+	int prepare_type;
 } ANRContext_t;
 
 

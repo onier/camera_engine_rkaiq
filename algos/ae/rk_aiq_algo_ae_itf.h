@@ -49,10 +49,13 @@
  * In LinAe, Backlit support designated DarkROI
  *              add OverExpCtrl
  * delete some useless modules,including:AOE,Hist2Hal,IntervalAdjust
+ * v0.1.6-20201211
+ * support P-iris/DC-iris
+ * support SyncTest
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.5"
+#define RKISP_ALGO_AE_VERSION     "v0.1.6"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 

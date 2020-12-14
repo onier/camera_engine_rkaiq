@@ -389,6 +389,72 @@ RkAiqManager::deInit()
 }
 
 XCamReturn
+RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
+{
+  XCamReturn ret = XCAM_RETURN_NO_ERROR;
+  SmartPtr<RkAiqFullParamsProxy> initParams;
+
+  if (_state != AIQ_STATE_STARTED) {
+    LOGW_ANALYZER("should be called at STARTED state");
+    return ret;
+  }
+
+  mAiqRstAppTh->triger_stop();
+  bool bret = mAiqRstAppTh->stop();
+  ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
+  RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
+
+  ret = mRkAiqAnalyzer->stop();
+  RKAIQMNG_CHECK_RET(ret, "analyzer stop error %d", ret);
+
+  ret = mRkLumaAnalyzer->stop();
+  RKAIQMNG_CHECK_RET(ret, "luma analyzer stop error %d", ret);
+
+  // ret = mRkAiqAnalyzer->deInit();
+  ret = mRkLumaAnalyzer->deInit();
+
+  mCalibDb = newCalibDb;
+
+  ret = mRkAiqAnalyzer->setCalib(mCalibDb);
+  ret = mRkLumaAnalyzer->init(&mCalibDb->lumaDetect);
+
+  // 3. re-prepare analyzer
+  LOGI_ANALYZER("reprepare analyzer ...");
+  rk_aiq_exposure_sensor_descriptor sensor_des;
+  ret = mCamHw->getSensorModeData(mSnsEntName, sensor_des);
+
+  int working_mode_hw = RK_AIQ_WORKING_MODE_NORMAL;
+  if (mWorkingMode == RK_AIQ_WORKING_MODE_ISP_HDR2)
+      working_mode_hw = RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR;
+  else if (mWorkingMode == RK_AIQ_WORKING_MODE_ISP_HDR3)
+      working_mode_hw = RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR;
+
+  ret = mRkAiqAnalyzer->prepare(&sensor_des, working_mode_hw);
+  RKAIQMNG_CHECK_RET(ret, "analyzer prepare error %d", ret);
+
+  initParams = mRkAiqAnalyzer->getAiqFullParams();
+
+  ret = applyAnalyzerResult(initParams);
+  RKAIQMNG_CHECK_RET(ret, "set initial params error %d", ret);
+
+  // 4. restart analyzer
+  LOGI_ANALYZER("restart analyzer");
+  mAiqRstAppTh->triger_start();
+  bret = mAiqRstAppTh->start();
+  ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
+  RKAIQMNG_CHECK_RET(ret, "apply result thread start error");
+
+  ret = mRkAiqAnalyzer->start();
+  RKAIQMNG_CHECK_RET(ret, "analyzer start error %d", ret);
+
+  ret = mRkLumaAnalyzer->start();
+  RKAIQMNG_CHECK_RET(ret, "luma analyzer start error %d", ret);
+
+  EXIT_XCORE_FUNCTION();
+  return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
 RkAiqManager::isppStatsCb(SmartPtr<VideoBuffer>& isppStats)
 {
     ENTER_XCORE_FUNCTION();
