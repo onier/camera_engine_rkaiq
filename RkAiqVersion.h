@@ -294,7 +294,7 @@
  *   - Add a strategy to avoid flicker in global Tmo cuased by Tmo algo
  *   - Fix bug that the wrong interpolation between dot=12 and dot=13 in AHDR
  * - some cpu usage optimization
- * v1.0x23.2
+ * v1.0x24.0
  * - calib db: v1.4.2 magic code: 1089142, same as v1.0x23.0
  * - isp driver v1.0x2.1, same as v1.0x23.1
  * - add some new iqfiles
@@ -302,7 +302,7 @@
  * - fix some API bugs of ahdr/adpcc/adehaze
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x23.2"
+#define RK_AIQ_VERSION_REAL_V "v1.0x24.0"
 #define RK_AIQ_RELEASE_DATE "2020-12-07"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
