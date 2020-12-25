@@ -713,6 +713,18 @@ V4l2Device::stop ()
         /*     _queued_bufcnt--; */
         /* } */
         /* fini_buffer_pool (); */
+        /* release the shared buf between mipi tx and rx */
+        if (_memory_type == V4L2_MEMORY_DMABUF) {
+            struct v4l2_requestbuffers request_buf;
+            xcam_mem_clear (request_buf);
+            request_buf.type = _buf_type;
+            request_buf.count = 0;
+            request_buf.memory = _memory_type;
+            if (io_control (VIDIOC_REQBUFS, &request_buf) < 0) {
+                XCAM_LOG_ERROR ("device(%s) starts failed on VIDIOC_REQBUFS", XCAM_STR (_name));
+                //return XCAM_RETURN_ERROR_IOCTL;
+            }
+        }
     }
 
     if (_buf_pool.size() > 0)
