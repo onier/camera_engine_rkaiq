@@ -45,4 +45,12 @@ v1.3.2 - 2020.12.07
   - fix the bug that tmo get function using wrong structure
   - other optimizations
 
+v1.3.3 - 2020.12.16
+  - add ccm module
+  - add cproc module
+  - add awb module to tuning assistant
+
+v1.4.0 - 2020.12.28
+  - fix some bug
+  - change version matching rule
 ==================== RKISP2X TUNER VERSION HISTORY ====================
