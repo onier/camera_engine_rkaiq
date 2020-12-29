@@ -100,6 +100,7 @@ public:
     };
 
     void triger_start() {
+        mAiqRstQueue.clear ();
         mAiqRstQueue.resume_pop ();
     };
 

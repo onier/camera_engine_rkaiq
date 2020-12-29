@@ -2978,9 +2978,11 @@ CamHwIsp20::setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams)
             _state == CAM_HW_STATE_PAUSED) {
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "hdr-debug: %s: first set ispparams id[%d]\n",
                         __func__, ispParams->data()->frame_id);
-        ret = mIspParamsDev->start();
-        if (ret < 0) {
-            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare isp params dev err: %d\n", ret);
+        if (!mIspParamsDev->is_activated()) {
+            ret = mIspParamsDev->start();
+            if (ret < 0) {
+                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare isp params dev err: %d\n", ret);
+            }
         }
 
         setIspParamsSync(ispParams->data()->frame_id);
@@ -3024,9 +3026,11 @@ CamHwIsp20::setIsppParams(SmartPtr<RkAiqIsppParamsProxy>& isppParams)
             _state == CAM_HW_STATE_PAUSED) {
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "hdr-debug: %s: first set isppParams id[%d]\n",
                         __func__, isppParams->data()->frame_id);
-        ret = mIsppParamsDev->start();
-        if (ret < 0) {
-            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare ispp params dev err: %d\n", ret);
+        if (!mIsppParamsDev->is_activated()) {
+            ret = mIsppParamsDev->start();
+            if (ret < 0) {
+                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare ispp params dev err: %d\n", ret);
+            }
         }
         setIsppParamsSync(isppParams->data()->frame_id);
     }
