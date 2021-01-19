@@ -321,6 +321,13 @@ typedef struct {
     float sharpness[64];
 } rk_aiq_af_sec_path_t;
 
+typedef struct {
+    int min_pos;
+    int max_pos;
+    float min_fl;
+    float max_fl;
+} rk_aiq_af_zoomrange;
+
 // sensor
 typedef struct {
     unsigned short line_periods_vertical_blanking;
@@ -605,5 +612,19 @@ typedef enum capture_raw_e {
     CAPTURE_RAW_SYNC,
     CAPTURE_RAW_AND_YUV_SYNC,
 } capture_raw_t;
+
+typedef enum rk_aiq_rawbuf_type_s {
+    RK_AIQ_RAW_ADDR,
+    RK_AIQ_RAW_FD,
+    RK_AIQ_RAW_DATA,
+    RK_AIQ_RAW_FILE
+}rk_aiq_rawbuf_type_t;
+
+typedef struct rk_aiq_raw_prop_s {
+    uint32_t frame_width;
+    uint32_t frame_height;
+    rk_aiq_format_t format;
+    rk_aiq_rawbuf_type_t rawbuf_type;
+}rk_aiq_raw_prop_t;
 
 #endif

@@ -454,6 +454,42 @@ XCamReturn rk_aiq_uapi_getVcmCfg(const rk_aiq_sys_ctx_t* ctx, rk_aiq_lens_vcmcfg
 XCamReturn rk_aiq_uapi_getSearchPath(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_sec_path_t* path);
 
 /*
+*****************************
+*
+* Desc: Focus Correstion
+* Argument:
+*
+*
+*****************************
+*/
+XCamReturn rk_aiq_uapi_FocusCorrestion(const rk_aiq_sys_ctx_t* ctx);
+
+/*
+*****************************
+*
+* Desc: Zoom
+* Argument:
+*
+*
+*****************************
+*/
+XCamReturn rk_aiq_uapi_getZoomRange(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_zoomrange* range);
+XCamReturn rk_aiq_uapi_setOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int pos);
+XCamReturn rk_aiq_uapi_getOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int *pos);
+XCamReturn rk_aiq_uapi_setZoomZeroPos(const rk_aiq_sys_ctx_t* ctx, int zero_pos);
+
+/*
+*****************************
+*
+* Desc: Zoom Correstion
+* Argument:
+*
+*
+*****************************
+*/
+XCamReturn rk_aiq_uapi_ZoomCorrestion(const rk_aiq_sys_ctx_t* ctx);
+
+/*
 **********************************************************
 * HDR
 **********************************************************

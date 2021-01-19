@@ -132,10 +132,19 @@
  *  - magic code:1123951
  *  - ACPROC: support hue/bright/saturation settings 
  *  - AIE: support ie mode setting
+ * v1.4.4
+ *  - mfnr: add motion detect module enable/disable control
+  * v1.4.5
+ *  - sharp & edgefilter: add kernel coeffs interpolation
+ *v1.4.6
+ *  - AF: add SceneDiff/ValidValue/WeightMatrix/zoomfocus_tbl
+ *v1.4.7
+ *  - mfnr:motion_detection: rename reserved9&reserved8 to
+ *  - frame_limit_y&frame_limit_uv.
  */
 
-#define RK_AIQ_CALIB_VERSION_REAL_V          "v1.4.3"
-#define RK_AIQ_CALIB_VERSION_MAGIC_V         "1123951"
+#define RK_AIQ_CALIB_VERSION_REAL_V          "v1.4.7"
+#define RK_AIQ_CALIB_VERSION_MAGIC_V         "1170944"
 
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/

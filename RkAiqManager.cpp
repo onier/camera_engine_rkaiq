@@ -505,7 +505,7 @@ XCamReturn
 RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
 {
     ENTER_XCORE_FUNCTION();
-
+    xcam_get_runtime_log_level();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     RkAiqFullParams* aiqParams = NULL;
 
@@ -777,31 +777,41 @@ RkAiqManager::getModuleCtl(rk_aiq_module_id_t mId, bool& mod_en)
 }
 
 XCamReturn
-RkAiqManager::enqueueBuffer(struct rk_aiq_vbuf *vbuf)
+RkAiqManager::rawdataPrepare(rk_aiq_raw_prop_t prop)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = mCamHw->enqueueBuffer(vbuf);
+    ret = mCamHw->rawdataPrepare(prop);
     EXIT_XCORE_FUNCTION();
     return ret;
 }
 
-XCamReturn RkAiqManager::offlineRdJobPrepare()
+XCamReturn
+RkAiqManager::enqueueRawBuffer(void *rawdata, bool sync)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-
-    ret = mCamHw->offlineRdJobPrepare();
+    ret = mCamHw->enqueueRawBuffer(rawdata, sync);
     EXIT_XCORE_FUNCTION();
     return ret;
 }
 
-XCamReturn RkAiqManager::offlineRdJobDone()
+XCamReturn
+RkAiqManager::enqueueRawFile(const char *path)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = mCamHw->enqueueRawFile(path);
+    EXIT_XCORE_FUNCTION();
+    return ret;
+}
 
-    ret = mCamHw->offlineRdJobDone();
+XCamReturn
+RkAiqManager::registRawdataCb(void (*callback)(void *))
+{
+    ENTER_XCORE_FUNCTION();
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = mCamHw->registRawdataCb(callback);
     EXIT_XCORE_FUNCTION();
     return ret;
 }

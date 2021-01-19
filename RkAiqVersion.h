@@ -256,8 +256,6 @@
  * - support AF funtionality
  * - TMO/Dehaze: lots of modifications
  * - isp driver v0.1.8
- * v1.2.4
- * - fix some bugs of dehaze and cpsl
  * v1.3.0
  * - calib db: v1.3.7 magic code: 1056480
  *   - modify sections: dehaze, TMO, AE
@@ -307,17 +305,30 @@
  * - isp driver v1.0x2.1, same as v1.0x23.1
  * - uapi: add rk_aiq_uapi_sysctl_updateIq
  * v1.0x34.0
- * - calib db: v1.4.3 magic code: 1123951, same as v1.0x23.3
+ * - calib db: v1.4.3 magic code: 1123951, same as v1.0x24.1
  * - isp driver v1.0x3.0
  * - Change mipi_rx buf type from USRPTR to DMABUF
  * - Open tmo enable function
  * - add exposure to ispparams
  * - fix aie gray_mode error of v1.023.3
  * - gen_mesh: v3.0.2
+ * v1.0x45.1
+ * - calib db: v1.4.4 magic code: 1123951 
+ * - isp driver v1.0x4.1
+ * - support socket IPC for toolserver
+ * - support 3dnr motion detection and process 
+ * v1.0x45.2
+ * - isp driver v1.0x4.1
+ * - fix stable bugs of 3ndr motion detection
+ * - support RK-RAW data process
+ * - support runtime debug log
+ * - uApi support thread safe
+ * v1.0x45.3
+ * - optimize motion detection algo 
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x34.0"
-#define RK_AIQ_RELEASE_DATE "2020-12-18"
+#define RK_AIQ_VERSION_REAL_V "v1.0x45.3"
+#define RK_AIQ_RELEASE_DATE "2020-01-16"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

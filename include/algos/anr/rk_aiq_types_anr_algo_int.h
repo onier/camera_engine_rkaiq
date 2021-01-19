@@ -202,6 +202,8 @@ typedef struct RKAnr_Mfnr_Params_s
     double gfsigma      [MAX_ISO_STEP][MFNR_MAX_LVL][MFNR_MAX_GAUS_SIZE];
 
     double noise_sigma  [MAX_ISO_STEP][1 << Y_CALIBRATION_BITS];
+    float mfnr_sigma_scale[MAX_ISO_STEP];
+	int motion_detection_enable;
     char mfnr_ver_char;
 } RKAnr_Mfnr_Params_t;
 
@@ -238,6 +240,8 @@ typedef struct RKAnr_Mfnr_Params_Select_s
     double noise_sigma_dehaze   [MAX_INTEPORATATION_LUMAPOINT];
     unsigned short  fix_x_pos           [MAX_INTEPORATATION_LUMAPOINT];
     unsigned short  fix_x_pos_dehaze    [MAX_INTEPORATATION_LUMAPOINT];
+
+    float mfnr_sigma_scale;
 
 
 } RKAnr_Mfnr_Params_Select_t;
@@ -560,7 +564,8 @@ typedef struct ANRProcResult_s {
     RKAnr_Uvnr_Fix_t stUvnrFix;
     RKAnr_Ynr_Fix_t stYnrFix;
     RKAnr_Gain_Fix_t stGainFix;
-
+    //for motion detection
+    CalibDb_MFNR_Motion_t  stMotion;
 } ANRProcResult_t;
 
 

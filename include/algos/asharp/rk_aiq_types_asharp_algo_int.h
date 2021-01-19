@@ -95,13 +95,22 @@ typedef struct RKAsharp_Sharp_HW_Params_s
     float hbf_gain      [MAX_ISO_STEP];
     float hbf_add       [MAX_ISO_STEP];
     short ehf_th        [MAX_ISO_STEP];
+    float pbf_coeff_percent[MAX_ISO_STEP];
+    float rf_m_coeff_percent[MAX_ISO_STEP];
+    float rf_h_coeff_percent[MAX_ISO_STEP];
+    float hbf_coeff_percent[MAX_ISO_STEP];
 
+    
     float gaus_luma_kernel  [MAX_ISO_STEP][RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM];
-    float kernel_pbf    [MAX_ISO_STEP][RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM];
-    float h_rf_m        [MAX_ISO_STEP][RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM];
+    float kernel_pbf_l    [MAX_ISO_STEP][RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM];
+    float kernel_pbf_h    [MAX_ISO_STEP][RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM];
+    float h_rf_m_l        [MAX_ISO_STEP][RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM];
+    float h_rf_m_h        [MAX_ISO_STEP][RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM];
     float kernel_mbf    [MAX_ISO_STEP][RKSHAPRENHW_MBF_DIAM_Y * RKSHAPRENHW_MBF_DIAM_X];
-    float h_rf_h        [MAX_ISO_STEP][RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM];
-    float kernel_hbf    [MAX_ISO_STEP][RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM];
+    float h_rf_h_l        [MAX_ISO_STEP][RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM];
+    float h_rf_h_h        [MAX_ISO_STEP][RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM];
+    float kernel_hbf_l    [MAX_ISO_STEP][RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM];
+    float kernel_hbf_h    [MAX_ISO_STEP][RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM];
 
 } RKAsharp_Sharp_HW_Params_t;
 
@@ -253,7 +262,9 @@ typedef struct RKAsharp_EdgeFilter_Params_s
     float h3_p_coef_5x5         [MAX_ISO_STEP][RKEDGEFILTER_DIR_SMTH_DIAM   * RKEDGEFILTER_DIR_SMTH_DIAM];
     float h_coef_5x5            [MAX_ISO_STEP][RKEDGEFILTER_GAUS_DIAM       * RKEDGEFILTER_GAUS_DIAM];
     float gf_coef_3x3           [MAX_ISO_STEP][RKEDGEFILTER_SHRP_DIAM       * RKEDGEFILTER_SHRP_DIAM];
-    float dog_kernel            [MAX_ISO_STEP][RKEDGEFILTER_DOG_DIAM        * RKEDGEFILTER_DOG_DIAM];
+    float dog_kernel_l            [MAX_ISO_STEP][RKEDGEFILTER_DOG_DIAM        * RKEDGEFILTER_DOG_DIAM];
+    float dog_kernel_h            [MAX_ISO_STEP][RKEDGEFILTER_DOG_DIAM        * RKEDGEFILTER_DOG_DIAM];
+    float dog_kernel_percent      [MAX_ISO_STEP];
 } RKAsharp_EdgeFilter_Params_t;
 
 typedef struct RKAsharp_EdgeFilter_Params_Select_s

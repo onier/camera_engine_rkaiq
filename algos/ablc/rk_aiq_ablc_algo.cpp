@@ -139,7 +139,8 @@ AblcResult_t Ablc_config_mode_param(AblcParams_t *pParams, CalibDb_Blc_t* pBlcCa
 		LOGE_ANR("%s(%d): not support param mode!\n", __FUNCTION__, __LINE__);
 		sprintf(mode_name, "%s", "normal");
 	}
-	
+
+
 	res = Ablc_get_mode_cell_idx_by_name(pBlcCalib, mode_name, &mode_idx);
 	if(res != ABLC_RET_SUCCESS){
 		LOGE_ASHARP("%s(%d): error!!!  can't find mode name in iq files, use 0 instead\n", __FUNCTION__, __LINE__);
@@ -164,9 +165,9 @@ AblcResult_t AblcParamModeProcess(AblcContext_t *pAblcCtx, AblcExpInfo_t *pExpIn
 
 	*mode = pAblcCtx->eParamMode;
 
-	if(pExpInfo->hdr_mode == 1){
+	if(pExpInfo->hdr_mode == 0){
 		*mode = ABLC_PARAM_MODE_NORMAL;
-	}else if(pExpInfo->hdr_mode > 1){
+	}else if(pExpInfo->hdr_mode >= 1){
 		*mode = ABLC_PARAM_MODE_HDR;
 	}else{
 		*mode = ABLC_PARAM_MODE_NORMAL;
@@ -183,6 +184,7 @@ AblcResult_t Ablc_Select_Params_By_ISO(AblcParams_t *pParams, AblcParamsSelect_t
     int highIso = 0;
     float ratio = 0.0f;
     int isoValue = 50;
+	int i=0;
 
     LOGI_ABLC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
 
@@ -203,7 +205,7 @@ AblcResult_t Ablc_Select_Params_By_ISO(AblcParams_t *pParams, AblcParamsSelect_t
 
 
     isoValue = pExpInfo->arIso[pExpInfo->hdr_mode];
-    for(int i = 0; i < BLC_MAX_ISO_LEVEL - 1; i++)
+    for(i = 0; i < BLC_MAX_ISO_LEVEL - 1; i++)
     {
         if(isoValue >= pParams->iso[i] && isoValue <= pParams->iso[i + 1])
         {
@@ -220,19 +222,21 @@ AblcResult_t Ablc_Select_Params_By_ISO(AblcParams_t *pParams, AblcParamsSelect_t
         }
     }
 
-    if(isoValue < pParams->iso[0])
-    {
-        isoLowlevel = 0;
-        isoHighlevel = 1;
-        ratio = 0;
-    }
+	if(i == BLC_MAX_ISO_LEVEL -1){
+	    if(isoValue < pParams->iso[0])
+	    {
+	        isoLowlevel = 0;
+	        isoHighlevel = 1;
+	        ratio = 0;
+	    }
 
-    if(isoValue > pParams->iso[BLC_MAX_ISO_LEVEL - 1])
-    {
-        isoLowlevel = BLC_MAX_ISO_LEVEL - 1;
-        isoHighlevel = BLC_MAX_ISO_LEVEL - 1;
-        ratio = 0;
-    }
+	    if(isoValue > pParams->iso[BLC_MAX_ISO_LEVEL - 1])
+	    {
+	        isoLowlevel = BLC_MAX_ISO_LEVEL - 1;
+	        isoHighlevel = BLC_MAX_ISO_LEVEL - 1;
+	        ratio = 0;
+	    }
+	}
 
     pSelect->enable = pParams->enable;
 

@@ -28,6 +28,7 @@ XCamReturn  rk_aiq_user_api_aie_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, aie_a
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_AIE);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
 
     RkAiqAieHandleInt* algo_handle =
         algoHandle<RkAiqAieHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AIE);
@@ -41,6 +42,7 @@ XCamReturn  rk_aiq_user_api_aie_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, aie_a
 
 XCamReturn  rk_aiq_user_api_aie_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, aie_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     RkAiqAieHandleInt* algo_handle =

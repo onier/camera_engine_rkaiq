@@ -240,7 +240,7 @@ private:
     bool parseEntrySensorGicISO(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNR(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRDynamic(const XMLElement*   pelement, void* param = NULL, int index = 0);
-	bool parseEntrySensorMFNRMotionDetection(const XMLElement*   pelement, void* param = NULL, int index = 0);
+    bool parseEntrySensorMFNRMotionDetection(const XMLElement*   pelement, void* param = NULL, int index = 0);
     bool parseEntrySensorMFNRModeCell(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRAwbUvRatio(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRISO(const XMLElement* pelement, void* param = NULL, int index = 0);
@@ -267,6 +267,7 @@ private:
     bool parseEntrySensorAfPdaf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfVcmCfg(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfMeasISO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfZoomFocusTbl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLdch(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorFec(const XMLElement* pelement, void* param = NULL);

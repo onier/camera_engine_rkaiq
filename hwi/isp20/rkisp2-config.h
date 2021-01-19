@@ -39,6 +39,12 @@
 #define RKISP_CMD_SET_LDCHBUF_SIZE \
 	_IOW('V', BASE_VIDIOC_PRIVATE + 5, struct rkisp_ldchbuf_size)
 
+#define RKISP_CMD_GET_SHM_BUFFD \
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 6, struct rkisp_thunderboot_shmem)
+
+#define RKISP_CMD_GET_FBCBUF_FD  \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 7, struct isp2x_buf_idxfd)
+
 #define ISP2X_MODULE_DPCC       BIT_ULL(0)
 #define ISP2X_MODULE_BLS        BIT_ULL(1)
 #define ISP2X_MODULE_SDG        BIT_ULL(2)
@@ -167,6 +173,8 @@
 
 #define ISP2X_THUNDERBOOT_VIDEO_BUF_NUM	30
 
+#define ISP2X_FBCBUF_FD_NUM		64
+
 /*
  * ISP2X_HDR_MODE_NOMAL: linear mode
  * ISP2X_HDR_MODE_X2: hdr two frame or line mode
@@ -212,6 +220,20 @@ enum isp2x_csi_memory {
     CSI_MEM_BYTE_LE,
     CSI_MEM_MAX,
 };
+
+struct isp2x_ispgain_buf {
+	u32 gain_dmaidx;
+	u32 mfbc_dmaidx;
+	u32 gain_size;
+	u32 mfbc_size;
+	u32 frame_id;
+} __attribute__ ((packed));
+
+struct isp2x_buf_idxfd {
+	u32 buf_num;
+	u32 index[ISP2X_FBCBUF_FD_NUM];
+	s32 dmafd[ISP2X_FBCBUF_FD_NUM];
+} __attribute__ ((packed));
 
 struct isp2x_window {
     u16 h_offs;
@@ -1683,6 +1705,15 @@ struct rkisp_thunderboot_resmem_head {
 struct rkisp_thunderboot_resmem {
 	u32 resmem_padr;
 	u32 resmem_size;
+} __attribute__ ((packed));
+
+/**
+ * struct rkisp_thunderboot_shmem
+ */
+struct rkisp_thunderboot_shmem {
+	u32 shm_start;
+	u32 shm_size;
+	s32 shm_fd;
 } __attribute__ ((packed));
 
 #endif /* _UAPI_RKISP2_CONFIG_H */

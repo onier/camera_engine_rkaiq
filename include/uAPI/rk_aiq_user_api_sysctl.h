@@ -292,14 +292,56 @@ XCamReturn
 rk_aiq_uapi_sysctl_queryCpsLtCap(const rk_aiq_sys_ctx_t* ctx,
                                  rk_aiq_cpsl_cap_t* cap);
 
-int32_t
-rk_aiq_uapi_enqueue_buffer(const rk_aiq_sys_ctx_t* ctx, struct rk_aiq_vbuf *vbuf);
+/*!
+ * \brief prepare RK-raw-format data process environment
+ *
+ * \param[in] ctx             context
+ * \param[in] prop            prepare params
+ * \return return 0 if success
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_prepareRkRaw(const rk_aiq_sys_ctx_t* ctx, rk_aiq_raw_prop_t prop);
 
-int32_t
-offlineRdJobPrepare(const rk_aiq_sys_ctx_t* ctx);
+/*!
+ * \brief queue RK-Raw-format buffer into aiq control system
+ *
+ * \param[in] ctx             context
+ * \param[in] rawdata         RK-Raw-format buffer
+ * \param[in] sync            sync flag, true means sync mode,calling process will be blocked,
+ *                            until the queued frame is processed. false means async mode, calling
+ *                            process is not blocked, if you want to free rawdata or reuse it, callback
+ *                            should be registered,after frame is processed, callback function would be called.
+ * \return return 0 if success
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_enqueueRkRawBuf(const rk_aiq_sys_ctx_t* ctx, void *rawdata, bool sync);
 
-int32_t
-offlineRdJobDone(const rk_aiq_sys_ctx_t* ctx);
+/*!
+ * \brief queue RK-Raw-format file into aiq control system
+ *
+ * \param[in] ctx             context
+ * \param[in] path            RK-Raw-format file path
+ * calling process will be blocked until the queued frame is processed
+ * \return return 0 if success
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_enqueueRkRawFile(const rk_aiq_sys_ctx_t* ctx, const char *path);
+
+/*!
+ * \brief regist RK-Raw-format buffer callback into aiq control system
+ *
+ * \param[in] ctx             context
+ * \param[in] callback        callback function pointer
+ * if callback function is registered,  (when rk_aiq_uapi_sysctl_enqueueRkRawBuf used in sync mode)
+ * callback will be called in sync after the queued raw buffer is processed, raw buffer pointer
+ * which passed into aiq by rk_aiq_uapi_sysctl_enqueueRkRawBuf would be passed back into the callback
+ * function you registered.
+ * this function is not required.
+ *
+ * \return return 0 if success
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_registRkRawCb(const rk_aiq_sys_ctx_t* ctx, void (*callback)(void*));
 
 /*!
  * \brief set the bypass stream rotation

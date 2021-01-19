@@ -120,6 +120,11 @@ typedef struct Cam5x5UCharMatrix_s {
     uint8_t uCoeff[5 * 5];            /**< array of 5x5 unsigned char values */
 } Cam5x5UCharMatrix_t;
 
+typedef struct Cam15x15UCharMatrix_s {
+    uint8_t uCoeff[15 * 15];            /**< array of 15x15 unsigned char values */
+} Cam15x15UCharMatrix_t;
+
+
 typedef struct Cam1x3IntMatrix_s
 {
     int Coeff[3];
@@ -466,17 +471,5 @@ typedef enum {
     RK_MODULE_RAWNR,//16
     RK_MODULE_MAX
 } rk_aiq_module_id_t;
-
-struct rk_aiq_vbuf_info {
-    uint32_t frame_id;
-    uint32_t timestamp;
-    uint32_t exp_time;
-    uint32_t exp_gain;
-    uint8_t *data_addr;
-    uint32_t data_length;
-};
-struct rk_aiq_vbuf {
-    struct rk_aiq_vbuf_info buf_info[3];/*index: 0-short,1-medium,2-long*/
-};
 
 #endif

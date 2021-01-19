@@ -5,6 +5,16 @@ RKAIQ_BEGIN_DECLARE
 
 #define MAX_SHARP_LUMA_CLIP_VALUE (8.0)
 
+void sharp_filter_merge(float *src0, float *src1, float* dst, int size, float alpha)
+{
+    for(int i = 0; i < size; i++)
+    {
+        dst[i] = src0[i] * alpha + src1[i] * (1 - alpha);
+        LOGD_ANR("sharp filter_merge idx[%d]; src1:%f src2:%f alpha:%f dst:%f\n",
+			i, src0[i], src1[i], alpha, dst[i]);
+    }
+}
+
 AsharpResult_t sharp_get_mode_cell_idx_by_name_v1(CalibDb_Sharp_t *pCalibdb, char *name, int *mode_idx)
 {
 	int i = 0;
@@ -174,6 +184,10 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
 		pParams->mbf_add[i] = pSetting->sharp_iso[i].mbf_add;
 		pParams->hbf_add[i] = pSetting->sharp_iso[i].hbf_add;
         pParams->ehf_th[i] = pSetting->sharp_iso[i].local_sharp_strength;
+		pParams->pbf_coeff_percent[i] = pSetting->sharp_iso[i].pbf_coeff_percent;
+		pParams->rf_m_coeff_percent[i] = pSetting->sharp_iso[i].rf_m_coeff_percent;
+		pParams->rf_h_coeff_percent[i] = pSetting->sharp_iso[i].rf_h_coeff_percent;
+		pParams->hbf_coeff_percent[i] = pSetting->sharp_iso[i].hbf_coeff_percent;
     }
 
 	//////////////////////////////////////////////////////////////////////////
@@ -253,21 +267,44 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
         }
     }
 
+	float* p_kernel_pbf_l = pbf_coeff;
+	float* p_kernel_pbf_h = pbf_coeff;
+	#if 0
 	float* p_kernel_pbf = pbf_coeff;
-	#ifndef RK_SIMULATOR_HW
 	if(pCalibdb->mode_cell[mode_idx].pbf_coeff[RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM / 2] != 0){
 		p_kernel_pbf = pCalibdb->mode_cell[mode_idx].pbf_coeff;
+	}
+
+	 for (i=0; i<max_iso_step; i++){
+        int h = RKSHAPRENHW_PBF_DIAM;
+        int w = RKSHAPRENHW_PBF_DIAM;
+        for(int m = 0; m < h; m++){
+            for(int n = 0; n < w; n++){
+				pParams->kernel_pbf[i][m * w + n] = p_kernel_pbf[m * w + n];
+            }
+        }
+    }
+	#endif
+
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].pbf_coeff_l[RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM / 2] != 0
+		&& pCalibdb->mode_cell[mode_idx].pbf_coeff_h[RKSHAPRENHW_PBF_DIAM * RKSHAPRENHW_PBF_DIAM / 2] !=0){
+		p_kernel_pbf_l = pCalibdb->mode_cell[mode_idx].pbf_coeff_l;
+		p_kernel_pbf_h = pCalibdb->mode_cell[mode_idx].pbf_coeff_h;
 	}
 	#endif
     for (i=0; i<max_iso_step; i++){
         int h = RKSHAPRENHW_PBF_DIAM;
         int w = RKSHAPRENHW_PBF_DIAM;
         for(int m = 0; m < h; m++){
-            for(int n = 0; n < w; n++)
-                pParams->kernel_pbf[i][m * w + n] = p_kernel_pbf[m * w + n];
+            for(int n = 0; n < w; n++){
+				pParams->kernel_pbf_l[i][m * w + n] = p_kernel_pbf_l[m * w + n];
+                pParams->kernel_pbf_h[i][m * w + n] = p_kernel_pbf_h[m * w + n];
+            }
         }
     }
 
+	#if 0
 	float* p_h_rf_m = rf_m_coeff;
 	#ifndef RK_SIMULATOR_HW
 	if(pCalibdb->mode_cell[mode_idx].rf_m_coeff[RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM / 2] != 0){
@@ -282,6 +319,28 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
                 pParams->h_rf_m[i][m * w + n] = p_h_rf_m[m * w + n];
         }
     }
+	#else
+		float* p_h_rf_m_l = rf_m_coeff;
+		float* p_h_rf_m_h = rf_m_coeff;
+		#ifndef RK_SIMULATOR_HW
+		if(pCalibdb->mode_cell[mode_idx].rf_m_coeff_l[RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM / 2] != 0
+			&& pCalibdb->mode_cell[mode_idx].rf_m_coeff_h[RKSHAPRENHW_MRF_DIAM * RKSHAPRENHW_MRF_DIAM / 2] != 0){
+			p_h_rf_m_l = pCalibdb->mode_cell[mode_idx].rf_m_coeff_l;
+			p_h_rf_m_h = pCalibdb->mode_cell[mode_idx].rf_m_coeff_h;
+		}
+		#endif
+
+		for (i=0; i<max_iso_step; i++){
+        int h = RKSHAPRENHW_MRF_DIAM;
+        int w = RKSHAPRENHW_MRF_DIAM;
+        for(int m = 0; m < h; m++){
+            for(int n = 0; n < w; n++){
+                pParams->h_rf_m_l[i][m * w + n] = p_h_rf_m_l[m * w + n];
+				pParams->h_rf_m_h[i][m * w + n] = p_h_rf_m_h[m * w + n];
+            }
+        }
+    }
+	#endif
 
 	float* p_kernel_mbf= mbf_coeff;
 	#ifndef RK_SIMULATOR_HW
@@ -298,6 +357,7 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
         }
     }
 
+	#if 0
 	float* p_h_rf_h= rf_h_coeff;
 	#ifndef RK_SIMULATOR_HW
 	if(pCalibdb->mode_cell[mode_idx].rf_h_coeff[RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM / 2] != 0){
@@ -312,7 +372,30 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
                 pParams->h_rf_h[i][m * w + n] = p_h_rf_h[m * w + n];
         }
     }
+	#else
+	float* p_h_rf_h_l= rf_h_coeff;
+	float* p_h_rf_h_h= rf_h_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].rf_h_coeff_l[RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM / 2] != 0
+		&& pCalibdb->mode_cell[mode_idx].rf_h_coeff_h[RKSHAPRENHW_HRF_DIAM * RKSHAPRENHW_HRF_DIAM / 2] != 0){
+		p_h_rf_h_l = pCalibdb->mode_cell[mode_idx].rf_h_coeff_l;
+		p_h_rf_h_h = pCalibdb->mode_cell[mode_idx].rf_h_coeff_h;
+	}
+	#endif
+    for (i=0; i<max_iso_step; i++){
+        int h = RKSHAPRENHW_HRF_DIAM;
+        int w = RKSHAPRENHW_HRF_DIAM;
+        for(int m = 0; m < h; m++){
+            for(int n = 0; n < w; n++){
+                pParams->h_rf_h_l[i][m * w + n] = p_h_rf_h_l[m * w + n];
+				pParams->h_rf_h_h[i][m * w + n] = p_h_rf_h_h[m * w + n];
+            }
+        }
+    }
+	#endif
+	
 
+	#if 0
 	float* p_kernel_hbf= hbf_coeff;
 	#ifndef RK_SIMULATOR_HW
 	if(pCalibdb->mode_cell[mode_idx].hbf_coeff[RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM / 2] != 0){
@@ -327,6 +410,28 @@ AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb
                 pParams->kernel_hbf[i][m * w + n] = p_kernel_hbf[m * w + n];
         }
     }
+	#else
+	float* p_kernel_hbf_l= hbf_coeff;
+	float* p_kernel_hbf_h= hbf_coeff;
+	#ifndef RK_SIMULATOR_HW
+	if(pCalibdb->mode_cell[mode_idx].hbf_coeff_l[RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM / 2] != 0
+		&& pCalibdb->mode_cell[mode_idx].hbf_coeff_h[RKSHAPRENHW_HBF_DIAM * RKSHAPRENHW_HBF_DIAM / 2] != 0){
+		p_kernel_hbf_l = pCalibdb->mode_cell[mode_idx].hbf_coeff_l;
+		p_kernel_hbf_h = pCalibdb->mode_cell[mode_idx].hbf_coeff_h;
+	}
+	#endif
+    for (i=0; i<max_iso_step; i++){
+        int h = RKSHAPRENHW_HBF_DIAM;
+        int w = RKSHAPRENHW_HBF_DIAM;
+        for(int m = 0; m < h; m++){
+            for(int n = 0; n < w; n++){
+                pParams->kernel_hbf_l[i][m * w + n] = p_kernel_hbf_l[m * w + n];
+				pParams->kernel_hbf_h[i][m * w + n] = p_kernel_hbf_h[m * w + n];
+            }
+        }
+    }
+	#endif
+
 
 	LOGD_ASHARP("oyyf sharp iso50 lratio:%f hratio:%f\n", 
 			pParams->lratio[0],
@@ -380,21 +485,23 @@ AsharpResult_t select_rk_sharpen_hw_params_by_ISO(
         }
     }
 
-    if(iso < strksharpenParams->iso[0] ) {
-        iso_low = strksharpenParams->iso[0] ;
-        iso_high = strksharpenParams->iso[1];
-        gain_low = 0;
-        gain_high = 1;
-        ratio = 0;
-    }
+	if(i == max_iso_step - 1){
+	    if(iso < strksharpenParams->iso[0] ) {
+	        iso_low = strksharpenParams->iso[0] ;
+	        iso_high = strksharpenParams->iso[1];
+	        gain_low = 0;
+	        gain_high = 1;
+	        ratio = 0;
+	    }
 
-    if(iso > strksharpenParams->iso[max_iso_step - 1] ) {
-        iso_low = strksharpenParams->iso[max_iso_step - 2] ;
-        iso_high = strksharpenParams->iso[max_iso_step - 1];
-        gain_low = max_iso_step - 2;
-        gain_high = max_iso_step - 1;
-        ratio = 1;
-    }
+	    if(iso > strksharpenParams->iso[max_iso_step - 1] ) {
+	        iso_low = strksharpenParams->iso[max_iso_step - 2] ;
+	        iso_high = strksharpenParams->iso[max_iso_step - 1];
+	        gain_low = max_iso_step - 2;
+	        gain_high = max_iso_step - 1;
+	        ratio = 1;
+	    }
+	}
 #else
     for (i = max_iso_step - 1; i >= 0; i--)
     {
@@ -402,6 +509,7 @@ AsharpResult_t select_rk_sharpen_hw_params_by_ISO(
         {
             iso_low = iso_div * (2 << (i)) / 2;
             iso_high = iso_div * (2 << i);
+			break;
         }
     }
 
@@ -424,7 +532,9 @@ AsharpResult_t select_rk_sharpen_hw_params_by_ISO(
     gain_high       = MIN(MAX(gain_high, 0), max_iso_step - 1);
 #endif
 
-
+	LOGD_ASHARP("%s:%d iso:%d iso_low:%d iso_high:%d gainlow:%d gain_high:%d ratio:%f\n",
+			__FUNCTION__, __LINE__, 
+			iso, iso_low, iso_high, gain_low, gain_high, ratio);
     strksharpenParamsSelected->lratio               = INTERP1(strksharpenParams->lratio     [gain_low],     strksharpenParams->lratio       [gain_high],    ratio);
     strksharpenParamsSelected->hratio               = INTERP1(strksharpenParams->hratio     [gain_low],     strksharpenParams->hratio       [gain_high],    ratio);
     strksharpenParamsSelected->M_ratio              = INTERP1(strksharpenParams->M_ratio    [gain_low],     strksharpenParams->M_ratio      [gain_high],    ratio);
@@ -451,19 +561,33 @@ AsharpResult_t select_rk_sharpen_hw_params_by_ISO(
     strksharpenParamsSelected->hbf_gain      = INTERP1(strksharpenParams->hbf_gain   [gain_low],  strksharpenParams->hbf_gain     [gain_high], ratio);
     strksharpenParamsSelected->hbf_add       = INTERP1(strksharpenParams->hbf_add    [gain_low],  strksharpenParams->hbf_add      [gain_high], ratio);
 
-    for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->gaus_luma_kernel) / sizeof(strksharpenParamsSelected->gaus_luma_kernel[0]); i++)
+	
+	for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->gaus_luma_kernel) / sizeof(strksharpenParamsSelected->gaus_luma_kernel[0]); i++)
         strksharpenParamsSelected->gaus_luma_kernel[i]    = INTERP1(strksharpenParams->gaus_luma_kernel [gain_low][i],  strksharpenParams->gaus_luma_kernel   [gain_high][i], ratio);
-    for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->kernel_pbf) / sizeof(strksharpenParamsSelected->kernel_pbf[0]); i++)
+	for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->kernel_mbf) / sizeof(strksharpenParamsSelected->kernel_mbf[0]); i++)
+        strksharpenParamsSelected->kernel_mbf[i]    = INTERP1(strksharpenParams->kernel_mbf [gain_low][i],  strksharpenParams->kernel_mbf   [gain_high][i], ratio);
+	#if 0
+	for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->kernel_pbf) / sizeof(strksharpenParamsSelected->kernel_pbf[0]); i++)
         strksharpenParamsSelected->kernel_pbf[i]    = INTERP1(strksharpenParams->kernel_pbf [gain_low][i],  strksharpenParams->kernel_pbf   [gain_high][i], ratio);
     for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->h_rf_m) / sizeof(strksharpenParamsSelected->h_rf_m[0]); i++)
         strksharpenParamsSelected->h_rf_m[i]        = INTERP1(strksharpenParams->h_rf_m [gain_low][i],      strksharpenParams->h_rf_m       [gain_high][i], ratio);
-    for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->kernel_mbf) / sizeof(strksharpenParamsSelected->kernel_mbf[0]); i++)
-        strksharpenParamsSelected->kernel_mbf[i]    = INTERP1(strksharpenParams->kernel_mbf [gain_low][i],  strksharpenParams->kernel_mbf   [gain_high][i], ratio);
+   
     for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->h_rf_h) / sizeof(strksharpenParamsSelected->h_rf_h[0]); i++)
         strksharpenParamsSelected->h_rf_h[i]        = INTERP1(strksharpenParams->h_rf_h [gain_low][i],      strksharpenParams->h_rf_h       [gain_high][i], ratio);
     for(unsigned int i = 0; i < sizeof(strksharpenParamsSelected->kernel_hbf) / sizeof(strksharpenParamsSelected->kernel_hbf[0]); i++)
         strksharpenParamsSelected->kernel_hbf[i]    = INTERP1(strksharpenParams->kernel_hbf [gain_low][i],  strksharpenParams->kernel_hbf   [gain_high][i], ratio);
+	#else
+	
+	float pbf_coeff_percent 	 = INTERP1(strksharpenParams->pbf_coeff_percent    [gain_low],	strksharpenParams->pbf_coeff_percent	  [gain_high], ratio);
+	float rf_m_coeff_percent	  = INTERP1(strksharpenParams->rf_m_coeff_percent	 [gain_low],  strksharpenParams->rf_m_coeff_percent 	 [gain_high], ratio);
+	float rf_h_coeff_percent	  = INTERP1(strksharpenParams->rf_h_coeff_percent	 [gain_low],  strksharpenParams->rf_h_coeff_percent 	 [gain_high], ratio);
+	float hbf_coeff_percent 	 = INTERP1(strksharpenParams->hbf_coeff_percent    [gain_low],	strksharpenParams->hbf_coeff_percent	  [gain_high], ratio);
 
+	sharp_filter_merge(strksharpenParams->kernel_pbf_h[gain_low], strksharpenParams->kernel_pbf_l[gain_low], strksharpenParamsSelected->kernel_pbf, 9, pbf_coeff_percent);
+	sharp_filter_merge(strksharpenParams->h_rf_m_h[gain_low], strksharpenParams->h_rf_m_l[gain_low], strksharpenParamsSelected->h_rf_m, 25, rf_m_coeff_percent);
+	sharp_filter_merge(strksharpenParams->h_rf_h_h[gain_low], strksharpenParams->h_rf_h_l[gain_low], strksharpenParamsSelected->h_rf_h, 25, rf_h_coeff_percent);
+	sharp_filter_merge(strksharpenParams->kernel_hbf_h[gain_low], strksharpenParams->kernel_hbf_l[gain_low], strksharpenParamsSelected->kernel_hbf, 9, hbf_coeff_percent);
+	#endif
     return res;
 }
 

@@ -956,6 +956,7 @@ RkAiqCore::genIspAnrResult(RkAiqFullParams* params)
         LOGD_ANR("oyyf: %s:%d output isp param end \n", __FUNCTION__, __LINE__);
 
 #endif
+    isp_param->motion = anr_rk->stAnrProcResult.stMotion;
     }
 
     EXIT_ANALYZER_FUNCTION();

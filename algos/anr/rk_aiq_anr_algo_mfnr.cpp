@@ -376,6 +376,14 @@ ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCali
         }
     }
 
+    #ifndef RK_SIMULATOR_HW
+    pParams->motion_detection_enable = pCalibdb->mode_cell[mode_idx].motion.enable & pCalibdb->motion_detect_en;
+    for(int j = 0; j < MAX_ISO_STEP; j++)
+    {
+        pParams->mfnr_sigma_scale[j] = pCalibdb->mode_cell[mode_idx].motion.mfnrSigmaScale[j];
+    }
+    #endif
+
 	#ifndef RK_SIMULATOR_HW
 	for (i=0;i<max_iso_step;i++){
          pParams->iso[i] = pSetting->mfnr_iso[i].iso;
@@ -447,21 +455,23 @@ ANRresult_t select_mfnr_params_by_ISO(RKAnr_Mfnr_Params_t *stmfnrParams,    RKAn
         }
     }
 
-    if(iso < stmfnrParams->iso[0]) {
-        iso_low = stmfnrParams->iso[0];
-        iso_high = stmfnrParams->iso[1];
-        gain_low = 0;
-        gain_high = 1;
-        ratio = 0;
-    }
+	if(i == MAX_ISO_STEP - 1){
+	    if(iso < stmfnrParams->iso[0]) {
+	        iso_low = stmfnrParams->iso[0];
+	        iso_high = stmfnrParams->iso[1];
+	        gain_low = 0;
+	        gain_high = 1;
+	        ratio = 0;
+	    }
 
-    if(iso > stmfnrParams->iso[MAX_ISO_STEP - 1]) {
-        iso_low = stmfnrParams->iso[MAX_ISO_STEP - 2];
-        iso_high = stmfnrParams->iso[MAX_ISO_STEP - 1];
-        gain_low = MAX_ISO_STEP - 2;
-        gain_high = MAX_ISO_STEP - 1;
-        ratio = 1;
-    }
+	    if(iso > stmfnrParams->iso[MAX_ISO_STEP - 1]) {
+	        iso_low = stmfnrParams->iso[MAX_ISO_STEP - 2];
+	        iso_high = stmfnrParams->iso[MAX_ISO_STEP - 1];
+	        gain_low = MAX_ISO_STEP - 2;
+	        gain_high = MAX_ISO_STEP - 1;
+	        ratio = 1;
+	    }
+	}
 #else
     for (i = MAX_ISO_STEP - 1; i >= 0; i--)
     {
@@ -777,52 +787,55 @@ ANRresult_t select_mfnr_params_by_ISO(RKAnr_Mfnr_Params_t *stmfnrParams,    RKAn
 
 #endif
 
+#if 1
+    if(stmfnrParams->motion_detection_enable){
+        stmfnrParamsSelected->mfnr_sigma_scale = ((stmfnrParams->mfnr_sigma_scale[gain_high] * ratio + stmfnrParams->mfnr_sigma_scale[gain_low] * (1 - ratio))) ;
+    }else{
+        stmfnrParamsSelected->mfnr_sigma_scale = 1.0;
+    }
+    LOGD_ANR("mfnr motion detetion enable:%d mfnr_sigma_scale:%f\n",
+            stmfnrParams->motion_detection_enable,
+            stmfnrParamsSelected->mfnr_sigma_scale);
+#endif
 //for (i = 0; i < range; i++)
 //    noise_sigma_tmp[i]                          = ROUND_F(noise_sigma_tmp[i] * (1 << 12)) >>  ;
 
 
     double noise_sigma_max = 0;
     double noise_sigma_limit = 1 << MFNR_F_INTE_SIGMA;
-    double sigma_ratio = 1.0;
-    double sigma_ratio_inv = 1.0;
-    for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT;      i++)
+    double sigma_scale          = 1.0;
+    double scale_scale          = 1.0;
+    for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT; i++)
         noise_sigma_max = MAX(stmfnrParamsSelected->noise_sigma_sample[i], noise_sigma_max);
 
-    if(noise_sigma_max > noise_sigma_limit)
-    {
-        if(noise_sigma_max <= noise_sigma_limit)
-        {
-            sigma_ratio       = 1;
-            sigma_ratio_inv   = 1;
-        }
-        else if(noise_sigma_max <= noise_sigma_limit * 2)
-        {
-            sigma_ratio       = 2;
-            sigma_ratio_inv   = 1.0 / 2;
-        }
-        else if(noise_sigma_max <= noise_sigma_limit * 4)
-        {
-            sigma_ratio       = 4;
-            sigma_ratio_inv   = 1.0 / 4;
-        }
-        else
-        {
-            LOGE_ANR("%s:%d noise_sigma is too big\n", __FUNCTION__, __LINE__);
-        }
-        if(sigma_ratio !=  1)
-        {
-            for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT;       i++)
-                stmfnrParamsSelected->noise_sigma_sample[i]         = stmfnrParamsSelected->noise_sigma_sample[i]   * sigma_ratio_inv;
-            for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT;       i++)
-                stmfnrParamsSelected->noise_sigma_dehaze[i]         = stmfnrParamsSelected->noise_sigma_dehaze[i]   * sigma_ratio_inv;
-            for(int dir_idx = 0; dir_idx < dir_num; dir_idx++)
-                for(int lvl = 0; lvl < max_lvl; lvl++)
-                    stmfnrParamsSelected->scale[dir_idx][lvl]       = stmfnrParamsSelected->scale[dir_idx][lvl]     * sigma_ratio;
-            for(int dir_idx = 0; dir_idx < dir_num; dir_idx++)
-                for(int lvl = 0; lvl < max_lvl_uv; lvl++)
-                    stmfnrParamsSelected->scale_uv[dir_idx][lvl]    = stmfnrParamsSelected->scale_uv[dir_idx][lvl]  * sigma_ratio;
-        }
+    if(noise_sigma_max * stmfnrParamsSelected->mfnr_sigma_scale <= noise_sigma_limit){
+        scale_scale = 1;
+        sigma_scale = stmfnrParamsSelected->mfnr_sigma_scale;
+    }else{
+        scale_scale = noise_sigma_limit / (noise_sigma_max * stmfnrParamsSelected->mfnr_sigma_scale);
+        sigma_scale = stmfnrParamsSelected->mfnr_sigma_scale * scale_scale;
     }
+
+    if(scale_scale != 1.0 || sigma_scale != 1.0)
+    {
+        for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT; i++)
+            stmfnrParamsSelected->noise_sigma_sample[i] = stmfnrParamsSelected->noise_sigma_sample[i] * sigma_scale;
+        for(int i = 0; i < MAX_INTEPORATATION_LUMAPOINT; i++)
+            stmfnrParamsSelected->noise_sigma_dehaze[i] = stmfnrParamsSelected->noise_sigma_dehaze[i] * sigma_scale;
+        for(int dir_idx = 0; dir_idx < dir_num; dir_idx++)
+            for(int lvl = 0; lvl < max_lvl; lvl++)
+                stmfnrParamsSelected->scale[dir_idx][lvl] = stmfnrParamsSelected->scale[dir_idx][lvl] * scale_scale;
+        for(int dir_idx = 0; dir_idx < dir_num; dir_idx++)
+            for(int lvl = 0; lvl < max_lvl_uv; lvl++)
+                stmfnrParamsSelected->scale_uv[dir_idx][lvl] = stmfnrParamsSelected->scale_uv[dir_idx][lvl] * scale_scale;
+    }
+
+	LOGD_ANR("mfnr final sigma_max:%f motion_scale:%f sigma_limit:%f sigma_scale:%f scale_scale:%f\n",
+		noise_sigma_max,
+		stmfnrParamsSelected->mfnr_sigma_scale,
+		noise_sigma_limit,
+		sigma_scale,
+		scale_scale);
 
     return res;
 

@@ -28,6 +28,7 @@ XCamReturn
 rk_aiq_user_api_asharp_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_attrib_t *attr)
 {
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_ASHARP);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 
@@ -41,6 +42,7 @@ rk_aiq_user_api_asharp_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_a
 XCamReturn
 rk_aiq_user_api_asharp_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 
@@ -54,6 +56,7 @@ rk_aiq_user_api_asharp_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_a
 XCamReturn
 rk_aiq_user_api_asharp_SetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_IQpara_t *para)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 
@@ -67,6 +70,7 @@ rk_aiq_user_api_asharp_SetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_I
 XCamReturn
 rk_aiq_user_api_asharp_GetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_IQpara_t *para)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 
@@ -81,6 +85,7 @@ rk_aiq_user_api_asharp_GetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_sharp_I
 XCamReturn
 rk_aiq_user_api_asharp_SetStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercent)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 
@@ -94,6 +99,7 @@ rk_aiq_user_api_asharp_SetStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPerce
 XCamReturn
 rk_aiq_user_api_asharp_GetStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercent)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAsharpHandleInt* algo_handle =
         algoHandle<RkAiqAsharpHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ASHARP);
 

@@ -338,7 +338,7 @@ Isp20PollThread::notify_sof (uint64_t time, int frameid)
 }
 
 bool
-Isp20PollThread::set_event_handle_dev(SmartPtr<SensorHw> &dev)
+Isp20PollThread::set_event_handle_dev(SmartPtr<BaseSensorHw> &dev)
 {
     ENTER_CAMHW_FUNCTION();
     XCAM_ASSERT (dev.ptr());
@@ -406,7 +406,6 @@ Isp20PollThread::Isp20PollThread()
     , _capture_image_mutex(false)
     , _capture_image_cond(false)
     ,  _capture_raw_type(CAPTURE_RAW_ASYNC)
-    , _loop_vain(false)
     , _is_multi_cam_conc(false)
     , _skip_num(0)
     , _skip_to_seq(0)
@@ -524,12 +523,6 @@ Isp20PollThread::set_working_mode(int mode, bool linked_to_isp)
 }
 
 void
-Isp20PollThread::set_loop_status(bool stat)
-{
-    _loop_vain = stat;
-}
-
-void
 Isp20PollThread::set_mipi_devs(SmartPtr<V4l2Device> mipi_tx_devs[3],
                                SmartPtr<V4l2Device> mipi_rx_devs[3],
                                SmartPtr<V4l2SubDevice> isp_dev)
@@ -630,8 +623,6 @@ Isp20PollThread::mipi_poll_buffer_loop (int type, int dev_index)
         dev = _isp_mipi_tx_infos[dev_index].dev;
         stop_fd = _isp_mipi_tx_infos[dev_index].stop_fds[0];
     } else if (type == ISP_POLL_MIPI_RX) {
-        if(_loop_vain)
-            return ret;
         dev = _isp_mipi_rx_infos[dev_index].dev;
         stop_fd = _isp_mipi_rx_infos[dev_index].stop_fds[0];
     } else
@@ -661,10 +652,9 @@ Isp20PollThread::mipi_poll_buffer_loop (int type, int dev_index)
 
     SmartPtr<V4l2BufferProxy> buf_proxy = new V4l2BufferProxy(buf, dev);
     if (type == ISP_POLL_MIPI_TX) {
-        if(_loop_vain)
-            return ret;
         handle_tx_buf(buf_proxy, dev_index);
     } else if (type == ISP_POLL_MIPI_RX) {
+        _event_handle_dev->on_dqueue(dev_index, buf_proxy);
         handle_rx_buf(buf_proxy, dev_index);
     }
 
@@ -732,7 +722,7 @@ void Isp20PollThread::sync_tx_buf()
             _isp_mipi_tx_infos[ISP_MIPI_HDR_S].buf_list.erase(buf_s);
             _isp_mipi_tx_infos[ISP_MIPI_HDR_M].buf_list.erase(buf_m);
             if (check_skip_frame(sequence_s)) {
-                LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "skip frame %d", sequence_s);
+                LOGE_CAMHW_SUBM(ISP20POLL_SUBM, "skip frame %d", sequence_s);
                 goto end;
             }
             _isp_mipi_rx_infos[ISP_MIPI_HDR_S].cache_list.push(buf_s);
@@ -792,7 +782,8 @@ Isp20PollThread::trigger_readback()
 
     it_ready = _isp_hdr_fid2ready_map.begin();
     sequence = it_ready->first;
-    if (_working_mode != RK_AIQ_WORKING_MODE_NORMAL) {
+
+    if (!_event_handle_dev->is_virtual_sensor() && _working_mode != RK_AIQ_WORKING_MODE_NORMAL) {
         match_lumadetect_map(sequence, additional_times);
         if (additional_times == -1) {
             LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "%s rdtimes not ready for seq %d !", __func__, sequence);
@@ -846,8 +837,15 @@ Isp20PollThread::trigger_readback()
                     _isp_mipi_rx_infos[i].buf_list.push(buf_proxy);
                     if (_isp_mipi_rx_infos[i].dev->get_mem_type() == V4L2_MEMORY_USERPTR)
                         v4l2buf[i]->set_expbuf_usrptr(buf_proxy->get_v4l2_userptr());
-                    else if (_isp_mipi_rx_infos[i].dev->get_mem_type() == V4L2_MEMORY_DMABUF)
+                    else if (_isp_mipi_rx_infos[i].dev->get_mem_type() == V4L2_MEMORY_DMABUF){
                         v4l2buf[i]->set_expbuf_fd(buf_proxy->get_expbuf_fd());
+                    }else if (_isp_mipi_rx_infos[i].dev->get_mem_type() == V4L2_MEMORY_MMAP) {
+                        if (_isp_mipi_tx_infos[i].dev->get_use_type() == 1)
+                        {
+                            memcpy((void*)v4l2buf[i]->get_expbuf_usrptr(),(void*)buf_proxy->get_v4l2_userptr(),v4l2buf[i]->get_buf().m.planes[0].length);
+                            v4l2buf[i]->set_reserved(buf_proxy->get_v4l2_userptr());
+                        }
+                    }
 
                     dynamic_capture_raw(i, sequence, buf_proxy, v4l2buf[i]);
                 }
@@ -866,8 +864,9 @@ Isp20PollThread::trigger_readback()
                 .frame_timestamp = 0,
                 .frame_id = sequence,
                 .times = 0,
-                .mode = _mipi_dev_max == 1 ? T_START_X1 : _mipi_dev_max == 2 ? T_START_X2 : T_START_X3,
-                /* mode : T_START_X2, */
+                .mode = _mipi_dev_max == 1 ? T_START_X1 :
+                _mipi_dev_max == 2 ? T_START_X2 : T_START_X3,
+                /* .mode = T_START_X2, */
             };
 
             if (_first_trigger)
@@ -1146,7 +1145,7 @@ int Isp20PollThread::dynamic_capture_raw(int i, uint32_t sequence,
 #endif
                 write_raw_to_file(fp, i, sequence,
                                   (void *)(buf_proxy->get_v4l2_userptr()),
-                                  v4l2buf->get_buf().m.planes[0].bytesused);
+                                  v4l2buf->get_buf().m.planes[0].length);
                 fclose(fp);
             }
             XCAM_STATIC_PROFILING_END(write_raw, 0);
@@ -1272,43 +1271,7 @@ void
 Isp20PollThread::write_reg_to_file(uint32_t base_addr, uint32_t offset_addr,
                                    int len, int sequence)
 {
-    char cmd_buffer[128] = {0};
 
-    if (base_addr == ISP_REGS_BASE) {
-#if 1
-        snprintf(cmd_buffer, sizeof(cmd_buffer),
-                 "io -4 -l 0x%x 0x%x > %s/frame%d_isp_reg",
-                 len,
-                 base_addr + offset_addr,
-                 raw_dir_path,
-                 sequence);
-#else
-        snprintf(cmd_buffer, sizeof(cmd_buffer),
-                 "io -4 -r -f %s/frame%d_isp_reg -l 0x%x 0x%x",
-                 raw_dir_path,
-                 sequence,
-                 len,
-                 base_addr + offset_addr);
-#endif
-    } else {
-#if 1
-        snprintf(cmd_buffer, sizeof(cmd_buffer),
-                 "io -4 -l 0x%x 0x%x > %s/frame%d_ispp_reg",
-                 len,
-                 base_addr + offset_addr,
-                 raw_dir_path,
-                 sequence);
-#else
-        snprintf(cmd_buffer, sizeof(cmd_buffer),
-                 "io -4 -r -f %s/frame%d_isppp_reg -l 0x%x 0x%x",
-                 raw_dir_path,
-                 sequence,
-                 len,
-                 base_addr + offset_addr);
-#endif
-    }
-
-    system(cmd_buffer);
 }
 
 XCamReturn
@@ -1430,7 +1393,7 @@ bool Isp20PollThread::check_skip_frame(int32_t buf_seq)
 #else
 
     if ((_skip_num > 0) && (buf_seq < _skip_to_seq)) {
-        LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "skip num  %d, skip seq %d, dest seq %d",
+        LOGE_CAMHW_SUBM(ISP20POLL_SUBM, "skip num  %d, skip seq %d, dest seq %d",
                         _skip_num, buf_seq, _skip_to_seq);
         _skip_num--;
         _mipi_trigger_mutex.unlock();

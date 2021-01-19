@@ -160,9 +160,10 @@ public:
     void rkLumaCalcFailed(const char* msg);
     XCamReturn setModuleCtl(rk_aiq_module_id_t mId, bool mod_en);
     XCamReturn getModuleCtl(rk_aiq_module_id_t mId, bool& mod_en);
-    XCamReturn enqueueBuffer(struct rk_aiq_vbuf *vbuf);
-    XCamReturn offlineRdJobPrepare();
-    XCamReturn offlineRdJobDone();
+    XCamReturn enqueueRawBuffer(void *rawdata, bool sync);
+    XCamReturn enqueueRawFile(const char *path);
+    XCamReturn registRawdataCb(void (*callback)(void *));
+    XCamReturn rawdataPrepare(rk_aiq_raw_prop_t prop);
     XCamReturn setSharpFbcRotation(rk_aiq_rotation_t rot);
     XCamReturn setMirrorFlip(bool mirror, bool flip, int skip_frm_cnt);
     XCamReturn getMirrorFlip(bool& mirror, bool& flip);

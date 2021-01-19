@@ -52,7 +52,7 @@ public:
     explicit Isp20PollThread();
     virtual ~Isp20PollThread();
 
-    bool set_event_handle_dev(SmartPtr<SensorHw> &dev);
+    bool set_event_handle_dev(SmartPtr<BaseSensorHw> &dev);
     bool set_iris_handle_dev(SmartPtr<LensHw> &dev);
     bool set_focus_handle_dev(SmartPtr<LensHw> &dev);
     bool set_rx_handle_dev(CamHwIsp20* dev);
@@ -63,7 +63,6 @@ public:
     XCamReturn notify_capture_raw();
     // should be called befor start
     void set_working_mode(int mode, bool linked_to_isp);
-    void set_loop_status(bool stat);
     XCamReturn capture_raw_ctl(capture_raw_t type, int count = 0, const char* capture_dir = nullptr, char* output_dir = nullptr);
     void set_hdr_global_tmo_mode(int frame_id, bool mode);
     virtual XCamReturn start();
@@ -115,10 +114,9 @@ private:
     Mutex _mipi_buf_mutex;
     Mutex _mipi_trigger_mutex;
     bool _first_trigger;
-    bool _loop_vain;
 private:
     XCAM_DEAD_COPY(Isp20PollThread);
-    SmartPtr<SensorHw> _event_handle_dev;
+    SmartPtr<BaseSensorHw> _event_handle_dev;
     SmartPtr<LensHw> _iris_handle_dev;
     SmartPtr<LensHw> _focus_handle_dev;
     CamHwIsp20* _rx_handle_dev;

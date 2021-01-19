@@ -23,7 +23,7 @@
 #include "Isp20Params.h"
 #include "SensorHw.h"
 #include "LensHw.h"
-
+#include "Isp20SpThread.h"
 struct media_device;
 
 namespace RkCam {
@@ -189,9 +189,6 @@ public:
     XCamReturn capture_raw_ctl(capture_raw_t type, int count = 0, const char* capture_dir = nullptr, char* output_dir = nullptr);
     void setDhazState(float& on);
     bool getDhazState();
-    XCamReturn enqueueBuffer(struct rk_aiq_vbuf *vbuf);
-    XCamReturn offlineRdJobPrepare();
-    XCamReturn offlineRdJobDone();
     void setHdrGlobalTmoMode(int frame_id, bool mode);
     XCamReturn setSharpFbcRotation(rk_aiq_rotation_t rot) {
         _sharp_fbc_rotation = rot;
@@ -206,8 +203,10 @@ public:
     XCamReturn getLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg);
     XCamReturn setLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg);
     XCamReturn setLensVcmCfg();
+    XCamReturn FocusCorrection();
+    XCamReturn ZoomCorrection();
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops);
-private:
+protected:
     XCAM_DEAD_COPY(CamHwIsp20);
     enum cam_hw_state_e {
         CAM_HW_STATE_INVALID,
@@ -283,6 +282,7 @@ private:
     static void allocMemResource(void *ops_ctx, void *config, void **mem_ctx);
     static void releaseMemResource(void *mem_ctx);
     static void* getFreeItem(void *mem_ctx);
+    void prepare_motion_detection();
     uint32_t _isp_module_ens;
     bool mNormalNoReadBack;
     bool mIsDhazOn;
@@ -299,6 +299,11 @@ private:
     drv_share_mem_ctx_t _fec_drv_mem_ctx;
     Mutex _mem_mutex;
     rk_aiq_rect_t _crop_rect;
+    SmartPtr<Isp20SpThread> mIspSpThread;
+    uint32_t _ds_width;
+    uint32_t _ds_heigth;
+    uint32_t _ds_width_align;
+    uint32_t _ds_heigth_align;
 };
 
 };

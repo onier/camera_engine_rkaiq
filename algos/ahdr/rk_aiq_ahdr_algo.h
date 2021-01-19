@@ -25,14 +25,14 @@ RESULT AhdrStop(AhdrHandle_t pAhdrCtx);
 void AhdrApiOffConfig(AhdrHandle_t pAhdrCtx);
 void AhdrConfig(AhdrHandle_t pAhdrCtx);
 void AhdrGetStats(AhdrHandle_t pAhdrCtx, rkisp_ahdr_stats_t* ROData) ;
-void AhdrIQUpdate(AhdrHandle_t pAhdrCtx, AecPreResult_t AecHdrPreResult, af_preprocess_result_t AfPreResult);
+void AhdrApiOffProcess(AhdrHandle_t pAhdrCtx, AecPreResult_t AecHdrPreResult, af_preprocess_result_t AfPreResult);
 void AhdrGetSensorInfo( AhdrHandle_t pAhdrCtx, AecProcResult_t AecHdrProcResult);
-void AhdrSelectMode(AhdrHandle_t pAhdrCtx, CalibDb_Ahdr_Para_t* pConfig, int mode);
-void AhdrUpdateConfig(AhdrHandle_t pAhdrCtx, AecPreResult_t AecHdrPreResult, af_preprocess_result_t AfPreResult);
+void AhdrUpdateConfig(AhdrHandle_t pAhdrCtx, CalibDb_Ahdr_Para_t* pConfig, int mode);
+void AhdrProcessing(AhdrHandle_t pAhdrCtx, AecPreResult_t AecHdrPreResult, af_preprocess_result_t AfPreResult);
 bool SetGlobalTMO(AhdrHandle_t pAhdrCtx);
 RESULT AhdrInit(AhdrInstanceConfig_t* pInstConfig) ;
 RESULT AhdrRelease(AhdrHandle_t pAhdrCtx) ;
-void AhdrProcessing(AhdrHandle_t pAhdrCtx);
+void AhdrGetProcRes(AhdrHandle_t pAhdrCtx);
 
 
 #endif
