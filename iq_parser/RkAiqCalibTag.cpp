@@ -6795,7 +6795,7 @@ int calib_check_nonleaf_tag_end(CALIB_IQ_TAG_ID_T tag_id)
     // check if all tags have been checked successfully
     for (uint32_t i = 0; i < check_info->count; i++) {
         if (check_info->tag_counts_remain[i] != 0) {
-            LOGE("%s(%d): parent_id:%d parent_name:%s tag_id:%d tag_name:%s --- tag_counts_remain[%d]:%d != 0  assert!!!\n",
+            LOGW("%s(%d): parent_id:%d parent_name:%s tag_id:%d tag_name:%s --- tag_counts_remain[%d]:%d != 0  assert!!!\n",
                  __FUNCTION__, __LINE__,
                  tag_id,
                  TAG_NAME(tag_id),

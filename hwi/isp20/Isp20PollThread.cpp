@@ -293,7 +293,7 @@ Isp20PollThread::new_video_buffer(SmartPtr<V4l2Buffer> buf,
 #endif
             write_metadata_to_file(raw_dir_path,
                                    buf->get_buf().sequence,
-                                   ispParams, expParams);
+                                   ispParams, expParams, afParams);
             _capture_metadata_num--;
             if (!_capture_metadata_num) {
                 _is_raw_dir_exist = false;
@@ -492,10 +492,11 @@ Isp20PollThread::stop ()
             _isp_mipi_rx_infos[i].cache_list.clear ();
         }
     }
-
+    _mipi_trigger_mutex.lock();
     _isp_hdr_fid2times_map.clear();
     _isp_hdr_fid2ready_map.clear();
     _hdr_global_tmo_state_map.clear();
+    _mipi_trigger_mutex.unlock();
     destroy_stop_fds_mipi ();
     _skip_num = 0;
 
@@ -980,13 +981,21 @@ void
 Isp20PollThread::write_metadata_to_file(const char* dir_path,
                                         int frame_id,
                                         SmartPtr<RkAiqIspParamsProxy>& ispParams,
-                                        SmartPtr<RkAiqExpParamsProxy>& expParams)
+                                        SmartPtr<RkAiqExpParamsProxy>& expParams,
+                                        SmartPtr<RkAiqAfInfoProxy>& afParams)
 {
     FILE *fp = nullptr;
     char file_name[64] = {0};
     char buffer[256] = {0};
+    int32_t focusCode = 0;
+    int32_t zoomCode = 0;
 
     snprintf(file_name, sizeof(file_name), "%s/meta_data", dir_path);
+
+    if(afParams.ptr()) {
+        focusCode = afParams->data()->focusCode;
+        zoomCode = afParams->data()->zoomCode;
+    }
 
     fp = fopen(file_name, "ab+");
     if (fp != nullptr) {
@@ -995,7 +1004,7 @@ Isp20PollThread::write_metadata_to_file(const char* dir_path,
             snprintf(buffer,
                      sizeof(buffer),
                      "frame%08d-l_m_s-gain[%08.5f_%08.5f_%08.5f]-time[%08.5f_%08.5f_%08.5f]-"
-                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]\n",
+                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]-afcode[%08d_%08d]\n",
                      frame_id,
                      expParams->data()->aecExpInfo.HdrExp[2].exp_real_params.analog_gain,
                      expParams->data()->aecExpInfo.HdrExp[1].exp_real_params.analog_gain,
@@ -1007,13 +1016,15 @@ Isp20PollThread::write_metadata_to_file(const char* dir_path,
                      ispParams->data()->awb_gain.grgain,
                      ispParams->data()->awb_gain.gbgain,
                      ispParams->data()->awb_gain.bgain,
-                     1);
+                     1,
+                     focusCode,
+                     zoomCode);
         } else if (_working_mode == RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR || \
                    _working_mode == RK_AIQ_ISP_HDR_MODE_2_LINE_HDR) {
             snprintf(buffer,
                      sizeof(buffer),
                      "frame%08d-l_s-gain[%08.5f_%08.5f]-time[%08.5f_%08.5f]-"
-                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]\n",
+                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]-afcode[%08d_%08d]\n",
                      frame_id,
                      expParams->data()->aecExpInfo.HdrExp[1].exp_real_params.analog_gain,
                      expParams->data()->aecExpInfo.HdrExp[0].exp_real_params.analog_gain,
@@ -1023,12 +1034,14 @@ Isp20PollThread::write_metadata_to_file(const char* dir_path,
                      ispParams->data()->awb_gain.grgain,
                      ispParams->data()->awb_gain.gbgain,
                      ispParams->data()->awb_gain.bgain,
-                     1);
+                     1,
+                     focusCode,
+                     zoomCode);
         } else {
             snprintf(buffer,
                      sizeof(buffer),
                      "frame%08d-gain[%08.5f]-time[%08.5f]-"
-                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]\n",
+                     "awbGain[%08.4f_%08.4f_%08.4f_%08.4f]-dgain[%08d]-afcode[%08d_%08d]\n",
                      frame_id,
                      expParams->data()->aecExpInfo.LinearExp.exp_real_params.analog_gain,
                      expParams->data()->aecExpInfo.LinearExp.exp_real_params.integration_time,
@@ -1036,7 +1049,9 @@ Isp20PollThread::write_metadata_to_file(const char* dir_path,
                      ispParams->data()->awb_gain.grgain,
                      ispParams->data()->awb_gain.gbgain,
                      ispParams->data()->awb_gain.bgain,
-                     1);
+                     1,
+                     focusCode,
+                     zoomCode);
         }
 
         fwrite((void *)buffer, strlen(buffer), 1, fp);
@@ -1140,12 +1155,20 @@ int Isp20PollThread::dynamic_capture_raw(int i, uint32_t sequence,
 
             fp = fopen(raw_name, "wb+");
             if (fp != nullptr) {
+                int size = 0;
 #ifdef WRITE_RAW_FILE_HEADER
                 write_frame_header_to_raw(fp, i, sequence);
 #endif
+
+#if 0
+                size = v4l2buf->get_buf().m.planes[0].length;
+#else
+                /* raw image size compatible with ISP expansion line mode */
+                size = _stride_perline * sns_height;
+#endif
                 write_raw_to_file(fp, i, sequence,
                                   (void *)(buf_proxy->get_v4l2_userptr()),
-                                  v4l2buf->get_buf().m.planes[0].length);
+                                  size);
                 fclose(fp);
             }
             XCAM_STATIC_PROFILING_END(write_raw, 0);
@@ -1218,6 +1241,7 @@ Isp20PollThread::write_frame_header_to_raw(FILE *fp, int dev_index,
         mode = 1;
     }
 
+    _stride_perline = stridePerLine;
 
     *((uint16_t* )buffer) = RAW_FILE_IDENT;   // Identifier
     *((uint16_t* )(buffer + 2)) = HEADER_LEN;     // Header length

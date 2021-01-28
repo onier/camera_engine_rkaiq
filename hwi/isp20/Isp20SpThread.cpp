@@ -26,9 +26,9 @@ namespace RkCam {
 
 #define RATIO_PP_FLG                    0
 #define WRITE_FLG                       0
-#define WRITE_FLG_OTHER                 0
+#define WRITE_FLG_OTHER                 1
 
-int write_frame_num     = 0;
+int write_frame_num     = 2;
 int write_frame_num_st  = 100;
 int frame_write_st      = -1;
 
@@ -63,7 +63,7 @@ Isp20SpThread::select_motion_params(RKAnr_Mt_Params_Select_t *stmtParamsSelected
 
     stmtParamsSelected->enable              = _motion_params.enable;
     stmtParamsSelected->sigmaHScale         = (_motion_params.sigmaHScale[gain_l] * ratio + _motion_params.sigmaHScale[gain_r] * (1 - ratio));
-    LOGD("iso=%d, gain_f=%f,ratio=%f, gain_l:%d,gain_h:%d,HScale:%f\n",iso,gain_f,ratio,gain_l,gain_r,stmtParamsSelected->sigmaHScale);
+    LOG1("iso=%d, gain_f=%f,ratio=%f, gain_l:%d,gain_h:%d,HScale:%f\n",iso,gain_f,ratio,gain_l,gain_r,stmtParamsSelected->sigmaHScale);
     stmtParamsSelected->sigmaLScale         = (_motion_params.sigmaLScale[gain_l] * ratio + _motion_params.sigmaLScale[gain_r] * (1 - ratio));
     stmtParamsSelected->light_clp           = (_motion_params.lightClp[gain_l] * ratio + _motion_params.lightClp[gain_r] * (1 - ratio));
     stmtParamsSelected->uv_weight           = (_motion_params.uvWeight[gain_l] * ratio + _motion_params.uvWeight[gain_r] * (1 - ratio));
@@ -72,7 +72,7 @@ Isp20SpThread::select_motion_params(RKAnr_Mt_Params_Select_t *stmtParamsSelected
     stmtParamsSelected->yuvnr_gain_scale[2] = (_motion_params.yuvnrGainScale2[gain_l] * ratio + _motion_params.yuvnrGainScale2[gain_r] * (1 - ratio));
     stmtParamsSelected->frame_limit_y       = (_motion_params.frame_limit_y[gain_l] * ratio + _motion_params.frame_limit_y[gain_r] * (1 - ratio));
     stmtParamsSelected->frame_limit_uv      = (_motion_params.frame_limit_uv[gain_l] * ratio + _motion_params.frame_limit_uv[gain_r] * (1 - ratio));
-    LOGD("selected: %f,%f,%f,%f,%f,%f,%f\n",stmtParamsSelected->sigmaHScale,stmtParamsSelected->sigmaLScale ,stmtParamsSelected->light_clp,stmtParamsSelected->uv_weight,
+    LOG1("selected: %f,%f,%f,%f,%f,%f,%f\n",stmtParamsSelected->sigmaHScale,stmtParamsSelected->sigmaLScale ,stmtParamsSelected->light_clp,stmtParamsSelected->uv_weight,
     stmtParamsSelected->yuvnr_gain_scale[0],stmtParamsSelected->yuvnr_gain_scale[1],stmtParamsSelected->yuvnr_gain_scale[2]);
     return XCAM_RETURN_NO_ERROR;
 }
@@ -92,6 +92,7 @@ Isp20SpThread::Isp20SpThread ()
     mWrThread = new WrProcThread(this);
     _img_width = 0;
     _img_height = 0;
+    _working_mode = RK_AIQ_WORKING_MODE_NORMAL;
 }
 
 Isp20SpThread::~Isp20SpThread()
@@ -285,7 +286,11 @@ Isp20SpThread::kg_proc_loop ()
             LOG1("send MSG_CMD_WR_START,frameid=%u", tnr_inf->frame_id);
         }
         uint8_t* ratio = static_ratio[static_ratio_idx_out];
-
+        if (ratio == NULL) {
+            LOGE("static_ratio_idx_out=%d",static_ratio_idx_out);
+            LOGE("\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
+            assert(0);
+        }
         struct timeval tv0, tv1, tv2, tv3, tv4, tv5, tv6;
         gettimeofday(&tv0, NULL);
         void *gainkg_addr = mmap(NULL, tnr_inf->gainkg_size, PROT_READ | PROT_WRITE, MAP_SHARED, kg_fd, 0);
@@ -365,6 +370,11 @@ Isp20SpThread::wr_proc_loop ()
                 }
 
                 gettimeofday(&tv1, NULL);
+                if (static_ratio[ratio_idx] == NULL) {
+                    LOGE("ratio_idx=%d",ratio_idx);
+                    LOGE("\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
+                    assert(0);
+                }
                 set_gain_wr(gainwr_addr,    static_ratio[ratio_idx]);
                 gettimeofday(&tv2, NULL);
                 munmap(gainwr_addr, tnr_info->gainwr_size);
@@ -1015,7 +1025,6 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
         }
     }
 
-
 }
 
 void
@@ -1354,6 +1363,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio)
             free(test_buff_ori[i]);
         }
     }
+
   }
 
 
@@ -1475,6 +1485,7 @@ void
 Isp20SpThread::deinit()
 {
     LOGD("%s enter", __FUNCTION__);
+    SmartLock locker (_buf_list_mutex);
     _isp_buf_list.clear();
     _notifyYgCmdQ.clear();
     /*------- motion detect algorithm parameters deinit--------*/

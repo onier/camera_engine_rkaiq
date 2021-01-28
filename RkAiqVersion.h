@@ -324,11 +324,15 @@
  * - support runtime debug log
  * - uApi support thread safe
  * v1.0x45.3
- * - optimize motion detection algo 
+ * - optimize motion detection algo
+ * v1.0x45.4
+ * - motion detection stable issues
+ * - system stuck issues when enable fec
+ * - dump raw issues
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x45.3"
-#define RK_AIQ_RELEASE_DATE "2020-01-16"
+#define RK_AIQ_VERSION_REAL_V "v1.0x45.4"
+#define RK_AIQ_RELEASE_DATE "2020-01-28"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

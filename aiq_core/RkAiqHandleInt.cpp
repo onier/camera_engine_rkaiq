@@ -1356,11 +1356,23 @@ RkAiqAnrHandleInt::setAttrib(rk_aiq_nr_attrib_t *att)
 
     // if something changed
     if (0 != memcmp(&mCurAtt, att, sizeof(rk_aiq_nr_attrib_t))) {
+        RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+        if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
+            if ((att->eMode == ANR_OP_MODE_AUTO) && (!att->stAuto.mfnrEn || !att->stAuto.ynrEn || !att->stAuto.uvnrEn)) {
+                LOGE("motion detect is running, operate not permit!");
+                ret = XCAM_RETURN_ERROR_FAILED;
+                goto EXIT;
+            } else if ((att->eMode == ANR_OP_MODE_MANUAL) && (!att->stManual.mfnrEn || !att->stManual.ynrEn || !att->stManual.uvnrEn)) {
+                LOGE("motion detect is running, operate not permit!");
+                ret = XCAM_RETURN_ERROR_FAILED;
+                goto EXIT;
+            }
+        }
         mNewAtt = *att;
         updateAtt = true;
         waitSignal();
     }
-
+EXIT:
     mCfgMutex.unlock();
 
     EXIT_ANALYZER_FUNCTION();
@@ -1395,11 +1407,19 @@ RkAiqAnrHandleInt::setIQPara(rk_aiq_nr_IQPara_t *para)
 
     // if something changed
     if (0 != memcmp(&mCurIQpara, para, sizeof(rk_aiq_nr_IQPara_t))) {
+        RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+        if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
+            if (!para->stMfnrPara.enable || !para->stYnrPara.enable || !para->stUvnrPara.enable) {
+                ret = XCAM_RETURN_ERROR_FAILED;
+                LOGE("motion detect is running, operate not permit!");
+                goto EXIT;
+            }
+        }
         mNewIQpara = *para;
         UpdateIQpara = true;
         waitSignal();
     }
-
+EXIT:
     mCfgMutex.unlock();
 
     EXIT_ANALYZER_FUNCTION();

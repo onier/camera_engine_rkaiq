@@ -1905,6 +1905,8 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
     isp20Pollthread->set_event_handle_dev(sensorHw);
     if (mCalibDb->mfnr.enable && mCalibDb->mfnr.motion_detect_en) {
         prepare_motion_detection();
+        if (mIspSpThread.ptr())
+            mIspSpThread->set_working_mode(mode);
     }
 
     _state = CAM_HW_STATE_PREPARED;
@@ -2207,6 +2209,8 @@ XCamReturn CamHwIsp20::stop()
 
     if (!mKpHwSt)
         setIrcutParams(false);
+
+    SmartLock locker (_mutex);
     _pending_ispparams_queue.clear();
     _pending_isppParams_queue.clear();
     _effecting_ispparm_map.clear();
@@ -2259,6 +2263,7 @@ XCamReturn CamHwIsp20::pause()
 #endif
     if (mIspSpThread.ptr())
         mIspSpThread->pause();
+    SmartLock locker (_mutex);
     _pending_ispparams_queue.clear();
     _pending_isppParams_queue.clear();
     _effecting_ispparm_map.clear();
@@ -3191,6 +3196,9 @@ CamHwIsp20::setIsppParamsSync(int frameId)
             int buf_index = v4l2buf->get_buf().index;
 
             ispp_params = (struct rkispp_params_cfg*)v4l2buf->get_buf().m.userptr;
+            ispp_params->module_en_update = 0;
+            ispp_params->module_ens = 0;
+            ispp_params->module_cfg_update = 0;
 
             bool update_full = false;
             // restore params for re-start and re-prepare
@@ -4299,6 +4307,12 @@ XCamReturn
 CamHwIsp20::setModuleCtl(rk_aiq_module_id_t moduleId, bool en)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (mCalibDb->mfnr.enable && mCalibDb->mfnr.motion_detect_en) {
+        if ((moduleId == RK_MODULE_TNR || moduleId == RK_MODULE_NR) && (en == false)) {
+           LOGE_CAMHW_SUBM(ISP20HW_SUBM, "motion detect is running, operate not permit!");
+           return XCAM_RETURN_ERROR_FAILED;
+         }
+    }
     setModuleStatus(moduleId, en);
     return ret;
 }

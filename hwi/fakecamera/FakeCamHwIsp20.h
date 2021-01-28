@@ -109,15 +109,12 @@ public:
     virtual ~FakeCamHwIsp20();
     virtual XCamReturn init(const char* sns_ent_name);
     virtual XCamReturn prepare(uint32_t width, uint32_t height, int mode, int t_delay, int g_delay);
-    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams);
     virtual XCamReturn enqueueRawBuffer(void *rawdata, bool sync);
     virtual XCamReturn enqueueRawFile(const char *path);
     virtual XCamReturn registRawdataCb(void (*callback)(void *));
     virtual XCamReturn rawdataPrepare(rk_aiq_raw_prop_t prop);
 private:
     XCamReturn init_mipi_devices(rk_sensor_full_info_t *s_info);
-    XCamReturn hdr_mipi_prepare_mode(int mode);
-    XCamReturn hdr_mipi_prepare(int idx);
     void parse_rk_rawdata(void *rawdata, struct rk_aiq_vbuf *vbuf);
     void parse_rk_rawfile(FILE *fp, struct rk_aiq_vbuf *vbuf);
     struct _st_addrinfo _st_addr[3];

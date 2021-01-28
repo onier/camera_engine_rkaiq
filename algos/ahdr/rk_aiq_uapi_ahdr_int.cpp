@@ -19,13 +19,14 @@ rk_aiq_uapi_ahdr_SetAttrib
 
     //Todo
     pAhdrCtx->hdrAttr.opMode = attr.opMode;
-    memcpy(&pAhdrCtx->hdrAttr.stSetLevel, &attr.stSetLevel, sizeof(FastMode_t));
-    memcpy(&pAhdrCtx->hdrAttr.stDarkArea, &attr.stDarkArea, sizeof(DarkArea_t));
-    memcpy(&pAhdrCtx->hdrAttr.stTool, &attr.stTool, sizeof(CalibDb_Ahdr_Para_t));
+    if(attr.opMode == HDR_OpMode_SET_LEVEL)
+        memcpy(&pAhdrCtx->hdrAttr.stSetLevel, &attr.stSetLevel, sizeof(FastMode_t));
+    if(attr.opMode == HDR_OpMode_DarkArea)
+        memcpy(&pAhdrCtx->hdrAttr.stDarkArea, &attr.stDarkArea, sizeof(DarkArea_t));
+    if(attr.opMode == HDR_OpMode_Tool)
+        memcpy(&pAhdrCtx->hdrAttr.stTool, &attr.stTool, sizeof(CalibDb_Ahdr_Para_t));
 
-    if (need_sync == true)
-    {
-
+    if(attr.opMode == HDR_OpMode_Auto) {
         if (0 != memcmp(&pAhdrCtx->hdrAttr.stAuto.stMgeAuto, &attr.stAuto.stMgeAuto, sizeof(amgeAttr_t))) {
             memcpy(&pAhdrCtx->hdrAttr.stAuto.stMgeAuto, &attr.stAuto.stMgeAuto, sizeof(amgeAttr_t));
             pAhdrCtx->hdrAttr.stAuto.bUpdateMge = true;
@@ -40,7 +41,15 @@ rk_aiq_uapi_ahdr_SetAttrib
         else
             pAhdrCtx->hdrAttr.stAuto.bUpdateTmo = false;
 
+    }
+    else
+    {
+        pAhdrCtx->hdrAttr.stAuto.bUpdateMge = false;
+        pAhdrCtx->hdrAttr.stAuto.bUpdateTmo = false;
+    }
 
+    if (attr.opMode == HDR_OpMode_MANU )
+    {
         if (0 != memcmp(&pAhdrCtx->hdrAttr.stManual.stMgeManual, &attr.stManual.stMgeManual, sizeof(mmgeAttr_t))) {
             memcpy(&pAhdrCtx->hdrAttr.stManual.stMgeManual, &attr.stManual.stMgeManual, sizeof(mmgeAttr_t));
             pAhdrCtx->hdrAttr.stManual.bUpdateMge = true;
@@ -58,10 +67,8 @@ rk_aiq_uapi_ahdr_SetAttrib
     }
     else
     {
-        pAhdrCtx->hdrAttr.stAuto.bUpdateMge = need_sync;
-        pAhdrCtx->hdrAttr.stAuto.bUpdateTmo = need_sync;
-        pAhdrCtx->hdrAttr.stManual.bUpdateMge = need_sync;
-        pAhdrCtx->hdrAttr.stManual.bUpdateTmo = need_sync;
+        pAhdrCtx->hdrAttr.stManual.bUpdateMge = false;
+        pAhdrCtx->hdrAttr.stManual.bUpdateTmo = false;
     }
 
     return XCAM_RETURN_NO_ERROR;

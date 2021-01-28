@@ -123,6 +123,7 @@ private:
     uint32_t sns_width;
     uint32_t sns_height;
     uint32_t pixelformat;
+    uint32_t _stride_perline;
     char raw_dir_path[64];
     char user_set_raw_dir[64];
     bool _is_raw_dir_exist;
@@ -151,7 +152,8 @@ private:
                            int len, int sequence);
     void write_metadata_to_file(const char* dir_path, int frame_id,
                                 SmartPtr<RkAiqIspParamsProxy>& ispParams,
-                                SmartPtr<RkAiqExpParamsProxy>& expParams);
+                                SmartPtr<RkAiqExpParamsProxy>& expParams,
+                                SmartPtr<RkAiqAfInfoProxy>& afParams);
     bool get_value_from_file(const char* path, int& value, uint32_t& frameId);
     bool set_value_to_file(const char* path, int value, uint32_t sequence = 0);
     int detect_capture_raw_status(const char* file_name, uint32_t sequence);

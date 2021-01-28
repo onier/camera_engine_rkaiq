@@ -557,6 +557,8 @@ LensHw::getAfInfoParams(SmartPtr<RkAiqAfInfoProxy>& afInfo, int frame_id)
     afInfo->data()->focusEndTim = _focus_tim.vcm_end_t;
     afInfo->data()->zoomStartTim = _zoom_tim.vcm_start_t;
     afInfo->data()->zoomEndTim = _zoom_tim.vcm_end_t;
+    afInfo->data()->focusCode = _focus_pos;
+    afInfo->data()->zoomCode = _zoom_pos;
     if (i < LENSHW_RECORD_SOF_NUM) {
         afInfo->data()->sofTime = _frame_time[i];
     } else {
