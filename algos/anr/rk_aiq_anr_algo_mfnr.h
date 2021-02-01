@@ -11,17 +11,17 @@
 
 RKAIQ_BEGIN_DECLARE
 
-ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name, int *mode_idx);
+ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_2_t *pCalibdb, const char *name, int *mode_idx);
 
-ANRresult_t mfnr_get_setting_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name, int mode_idx, int *setting_idx);
+ANRresult_t mfnr_get_setting_idx_by_name(CalibDb_MFNR_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx);
 
-ANRresult_t init_mfnr_dynamic_params(RKAnr_Mfnr_Dynamic_t *pDynamic, CalibDb_MFNR_t *pCalibdb, int mode_idx);
+ANRresult_t init_mfnr_dynamic_params(RKAnr_Mfnr_Dynamic_t *pDynamic, CalibDb_MFNR_2_t *pCalibdb, int mode_idx);
 
-ANRresult_t mfnr_config_dynamic_param(RKAnr_Mfnr_Dynamic_t *pDynamic,  CalibDb_MFNR_t *pCalibdb, char* param_mode);
+ANRresult_t mfnr_config_dynamic_param(RKAnr_Mfnr_Dynamic_t *pDynamic,  CalibDb_MFNR_2_t *pCalibdb, char* param_mode);
 
-ANRresult_t mfnr_config_setting_param(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCalibdb, char* param_mode, char* snr_name);
+ANRresult_t mfnr_config_setting_param(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_2_t *pCalibdb, char* param_mode, char* snr_name);
 
-ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCalibdb, int mode_idx, int setting_idx);
+ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_2_t *pCalibdb, int mode_idx, int setting_idx);
 
 ANRresult_t select_mfnr_params_by_ISO(RKAnr_Mfnr_Params_t *stmfnrParams,    RKAnr_Mfnr_Params_Select_t *stmfnrParamsSelected, ANRExpInfo_t *pExpInfo, int bits_proc);
 

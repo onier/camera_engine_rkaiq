@@ -183,6 +183,19 @@ rk_aiq_user_api_af_GetSearchPath(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_sec_
 }
 
 XCamReturn
+rk_aiq_user_api_af_GetSearchResult(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_result_t* result)
+{
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->GetSearchResult(result);
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
 rk_aiq_user_api_af_GetZoomRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_zoomrange* range)
 {
     RKAIQ_API_SMART_LOCK(sys_ctx);

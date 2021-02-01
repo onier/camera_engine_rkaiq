@@ -31,8 +31,10 @@
 #define DEFAULT_CAPTURE_RAW_PATH "/tmp/capture_image"
 #define CAPTURE_CNT_FILENAME "/tmp/.capture_cnt"
 #define WRITE_RAW_FILE_HEADER
-#define WRITE_ISP_REG
-#define WRITE_ISPP_REG
+/*
+ * #define WRITE_ISP_REG
+ * #define WRITE_ISPP_REG
+ */
 #define ISP_REGS_BASE 0xffb50000
 #define ISPP_REGS_BASE 0xffb60000
 
@@ -230,7 +232,7 @@ Isp20PollThread::set_value_to_file(const char* path, int value, uint32_t sequenc
     char buffer[16] = {0};
     int fp;
 
-    fp = open(path, O_CREAT | O_RDWR | O_SYNC, S_IRWXU|S_IRUSR|S_IXUSR|S_IROTH|S_IXOTH);
+    fp = open(path, O_CREAT | O_RDWR | O_SYNC, S_IRWXU | S_IRUSR | S_IXUSR | S_IROTH | S_IXOTH);
     if (fp != -1) {
         ftruncate(fp, 0);
         lseek(fp, 0, SEEK_SET);
@@ -253,7 +255,7 @@ Isp20PollThread::new_video_buffer(SmartPtr<V4l2Buffer> buf,
     SmartPtr<VideoBuffer> video_buf = nullptr;
 
     if (type == ISP_POLL_3A_STATS) {
-        SmartPtr<RkAiqIspParamsProxy> ispParams = nullptr;
+        SmartPtr<RkAiqIspMeasParamsProxy> ispParams = nullptr;
         SmartPtr<RkAiqExpParamsProxy> expParams = nullptr;
         SmartPtr<RkAiqIrisParamsProxy> irisParams = nullptr;
         SmartPtr<RkAiqAfInfoProxy> afParams = nullptr;
@@ -267,10 +269,10 @@ Isp20PollThread::new_video_buffer(SmartPtr<V4l2Buffer> buf,
 
         }
 
-        if (_rx_handle_dev)
-            _rx_handle_dev->getEffectiveIspParams(ispParams, buf->get_buf().sequence);
+        if (mCamHw)
+            mCamHw->getEffectiveIspParams(ispParams, buf->get_buf().sequence);
 
-        video_buf = new Isp20StatsBuffer(buf, dev, ispParams, expParams, afParams, irisParams);
+        video_buf = new Isp20StatsBuffer(buf, dev, _event_handle_dev, mCamHw, afParams, irisParams);
 
         // write metadata && isp/ispp reg for debug
         if (_capture_metadata_num > 0) {
@@ -327,11 +329,11 @@ Isp20PollThread::notify_sof (uint64_t time, int frameid)
     if (_focus_handle_dev.ptr())
         _focus_handle_dev->handle_sof(time, frameid);
 
-	_sof_map_mutex.lock();
+    _sof_map_mutex.lock();
     while (_sof_timestamp_map.size() > 8)
-        _sof_timestamp_map.erase(_sof_timestamp_map.begin());
+	    _sof_timestamp_map.erase(_sof_timestamp_map.begin());
     _sof_timestamp_map[frameid] = time;
-	_sof_map_mutex.unlock();
+    _sof_map_mutex.unlock();
     EXIT_CAMHW_FUNCTION();
 
     return ret;
@@ -385,11 +387,11 @@ Isp20PollThread::set_focus_handle_dev(SmartPtr<LensHw> &dev)
 }
 
 bool
-Isp20PollThread::set_rx_handle_dev(CamHwIsp20* dev)
+Isp20PollThread::setCamHw(ICamHw *dev)
 {
     ENTER_CAMHW_FUNCTION();
     XCAM_ASSERT (dev);
-    _rx_handle_dev = dev;
+    mCamHw = dev;
     EXIT_CAMHW_FUNCTION();
     return true;
 }
@@ -409,6 +411,7 @@ Isp20PollThread::Isp20PollThread()
     , _is_multi_cam_conc(false)
     , _skip_num(0)
     , _skip_to_seq(0)
+    , _cache_tx_data(false)
 {
     for (int i = 0; i < 3; i++) {
         SmartPtr<MipiPollThread> mipi_poll = new MipiPollThread(this, ISP_POLL_MIPI_TX, i);
@@ -432,7 +435,6 @@ Isp20PollThread::Isp20PollThread()
 Isp20PollThread::~Isp20PollThread()
 {
     stop();
-    _sof_timestamp_map.clear();
 
     LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "~Isp20PollThread destructed");
 }
@@ -497,6 +499,9 @@ Isp20PollThread::stop ()
     _isp_hdr_fid2ready_map.clear();
     _hdr_global_tmo_state_map.clear();
     _mipi_trigger_mutex.unlock();
+    _sof_map_mutex.lock();
+    _sof_timestamp_map.clear();
+    _sof_map_mutex.unlock();
     destroy_stop_fds_mipi ();
     _skip_num = 0;
 
@@ -536,14 +541,11 @@ Isp20PollThread::set_mipi_devs(SmartPtr<V4l2Device> mipi_tx_devs[3],
 }
 
 void
-Isp20PollThread::set_hdr_frame_readback_infos(int frame_id, int times)
+Isp20PollThread::set_hdr_frame_readback_infos(rk_aiq_luma_params_t luma_params)
 {
-    if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL)
-        return;
-
     _mipi_trigger_mutex.lock();
-    _isp_hdr_fid2times_map[frame_id] = times;
-    LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "rdtimes seq %d \n", frame_id);
+    _isp_hdr_fid2times_map[luma_params.frame_id] = luma_params;
+    LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "rdtimes seq %d \n", luma_params.frame_id);
     _mipi_trigger_mutex.unlock();
     trigger_readback();
 }
@@ -772,37 +774,51 @@ Isp20PollThread::trigger_readback()
     uint32_t sequence = -1;
     sint32_t additional_times = -1;
     bool isHdrGlobalTmo = false;
+    bool isDhazEn = false, isTmoEn = false;
+    u64 ispModuleEns = 0x0;
 
     _mipi_trigger_mutex.lock();
-    _isp_hdr_fid2ready_map.size();
-    if (_isp_hdr_fid2ready_map.size() == 0) {
-        LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "%s buf not ready !", __func__);
-        _mipi_trigger_mutex.unlock();
-        return;
-    }
 
-    it_ready = _isp_hdr_fid2ready_map.begin();
-    sequence = it_ready->first;
-
-    if (!_event_handle_dev->is_virtual_sensor() && _working_mode != RK_AIQ_WORKING_MODE_NORMAL) {
-        match_lumadetect_map(sequence, additional_times);
-        if (additional_times == -1) {
-            LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "%s rdtimes not ready for seq %d !", __func__, sequence);
+    if (!_first_trigger && _cache_tx_data) {
+		/*
+		 * The hdrtmo needs to get the luma in advance,
+		 * so cache a frame of tx data.
+		 */
+        if (_isp_hdr_fid2ready_map.size() < 2) {
+            LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "%s buf not ready(%d) !",
+                    __func__, _isp_hdr_fid2ready_map.size());
             _mipi_trigger_mutex.unlock();
             return;
         }
-
-        match_globaltmostate_map(sequence, isHdrGlobalTmo);
-        if (isHdrGlobalTmo && !_rx_handle_dev->getDhazState())
-            additional_times = 0;
     } else {
-        additional_times = 0;
+        if (_isp_hdr_fid2ready_map.size() == 0) {
+            LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "%s buf not ready(%d) !",
+                    __func__, _isp_hdr_fid2ready_map.size());
+            _mipi_trigger_mutex.unlock();
+            return;
+        }
     }
+    it_ready = _isp_hdr_fid2ready_map.begin();
+    sequence = it_ready->first;
+
+    if (!_event_handle_dev->is_virtual_sensor()) {
+        match_lumadetect_map(sequence, additional_times);
+        if (additional_times == -1) {
+            LOGD_CAMHW_SUBM(ISP20POLL_SUBM,
+                            "%s rdtimes not ready for seq %d !",
+                            __func__, sequence);
+            _mipi_trigger_mutex.unlock();
+            return;
+        }
+    }
+
+    match_globaltmostate_map(sequence, isHdrGlobalTmo);
     _isp_hdr_fid2ready_map.erase(it_ready);
 
-    if (_rx_handle_dev) {
-        if (_rx_handle_dev->setIspParamsSync(sequence)) {
-            LOGE_CAMHW_SUBM(ISP20POLL_SUBM, "%s frame[%d] set isp params failed, don't read back!\n",
+    if (mCamHw) {
+        if (mCamHw->setIspParamsSync(sequence)) {
+            LOGE_CAMHW_SUBM(ISP20POLL_SUBM,
+                            "%s frame[%d] set isp params failed, don't read back!\n",
                             __func__, sequence);
             // drop frame, return buf to tx
             for (int i = 0; i < _mipi_dev_max; i++) {
@@ -817,7 +833,7 @@ Isp20PollThread::trigger_readback()
             snprintf(file_name, sizeof(file_name), "%s", CAPTURE_CNT_FILENAME);
             detect_capture_raw_status(file_name, sequence);
 
-            _rx_handle_dev->setIsppParamsSync(sequence);
+            mCamHw->setIsppParamsSync(sequence);
             for (int i = 0; i < _mipi_dev_max; i++) {
                 ret = _isp_mipi_rx_infos[i].dev->get_buffer(v4l2buf[i],
                         _isp_mipi_rx_infos[i].cache_list.front()->get_v4l2_buf_index());
@@ -826,6 +842,7 @@ Isp20PollThread::trigger_readback()
                     goto out;
                 } else {
                     buf_proxy = _isp_mipi_rx_infos[i].cache_list.pop(-1);
+#if 0
                     if (_first_trigger) {
                         u8 *buf = (u8 *)buf_proxy->get_v4l2_userptr();
                         struct v4l2_format format = v4l2buf[i]->get_format();
@@ -839,6 +856,7 @@ Isp20PollThread::trigger_readback()
                             }
                         }
                     }
+#endif
                     _isp_mipi_rx_infos[i].buf_list.push(buf_proxy);
                     if (_isp_mipi_rx_infos[i].dev->get_mem_type() == V4L2_MEMORY_USERPTR)
                         v4l2buf[i]->set_expbuf_usrptr(buf_proxy->get_v4l2_userptr());
@@ -874,15 +892,32 @@ Isp20PollThread::trigger_readback()
                 /* .mode = T_START_X2, */
             };
 
+            ispModuleEns = mCamHw->getIspModuleEnState();
+            if (ispModuleEns & (1LL <<  RK_ISP2X_HDRTMO_ID))
+                isTmoEn = true;
+            if (ispModuleEns & (1LL << RK_ISP2X_DHAZ_ID))
+                isDhazEn = true;
+            /* In the case of multiple sensors, read back at least twice
+             * if dhaz or tmo enable
+             */
+            if (_is_multi_cam_conc && (isTmoEn || isDhazEn))
+                tg.times = 1;
+
+            /* Fixed read back once:
+             * 1. global TMO and dhaz is off
+             * 2. tmo && dhaz is off
+             */
+            if (isTmoEn && isHdrGlobalTmo && !isDhazEn)
+                additional_times = 0;
+            else if (!isTmoEn && !isDhazEn)
+                additional_times = 0;
+
+            tg.times += additional_times;
+
             if (_first_trigger)
                 tg.times = 1;
-            else
-                tg.times += additional_times;
-
-            if (tg.times > 2)
+            else if (tg.times > 2)
                 tg.times = 2;
-            if (_is_multi_cam_conc && (tg.times < 1))
-                tg.times = 1;
 
             uint64_t sof_timestamp;
             match_sof_timestamp_map(tg.frame_id, sof_timestamp);
@@ -912,29 +947,94 @@ out:
     _mipi_trigger_mutex.unlock();
 }
 
-void
+XCamReturn
+Isp20PollThread::getEffectiveLumaParams(int frame_id, rk_aiq_luma_params_t& luma_params)
+{
+    ENTER_CAMHW_FUNCTION();
+    std::map<uint32_t, rk_aiq_luma_params_t>::iterator it;
+    uint32_t search_id = frame_id < 0 ? 0 : frame_id;
+
+    if (_isp_hdr_fid2times_map.size() == 0) {
+        LOGE_CAMHW_SUBM(ISP20POLL_SUBM, "can't search id %d,  _effecting_exp_mapsize is %d\n",
+                        frame_id, _isp_hdr_fid2times_map.size());
+        return  XCAM_RETURN_ERROR_PARAM;
+    }
+
+    it = _isp_hdr_fid2times_map.find(search_id);
+
+    // havn't found
+    if (it == _isp_hdr_fid2times_map.end()) {
+        std::map<uint32_t, rk_aiq_luma_params_t>::reverse_iterator rit;
+
+        rit = _isp_hdr_fid2times_map.rbegin();
+        do {
+            if (search_id >= rit->first) {
+                LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "exp-sync: can't find id %d, get latest id %d in _isp_hdr_fid2times_map\n",
+                                search_id, rit->first);
+                break;
+            }
+        } while (++rit != _isp_hdr_fid2times_map.rend());
+
+        if (rit == _isp_hdr_fid2times_map.rend()) {
+            LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "can't find the latest effecting exposure for id %d, impossible case !", frame_id);
+            return XCAM_RETURN_ERROR_PARAM;
+        }
+
+        luma_params = rit->second;
+    } else {
+        luma_params = it->second;
+    }
+
+    while (_isp_hdr_fid2times_map.size() > 4)
+        _isp_hdr_fid2times_map.erase(_isp_hdr_fid2times_map.begin());
+
+    EXIT_CAMHW_FUNCTION();
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+	void
 Isp20PollThread::match_lumadetect_map(uint32_t sequence, sint32_t &additional_times)
 {
-    std::map<uint32_t, int>::iterator it_times_del;
-    for (std::map<uint32_t, int>::iterator iter = _isp_hdr_fid2times_map.begin();
-            iter != _isp_hdr_fid2times_map.end();) {
-        if (iter->first < sequence) {
-            it_times_del = iter++;
-            LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "del seq %d", it_times_del->first);
-            _isp_hdr_fid2times_map.erase(it_times_del);
-        } else if (iter->first == sequence) {
-            additional_times = iter->second;
-            it_times_del = iter++;
-            LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "del seq %d", it_times_del->first);
-            _isp_hdr_fid2times_map.erase(it_times_del);
-            break;
-        } else {
-            LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "%s missing rdtimes for buf_seq %d, min rdtimes_seq %d !",
-                            __func__, sequence, iter->first);
-            additional_times = 0;
-            break;
-        }
-    }
+	uint32_t frame_id, target_id;
+
+	if (_isp_hdr_fid2times_map.empty())
+		LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "luma map is empty");
+
+	while (_isp_hdr_fid2times_map.size() > 4)
+		_isp_hdr_fid2times_map.erase(_isp_hdr_fid2times_map.begin());
+
+	std::map<uint32_t, rk_aiq_luma_params_t>::iterator iter, it_times_del;
+	for (iter = _isp_hdr_fid2times_map.begin(); iter != _isp_hdr_fid2times_map.end();) {
+		if (_cache_tx_data) {
+			/*
+			 * The hdrtmo needs to get the luma in advance,
+			 * so match the luma of previous frame in Lumadetect.
+			 */
+			target_id = iter->first - 1;
+		} else {
+			target_id = iter->first;
+		}
+
+		if (target_id < sequence && iter->first != 0) {
+			it_times_del = iter++;
+			LOGD_CAMHW_SUBM(ISP20POLL_SUBM, "del seq %d", it_times_del->first);
+			// _isp_hdr_fid2times_map.erase(it_times_del);
+		} else if (target_id == sequence || iter->first == 0) {
+			additional_times = iter->second.hdrProcessCnt;
+			frame_id = iter->first;
+			it_times_del = iter++;
+			LOGW_CAMHW_SUBM(ISP20POLL_SUBM, "find luma id(%d)-seq id(%d)", frame_id, sequence);
+			// _isp_hdr_fid2times_map.erase(it_times_del);
+			break;
+		} else {
+			LOGW_CAMHW_SUBM(ISP20POLL_SUBM,
+					"%s missing rdtimes for buf_seq %d, min rdtimes_seq %d !",
+					__func__, sequence, iter->first);
+			additional_times = 0;
+			break;
+		}
+	}
 }
 
 void
@@ -964,27 +1064,30 @@ Isp20PollThread::match_globaltmostate_map(uint32_t sequence, bool &isHdrGlobalTm
 XCamReturn
 Isp20PollThread::match_sof_timestamp_map(sint32_t sequence, uint64_t &timestamp)
 {
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
     std::map<int, uint64_t>::iterator it;
     sint32_t search_id = sequence < 0 ? 0 : sequence;
 
     _sof_map_mutex.lock();
     it = _sof_timestamp_map.find(search_id);
-    _sof_map_mutex.unlock();
     if (it != _sof_timestamp_map.end()) {
         timestamp = it->second;
-        return XCAM_RETURN_NO_ERROR;
+        _sof_timestamp_map.erase(it);
     } else {
-        LOGE_CAMHW_SUBM(ISP20POLL_SUBM,
+        LOGW_CAMHW_SUBM(ISP20POLL_SUBM,
                 "can't find frameid(%d), get sof timestamp failed!\n",
                 sequence);
-        return XCAM_RETURN_ERROR_FAILED;
+        ret = XCAM_RETURN_ERROR_FAILED;
     }
+    _sof_map_mutex.unlock();
+
+    return ret;
 }
 
 void
 Isp20PollThread::write_metadata_to_file(const char* dir_path,
                                         int frame_id,
-                                        SmartPtr<RkAiqIspParamsProxy>& ispParams,
+                                        SmartPtr<RkAiqIspMeasParamsProxy>& ispParams,
                                         SmartPtr<RkAiqExpParamsProxy>& expParams,
                                         SmartPtr<RkAiqAfInfoProxy>& afParams)
 {

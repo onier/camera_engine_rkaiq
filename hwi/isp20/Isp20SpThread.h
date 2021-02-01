@@ -21,7 +21,15 @@
 
 #include "xcam_thread.h"
 #include "xcam_mutex.h"
-#include "motion_detect.h"
+
+
+#define RK_AIQ_MOTION_DETECTION_VERSION_HEAD     "AIQ MDETECTION "
+#define RK_AIQ_MOTION_DETECTION_VERSION_STR      "v1.4.0"
+#define  RK_AIQ_MOTION_DETECTION_VERSION \
+    RK_AIQ_MOTION_DETECTION_VERSION_HEAD \
+    RK_AIQ_MOTION_DETECTION_VERSION_STR
+
+#define MOTIONDETECT_SUBM                   (0x20)
 
 using namespace XCam;
 
@@ -59,6 +67,12 @@ typedef struct RKAnr_Mt_Params_Select_t
     float yuvnr_gain_scale[3];
     float frame_limit_y;
     float frame_limit_uv;
+    float gain_scale_l_y;
+    float gain_scale_h_y;
+    float gain_scale_l_uv;
+    float gain_scale_h_uv;
+    float motion_dn_str;
+	float gain_ratio;
 
 } RKAnr_Mt_Params_Select_t;
 
@@ -89,14 +103,14 @@ public:
     void set_sp_img_size		(int w, int h, int w_align, int h_align);
     void set_gain_isp			(void *buf, uint8_t* ratio);
     void set_gain_wr			(void *buf, uint8_t* ratio);
-	void set_gainkg				(void *buf, uint8_t* ratio);
+	void set_gainkg				(void *buf, uint8_t* ratio, uint8_t* ratio_next);
     void start                  ();
     void stop                   ();
     void pause                  ();
     void resume                 ();
     void set_calibDb(const CamCalibDbContext_t* calib);
     void set_working_mode(int mode);
-    void update_motion_detection_params(CalibDb_MFNR_Motion_t *motion);
+    void update_motion_detection_params(ANRMotionParam_t *motion);
 protected:
     void init                                  ();
     void deinit                                ();
@@ -186,9 +200,6 @@ private:
     int gainkg_blk_isp_h;
 	uint8_t **static_ratio;
 	uint8_t *frame_detect_flg;
-	int 	*frameid_ptr;
-	int 	*frameid_tnr_ptr;
-	int 	frame_id_last;
 	uint8_t **pImgbuf;
 	uint8_t **gain_isp_buf_bak;
 	uint8_t *pPreAlpha;
@@ -196,19 +207,16 @@ private:
 
 	RKAnr_Mt_Params_t 			mtParams;
 	RKAnr_Mt_Params_Select_t 	mtParamsSelect;
-	CalibDb_MFNR_Motion_t  _motion_params;
+	RKAnr_Mt_Params_Select_t 	**mtParamsSelect_list;
+	ANRMotionParam_t  _motion_params;
 
 	uint8_t static_ratio_idx_in;
 	uint8_t static_ratio_idx_out;
-
 	uint8_t static_ratio_num;
-	uint8_t static_ratio_bit_inte;
-	uint8_t static_ratio_bit_deci;
-	uint8_t static_ratio_max;
+
 	uint8_t static_ratio_l;
 	uint8_t static_ratio_l_bit;
-	uint8_t static_ratio_r;
-	uint8_t static_ratio_delta;
+	uint8_t static_ratio_r_bit;
 	int16_t *pTmpBuf;
 };
 

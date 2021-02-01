@@ -546,6 +546,11 @@ typedef struct ANR_Auto_Attr_s
 
 } ANR_Auto_Attr_t;
 
+typedef struct ANRMotionParam_s {
+    CalibDb_MFNR_Motion_t  stMotion;
+    float gain_ratio;
+}ANRMotionParam_t;
+
 typedef struct ANRProcResult_s {
     int bayernrEn;
     int mfnrEn;
@@ -565,7 +570,7 @@ typedef struct ANRProcResult_s {
     RKAnr_Ynr_Fix_t stYnrFix;
     RKAnr_Gain_Fix_t stGainFix;
     //for motion detection
-    CalibDb_MFNR_Motion_t  stMotion;
+    ANRMotionParam_t  stMotionParam;
 } ANRProcResult_t;
 
 
@@ -596,7 +601,18 @@ typedef struct ANRExpInfo_s {
     float arAGain[3];
     float arDGain[3];
     int   arIso[3];
+    int   arDcgMode[3];
+    int   cur_snr_mode;
 	int   snr_mode;
+
+	float preTime[3];
+	float preAGain[3];
+	float preDGain[3];
+	int preIso[3];
+	int   preDcgMode[3];
+    int pre_snr_mode;
+
+	int mfnr_mode_3to1;
 } ANRExpInfo_t;
 
 

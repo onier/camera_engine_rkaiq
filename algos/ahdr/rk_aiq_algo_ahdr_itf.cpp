@@ -115,6 +115,12 @@ static XCamReturn AhdrPrepare(RkAiqAlgoCom* params)
         }
     }
 
+    //get aec delay frame
+    pAhdrCtx->CurrAeResult.AecDelayframe = MAX(pCalibDb->aec.CommCtrl.stAuto.WhiteDelayFrame,
+                                           pCalibDb->aec.CommCtrl.stAuto.BlackDelayFrame);
+
+    LOGD_AHDR("%s:AecDelayframe:%d\n", __FUNCTION__, pAhdrCtx->CurrAeResult.AecDelayframe);
+
     LOG1_AHDR("%s:Exit!\n", __FUNCTION__);
     return(XCAM_RETURN_NO_ERROR);
 }
@@ -126,7 +132,6 @@ static XCamReturn AhdrPreProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* 
 
     AhdrHandle_t pAhdrCtx = inparams->ctx->AhdrInstConfig.hAhdr;
     RkAiqAlgoConfigAhdrInt* AhdrCfgParam = (RkAiqAlgoConfigAhdrInt*)inparams;
-    const CamCalibDbContext_t* pCalibDb = AhdrCfgParam->rk_com.u.prepare.calib;
 
     // sence mode
     if (AhdrCfgParam->rk_com.u.proc.gray_mode)
@@ -198,6 +203,7 @@ static XCamReturn AhdrProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
     AhdrProcResParams->AhdrProcRes.isLinearTmo = pAhdrCtx->AhdrProcRes.isLinearTmo;
     memcpy(&AhdrProcResParams->AhdrProcRes.MgeProcRes, &pAhdrCtx->AhdrProcRes.MgeProcRes, sizeof(MgeProcRes_t));
     memcpy(&AhdrProcResParams->AhdrProcRes.TmoProcRes, &pAhdrCtx->AhdrProcRes.TmoProcRes, sizeof(TmoProcRes_t));
+    memcpy(&AhdrProcResParams->AhdrProcRes.TmoFlicker, &pAhdrCtx->AhdrProcRes.TmoFlicker, sizeof(TmoFlickerPara_t));
 
     LOG1_AHDR("%s:Exit!\n", __FUNCTION__);
     return(XCAM_RETURN_NO_ERROR);

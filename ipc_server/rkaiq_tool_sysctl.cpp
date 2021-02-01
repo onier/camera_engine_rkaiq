@@ -6,56 +6,56 @@
 #define LOG_TAG "rkaiq_tool_sysctl.cpp"
 
 int setCpsLtCfg(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_uapi_sysctl_setCpsLtCfg(ctx,(rk_aiq_cpsl_cfg_t*) data);
+    return rk_aiq_uapi_sysctl_setCpsLtCfg(ctx, (rk_aiq_cpsl_cfg_t*) data);
 }
 
 int getCpsLtInfo(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_uapi_sysctl_getCpsLtInfo(ctx, (rk_aiq_cpsl_info_t *) data);
+    return rk_aiq_uapi_sysctl_getCpsLtInfo(ctx, (rk_aiq_cpsl_info_t *) data);
 }
 
 int queryCpsLtCap(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_uapi_sysctl_queryCpsLtCap(ctx, (rk_aiq_cpsl_cap_t *) data);
+    return rk_aiq_uapi_sysctl_queryCpsLtCap(ctx, (rk_aiq_cpsl_cap_t *) data);
 }
 
 int setWorkingModeDyn(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_uapi_sysctl_swWorkingModeDyn(ctx, *(rk_aiq_working_mode_t*) data);
+    return rk_aiq_uapi_sysctl_swWorkingModeDyn(ctx, *(rk_aiq_working_mode_t*) data);
 }
 
 int getVersionInfo(rk_aiq_sys_ctx_t* ctx, char* data) {
-  rk_aiq_uapi_get_version_info((rk_aiq_ver_info_t *)data);
-  return 0;
+    rk_aiq_uapi_get_version_info((rk_aiq_ver_info_t *)data);
+    return 0;
 }
 
 int setHdrAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_ahdr_SetAttrib(ctx, *(ahdr_attrib_t*)data);
+    return rk_aiq_user_api_ahdr_SetAttrib(ctx, *(ahdr_attrib_t*)data);
 }
 
 int getHdrAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_ahdr_GetAttrib(ctx, (ahdr_attrib_t*)data);
+    return rk_aiq_user_api_ahdr_GetAttrib(ctx, (ahdr_attrib_t*)data);
 }
 
 int setGammaAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_agamma_SetAttrib(ctx, *(rk_aiq_gamma_attrib_t*)data);
+    return rk_aiq_user_api_agamma_SetAttrib(ctx, *(rk_aiq_gamma_attrib_t*)data);
 }
 
 int getGammaAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_agamma_GetAttrib(ctx, (rk_aiq_gamma_attrib_t*)data);
+    return rk_aiq_user_api_agamma_GetAttrib(ctx, (rk_aiq_gamma_attrib_t*)data);
 }
 
 int setDpccAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_adpcc_SetAttrib(ctx, (rk_aiq_dpcc_attrib_t *)data);
+    return rk_aiq_user_api_adpcc_SetAttrib(ctx, (rk_aiq_dpcc_attrib_t *)data);
 }
 
 int getDpccAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_adpcc_GetAttrib(ctx, (rk_aiq_dpcc_attrib_t *)data);
+    return rk_aiq_user_api_adpcc_GetAttrib(ctx, (rk_aiq_dpcc_attrib_t *)data);
 }
 
 int setDehazeAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_adehaze_setSwAttrib(ctx, *(adehaze_sw_t *)data);
+    return rk_aiq_user_api_adehaze_setSwAttrib(ctx, *(adehaze_sw_t *)data);
 }
 
 int getDehazeAttrib(rk_aiq_sys_ctx_t* ctx, char* data) {
-  return rk_aiq_user_api_adehaze_getSwAttrib(ctx, (adehaze_sw_t *)data);
+    return rk_aiq_user_api_adehaze_getSwAttrib(ctx, (adehaze_sw_t *)data);
 }
 
 int setCcmAttrib(rk_aiq_sys_ctx_t* ctx, char* data)
@@ -89,7 +89,7 @@ int getAwbCCT(rk_aiq_sys_ctx_t* ctx, char* data)
 
 int queryWBInfo(rk_aiq_sys_ctx_t* ctx, char* data)
 {
-    return rk_aiq_user_api_awb_QueryWBInfo(ctx,(rk_aiq_wb_querry_info_t*) data);
+    return rk_aiq_user_api_awb_QueryWBInfo(ctx, (rk_aiq_wb_querry_info_t*) data);
 }
 
 int setAcpAttrib(rk_aiq_sys_ctx_t* ctx, char* data)
@@ -102,4 +102,7 @@ int getAcpAttrib(rk_aiq_sys_ctx_t* ctx, char* data)
     return rk_aiq_user_api_acp_GetAttrib(ctx, (acp_attrib_t *) data);
 }
 
-
+int enumStaticMetas(rk_aiq_sys_ctx_t* ctx, char* data)
+{
+    return rk_aiq_uapi_sysctl_enumStaticMetas(0, (rk_aiq_static_info_t*) data);
+}

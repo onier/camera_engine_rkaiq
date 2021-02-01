@@ -393,14 +393,21 @@ int ProcessCommand(rk_aiq_sys_ctx_t* ctx, RkAiqSocketData *dataRecv, RkAiqSocket
             dataReply->commandResult = setAcpAttrib(ctx,dataRecv->data);
             dataReply->data = NULL;
             dataReply->dataSize = 0; 
+            break;
         }
-        break;
         case ENUM_ID_CPROC_GETATTRIB:
         {
             dataReply->dataSize = sizeof(acp_attrib_t);
             dataReply->data = (char*)malloc(dataReply->dataSize);
             dataReply->commandResult =  getAcpAttrib(ctx,dataReply->data);
             break; 
+        }
+        case ENUM_ID_SYSCTL_ENUMSTATICMETAS:
+        {
+            dataReply->dataSize = sizeof(rk_aiq_static_info_t);
+            dataReply->data = (char*)malloc(dataReply->dataSize);
+            dataReply->commandResult =  enumStaticMetas(ctx,dataReply->data);
+            break;
         }
         default:
             return -1;

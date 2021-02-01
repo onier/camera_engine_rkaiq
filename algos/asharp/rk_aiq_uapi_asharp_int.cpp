@@ -41,12 +41,28 @@ rk_aiq_uapi_asharp_SetIQpara(RkAiqAlgoContext *ctx,
     AsharpContext_t* pAsharpCtx = (AsharpContext_t*)ctx;
 
     if(para->module_bits & (1 << ASHARP_MODULE_SHARP)){
-		pAsharpCtx->stSharpCalib = para->stSharpPara;
+		//pAsharpCtx->stSharpCalib = para->stSharpPara;
+		pAsharpCtx->stSharpCalib.enable = para->stSharpPara.enable;
+		memcpy(pAsharpCtx->stSharpCalib.version, para->stSharpPara.version, sizeof(para->stSharpPara.version));
+		for(int i=0; i<8; i++){
+			pAsharpCtx->stSharpCalib.luma_point[i] = para->stSharpPara.luma_point[i];
+		}		
+		for(int i=0; i<pAsharpCtx->stSharpCalib.mode_num; i++){
+			pAsharpCtx->stSharpCalib.mode_cell[i] = para->stSharpPara.mode_cell[i];
+		}
 		pAsharpCtx->isIQParaUpdate = true;
     }	
 
 	if(para->module_bits & (1 << ASHARP_MODULE_EDGEFILTER)){
-		pAsharpCtx->stEdgeFltCalib = para->stEdgeFltPara;
+		//pAsharpCtx->stEdgeFltCalib = para->stEdgeFltPara;
+		pAsharpCtx->stEdgeFltCalib.enable = para->stEdgeFltPara.enable;
+		memcpy(pAsharpCtx->stEdgeFltCalib.version, para->stEdgeFltPara.version, sizeof(para->stEdgeFltPara.version));
+		for(int i=0; i<8; i++){
+			pAsharpCtx->stEdgeFltCalib.luma_point[i] = para->stEdgeFltPara.luma_point[i];
+		}
+		for(int i=0; i<pAsharpCtx->stEdgeFltCalib.mode_num; i++){
+			pAsharpCtx->stEdgeFltCalib.mode_cell[i] = para->stEdgeFltPara.mode_cell[i];
+		}
 		pAsharpCtx->isIQParaUpdate = true;
     }
 	
@@ -60,9 +76,28 @@ rk_aiq_uapi_asharp_GetIQpara(const RkAiqAlgoContext *ctx,
 
  	AsharpContext_t* pAsharpCtx = (AsharpContext_t*)ctx;
 
-	para->stSharpPara = pAsharpCtx->stSharpCalib;
-	para->stEdgeFltPara = pAsharpCtx->stEdgeFltCalib;
-	
+	//para->stSharpPara = pAsharpCtx->stSharpCalib;
+	//para->stEdgeFltPara = pAsharpCtx->stEdgeFltCalib;
+	memset(&para->stSharpPara, 0x00, sizeof(CalibDb_Sharp_t));
+	para->stSharpPara.enable = pAsharpCtx->stSharpCalib.enable;
+	memcpy(para->stSharpPara.version, pAsharpCtx->stSharpCalib.version, sizeof(para->stSharpPara.version));
+	for(int i=0; i<8; i++){
+		para->stSharpPara.luma_point[i] = pAsharpCtx->stSharpCalib.luma_point[i];
+	}		
+	for(int i=0; i<pAsharpCtx->stSharpCalib.mode_num; i++){
+		para->stSharpPara.mode_cell[i] = pAsharpCtx->stSharpCalib.mode_cell[i];
+	}
+
+	memset(&para->stEdgeFltPara, 0x00, sizeof(CalibDb_EdgeFilter_t));
+	para->stEdgeFltPara.enable = pAsharpCtx->stEdgeFltCalib.enable;
+	memcpy(para->stEdgeFltPara.version, pAsharpCtx->stEdgeFltCalib.version, sizeof(para->stEdgeFltPara.version));
+	for(int i=0; i<8; i++){
+		para->stEdgeFltPara.luma_point[i] = pAsharpCtx->stEdgeFltCalib.luma_point[i];
+	}
+	for(int i=0; i<pAsharpCtx->stEdgeFltCalib.mode_num; i++){
+		para->stEdgeFltPara.mode_cell[i] = pAsharpCtx->stEdgeFltCalib.mode_cell[i];
+	}
+
     return XCAM_RETURN_NO_ERROR;
 }
 

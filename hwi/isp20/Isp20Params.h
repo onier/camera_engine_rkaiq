@@ -26,25 +26,56 @@ namespace RkCam {
 
 #define ISP20PARAM_SUBM (0x2)
 
+typedef struct AntiTmoFlicker_s {
+    int preFrameNum;
+    bool FirstChange;
+    int FirstChangeNum;
+    bool FirstChangeDone;
+    int FirstChangeDoneNum;
+} AntiTmoFlicker_t;
+
 class Isp20Params {
 public:
     explicit Isp20Params() : _last_pp_module_init_ens(0)
         , _force_isp_module_ens(0)
         , _force_ispp_module_ens(0)
-        , _force_module_flags(0) {};
+        , _force_module_flags(0)
+    {   AntiTmoFlicker.preFrameNum = 0;
+        AntiTmoFlicker.FirstChange = false;
+        AntiTmoFlicker.FirstChangeNum = 0;
+        AntiTmoFlicker.FirstChangeDone = false;
+        AntiTmoFlicker.FirstChangeDoneNum = 0;
+    };
     virtual ~Isp20Params() {};
 
     virtual XCamReturn checkIsp20Params(struct isp2x_isp_params_cfg& isp_cfg);
-    virtual XCamReturn convertAiqResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-            SmartPtr<RkAiqIspParamsProxy> aiq_results,
-            SmartPtr<RkAiqIspParamsProxy>& last_aiq_results);
-    virtual XCamReturn convertAiqResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
-            SmartPtr<RkAiqIsppParamsProxy> aiq_results);
+    virtual XCamReturn convertAiqMeasResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+            SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
+            SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results,
+            SmartPtr<RkAiqIspMeasParamsProxy>& last_aiq_results);
+    virtual XCamReturn convertAiqOtherResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+            SmartPtr<RkAiqIspOtherParamsProxy> aiq_results,
+            SmartPtr<RkAiqIspOtherParamsProxy>& last_aiq_results);
+    virtual XCamReturn convertAiqMeasResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
+            SmartPtr<RkAiqIsppMeasParamsProxy> aiq_results,
+            SmartPtr<RkAiqIsppMeasParamsProxy> &last_aiq_results);
+    virtual XCamReturn convertAiqOtherResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
+            SmartPtr<RkAiqIsppOtherParamsProxy> aiq_results,
+            SmartPtr<RkAiqIsppOtherParamsProxy> &last_aiq_results);
     void set_working_mode(int mode);
     void setModuleStatus(rk_aiq_module_id_t mId, bool en);
     void getModuleStatus(rk_aiq_module_id_t mId, bool& en);
-    void forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg, SmartPtr<RkAiqIsppParamsProxy> aiq_results);
-    void forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg, SmartPtr<RkAiqIspParamsProxy> aiq_results);
+    void hdrtmoGetLumaInfo(rk_aiq_luma_params_t * Next, rk_aiq_luma_params_t *Cur,
+                           s32 frameNum, s32 PixelNumBlock, float blc, float *luma);
+    void hdrtmoGetAeInfo(RKAiqAecExpInfo_t* Next, RKAiqAecExpInfo_t* Cur, s32 frameNum, float* expo);
+    s32 hdrtmoPredictK(float* luma, float* expo, s32 frameNum, PredictKPara_t *TmoPara);
+    bool hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWeight, s32 frameNum, float *LumaDeviation, float StableThr);
+    void forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg,
+                                  SmartPtr<RkAiqIsppMeasParamsProxy> aiq_meas_results,
+                                  SmartPtr<RkAiqIsppOtherParamsProxy> aiq_other_results);
+    void forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
+                                 SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
+                                 SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results);
 private:
     XCAM_DEAD_COPY(Isp20Params);
     void convertAiqAeToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
@@ -65,14 +96,16 @@ private:
                                         const rk_aiq_dehaze_cfg_t& dhaze                     );
     void convertAiqAgammaToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
                                        const AgammaProcRes_t& gamma_out_cfg);
+    void convertAiqAdegammaToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+                                         const AdegammaProcRes_t& degamma_cfg);
     void convertAiqAdemosaicToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-                                          SmartPtr<RkAiqIspParamsProxy> aiq_results);
+                                          SmartPtr<RkAiqIspOtherParamsProxy> aiq_results);
     void convertAiqLscToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
                                     const rk_aiq_lsc_cfg_t& lsc);
     void convertAiqBlcToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-                                    SmartPtr<RkAiqIspParamsProxy> aiq_results);
+                                    SmartPtr<RkAiqIspOtherParamsProxy> aiq_results);
     void convertAiqDpccToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-                                     SmartPtr<RkAiqIspParamsProxy> aiq_results);
+                                     SmartPtr<RkAiqIspMeasParamsProxy> aiq_results);
     void convertAiqCcmToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
                                     const rk_aiq_ccm_cfg_t& ccm);
     void convertAiqA3dlutToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
@@ -113,6 +146,7 @@ private:
     u32 _force_ispp_module_ens;
     u64 _force_module_flags;
     int _working_mode;
+    AntiTmoFlicker_t AntiTmoFlicker;
     Mutex _mutex;
 };
 };

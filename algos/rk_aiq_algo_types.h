@@ -556,6 +556,36 @@ typedef struct _RkAiqAlgoPostResAgamma {
     RkAiqAlgoResCom post_res_com;
 } RkAiqAlgoPostResAgamma;
 
+// adegamma
+typedef struct _RkAiqAlgoConfigAdegamma {
+    RkAiqAlgoCom com;
+} RkAiqAlgoConfigAdegamma;
+
+typedef struct _RkAiqAlgoPreAdegamma {
+    RkAiqAlgoCom com;
+} RkAiqAlgoPreAdegamma;
+
+typedef struct _RkAiqAlgoPreResAdegamma {
+    RkAiqAlgoResCom pre_res_com;
+} RkAiqAlgoPreResAdegamma;
+
+typedef struct _RkAiqAlgoProcAdegamma {
+    RkAiqAlgoCom com;
+} RkAiqAlgoProcAdegamma;
+
+typedef struct _RkAiqAlgoProcResAdegamma {
+    RkAiqAlgoResCom proc_res_com;
+    AdegammaProcRes_t adegamma_proc_res;
+} RkAiqAlgoProcResAdegamma;
+
+typedef struct _RkAiqAlgoPostAdegamma {
+    RkAiqAlgoCom com;
+} RkAiqAlgoPostAdegamma;
+
+typedef struct _RkAiqAlgoPostResAdegamma {
+    RkAiqAlgoResCom post_res_com;
+} RkAiqAlgoPostResAdegamma;
+
 // agic
 typedef struct _RkAiqAlgoConfigAgic {
     RkAiqAlgoCom com;

@@ -64,7 +64,7 @@ public:
   virtual ~SocketServer();
 
   int Send(int cilent_socket, char *buff, int size);
-  int Process(rk_aiq_sys_ctx_t* aiq_ctx);
+  int Process(rk_aiq_sys_ctx_t* aiq_ctx, const char* sns_ent_name);
 
   void RegisterRecvCallBack(RecvCallBack cb) { callback_ = cb; }
   void UnRegisterRecvCallBack() { callback_ = nullptr; }
@@ -78,6 +78,7 @@ private:
 private:
   int sockfd;
   int client_socket;
+  int sns_idx;
   int quit_;
   struct sockaddr_un serverAddress;
   struct sockaddr_un clientAddress;
@@ -245,10 +246,12 @@ enum {
 
 enum {
   ENUM_ID_SYSCTL_START = 0X1500,
+  ENUM_ID_SYSCTL_GETVERSIONINFO,
   ENUM_ID_SYSCTL_SETCPSLTCFG,
   ENUM_ID_SYSCTL_GETCPSLTINFO,
   ENUM_ID_SYSCTL_QUERYCPSLTCAP,
   ENUM_ID_SYSCTL_SETWORKINGMODE,
+  ENUM_ID_SYSCTL_ENUMSTATICMETAS,
   ENUM_ID_SYSCTL_END,
 };
 

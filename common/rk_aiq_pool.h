@@ -27,13 +27,13 @@ namespace RkCam {
 class RkAiqPartResults {
 public:
     explicit RkAiqPartResults() {
-        mIspParams = NULL;
+        mIspMeasMeasParams = NULL;
         mExposureParams = NULL;
         mFocusParams = NULL;
     };
     ~RkAiqPartResults() {};
 
-    rk_aiq_isp_params_t* mIspParams;
+    rk_aiq_isp_meas_params_t* mIspMeasParams;
     rk_aiq_exposure_params_comb_t* mExposureParams;
     rk_aiq_focus_params_t* mFocusParams;
 
@@ -43,7 +43,7 @@ private:
 #endif
 typedef struct RKAiqAecExpInfoWrapper_s {
     RKAiqAecExpInfo_t aecExpInfo;
-    RKAiqAecExpInfo_t exp_tbl[MAX_AEC_EFFECT_FNUM];
+    RKAiqAecExpInfo_t exp_tbl[MAX_AEC_EFFECT_FNUM + 1];
     Sensor_dpcc_res_t SensorDpccInfo;
     int exp_tbl_size;
     int algo_id;
@@ -81,6 +81,12 @@ typedef struct RKAiqCpslInfoWrapper_s {
     bool update_ir;
 } RKAiqCpslInfoWrapper_t;
 
+typedef enum RkAiqParamsType_e {
+    RK_AIQ_PARAMS_ALL,
+    RK_AIQ_PARAMS_MEAS,
+    RK_AIQ_PARAMS_OTHER,
+} RkAiqParamsType_t;
+
 typedef RKAiqAecExpInfoWrapper_t rk_aiq_exposure_params_wrapper_t;
 typedef RKAiqAfInfoWrapper_t rk_aiq_af_info_wrapper_t;
 typedef RkAiqIrisInfoWrapper_t rk_aiq_iris_params_wrapper_t;
@@ -91,12 +97,16 @@ typedef SharedItemPool<rk_aiq_iris_params_wrapper_t> RkAiqIrisParamsPool;
 typedef SharedItemProxy<rk_aiq_iris_params_wrapper_t> RkAiqIrisParamsProxy;
 typedef SharedItemPool<rk_aiq_af_info_wrapper_t> RkAiqAfInfoPool;
 typedef SharedItemProxy<rk_aiq_af_info_wrapper_t> RkAiqAfInfoProxy;
-typedef SharedItemPool<rk_aiq_isp_params_t> RkAiqIspParamsPool;
-typedef SharedItemProxy<rk_aiq_isp_params_t> RkAiqIspParamsProxy;
+typedef SharedItemPool<rk_aiq_isp_meas_params_t> RkAiqIspMeasParamsPool;
+typedef SharedItemProxy<rk_aiq_isp_meas_params_t> RkAiqIspMeasParamsProxy;
+typedef SharedItemPool<rk_aiq_isp_other_params_t> RkAiqIspOtherParamsPool;
+typedef SharedItemProxy<rk_aiq_isp_other_params_t> RkAiqIspOtherParamsProxy;
 typedef SharedItemPool<rk_aiq_focus_params_t> RkAiqFocusParamsPool;
 typedef SharedItemProxy<rk_aiq_focus_params_t> RkAiqFocusParamsProxy;
-typedef SharedItemPool<rk_aiq_ispp_params_t> RkAiqIsppParamsPool;
-typedef SharedItemProxy<rk_aiq_ispp_params_t> RkAiqIsppParamsProxy;
+typedef SharedItemPool<rk_aiq_ispp_meas_params_t> RkAiqIsppMeasParamsPool;
+typedef SharedItemProxy<rk_aiq_ispp_meas_params_t> RkAiqIsppMeasParamsProxy;
+typedef SharedItemPool<rk_aiq_ispp_other_params_t> RkAiqIsppOtherParamsPool;
+typedef SharedItemProxy<rk_aiq_ispp_other_params_t> RkAiqIsppOtherParamsProxy;
 typedef SharedItemPool<RKAiqCpslInfoWrapper_t> RkAiqCpslParamsPool;
 typedef SharedItemProxy<RKAiqCpslInfoWrapper_t> RkAiqCpslParamsProxy;
 
@@ -104,8 +114,10 @@ class RkAiqFullParams {
 public:
     explicit RkAiqFullParams()
         : mExposureParams(NULL)
-        , mIspParams(NULL)
-        , mIsppParams(NULL)
+        , mIspMeasParams(NULL)
+        , mIspOtherParams(NULL)
+        , mIsppMeasParams(NULL)
+        , mIsppOtherParams(NULL)
         , mFocusParams(NULL)
         , mIrisParams(NULL)
         , mCpslParams(NULL) {
@@ -114,15 +126,19 @@ public:
 
     void reset() {
         mExposureParams.release();
-        mIspParams.release();
-        mIsppParams.release();
+        mIspMeasParams.release();
+        mIspOtherParams.release();
+        mIsppMeasParams.release();
+        mIsppOtherParams.release();
         mFocusParams.release();
         mIrisParams.release();
         mCpslParams.release();
     };
     SmartPtr<RkAiqExpParamsProxy> mExposureParams;
-    SmartPtr<RkAiqIspParamsProxy> mIspParams;
-    SmartPtr<RkAiqIsppParamsProxy> mIsppParams;
+    SmartPtr<RkAiqIspMeasParamsProxy> mIspMeasParams;
+    SmartPtr<RkAiqIspOtherParamsProxy> mIspOtherParams;
+    SmartPtr<RkAiqIsppMeasParamsProxy> mIsppMeasParams;
+    SmartPtr<RkAiqIsppOtherParamsProxy> mIsppOtherParams;
     SmartPtr<RkAiqFocusParamsProxy> mFocusParams;
     SmartPtr<RkAiqIrisParamsProxy> mIrisParams;
     SmartPtr<RkAiqCpslParamsProxy> mCpslParams;

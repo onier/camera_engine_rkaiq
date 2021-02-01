@@ -12,7 +12,7 @@ void edgefilter_filter_merge(float *src0, float *src1, float* dst, int size, flo
     }
 }
 
-AsharpResult_t edgefilter_get_mode_cell_idx_by_name(CalibDb_EdgeFilter_t *pCalibdb, char *name, int *mode_idx)
+AsharpResult_t edgefilter_get_mode_cell_idx_by_name(CalibDb_EdgeFilter_2_t *pCalibdb, char *name, int *mode_idx)
 {
 	int i = 0;
 	AsharpResult_t res = ASHARP_RET_SUCCESS;
@@ -32,13 +32,18 @@ AsharpResult_t edgefilter_get_mode_cell_idx_by_name(CalibDb_EdgeFilter_t *pCalib
 		return ASHARP_RET_NULL_POINTER;
 	}
 
-	for(i=0; i<CALIBDB_NR_SHARP_SETTING_LEVEL; i++){
+	if(pCalibdb->mode_num < 1){
+		LOGE_ASHARP("%s(%d): mode cell num is zero\n", __FUNCTION__, __LINE__);
+		return ASHARP_RET_NULL_POINTER;
+	}
+
+	for(i=0; i<pCalibdb->mode_num; i++){
 		if(strncmp(name, pCalibdb->mode_cell[i].name, sizeof(pCalibdb->mode_cell[i].name)) == 0){
 			break;
 		}
 	}
 
-	if(i<CALIBDB_MAX_MODE_NUM){
+	if(i<pCalibdb->mode_num){
 		*mode_idx = i;
 		res = ASHARP_RET_SUCCESS;
 	}else{
@@ -51,7 +56,7 @@ AsharpResult_t edgefilter_get_mode_cell_idx_by_name(CalibDb_EdgeFilter_t *pCalib
 
 }
 
-AsharpResult_t edgefilter_get_setting_idx_by_name(CalibDb_EdgeFilter_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
+AsharpResult_t edgefilter_get_setting_idx_by_name(CalibDb_EdgeFilter_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
 {
 	int i = 0;
 	AsharpResult_t res = ASHARP_RET_SUCCESS;
@@ -90,7 +95,7 @@ AsharpResult_t edgefilter_get_setting_idx_by_name(CalibDb_EdgeFilter_t *pCalibdb
 
 }
 
-AsharpResult_t edgefilter_config_setting_param(RKAsharp_EdgeFilter_Params_t *pParams, CalibDb_EdgeFilter_t *pCalibdb, char* param_mode, char* snr_name)
+AsharpResult_t edgefilter_config_setting_param(RKAsharp_EdgeFilter_Params_t *pParams, CalibDb_EdgeFilter_2_t *pCalibdb, char* param_mode, char* snr_name)
 {
 	AsharpResult_t res = ASHARP_RET_SUCCESS;
 	int mode_idx = 0;
@@ -121,7 +126,7 @@ AsharpResult_t edgefilter_config_setting_param(RKAsharp_EdgeFilter_Params_t *pPa
 	return res;
 
 }
-AsharpResult_t init_edgefilter_params(RKAsharp_EdgeFilter_Params_t *pParams, CalibDb_EdgeFilter_t *pCalibdb, int mode_idx, int setting_idx)
+AsharpResult_t init_edgefilter_params(RKAsharp_EdgeFilter_Params_t *pParams, CalibDb_EdgeFilter_2_t *pCalibdb, int mode_idx, int setting_idx)
 {
     AsharpResult_t res = ASHARP_RET_SUCCESS;
     int i = 0;
@@ -310,8 +315,12 @@ AsharpResult_t select_edgefilter_params_by_ISO(RKAsharp_EdgeFilter_Params_t *str
         return ASHARP_RET_NULL_POINTER;
     }
 
-    iso = pExpInfo->arIso[pExpInfo->hdr_mode];
-
+	if(pExpInfo->mfnr_mode_3to1){
+    	iso = pExpInfo->preIso[pExpInfo->hdr_mode];
+	}else{
+		iso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}
+	
 #ifndef RK_SIMULATOR_HW
     for (i = 0; i < max_iso_step - 1; i++) {
         if (iso >= strkedgefilterParams->iso[i] && iso <= strkedgefilterParams->iso[i + 1] ) {

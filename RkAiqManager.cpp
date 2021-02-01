@@ -197,7 +197,7 @@ RkAiqManager::init()
     mCamHw->setCalib(mCalibDb);
     mCamHw->setIspLumaListener(this);
     mCamHw->setIspStatsListener(this);
-    mCamHw->setEvtsListener(NULL);
+    mCamHw->setEvtsListener(this);
     ret = mCamHw->init(mSnsEntName);
     RKAIQMNG_CHECK_RET(ret, "camHw init error %d !", ret);
     _state = AIQ_STATE_INITED;
@@ -292,12 +292,12 @@ RkAiqManager::start()
     if (_state == AIQ_STATE_STOPED) {
         SmartPtr<RkAiqFullParamsProxy> initParams = mRkAiqAnalyzer->getAiqFullParams();
 
-        if (initParams->data()->mIspParams.ptr()) {
-            initParams->data()->mIspParams->data()->frame_id = 0;
+        if (initParams->data()->mIspMeasParams.ptr()) {
+            initParams->data()->mIspMeasParams->data()->frame_id = 0;
         }
 
-        if (initParams->data()->mIsppParams.ptr()) {
-            initParams->data()->mIsppParams->data()->frame_id = 0;
+        if (initParams->data()->mIsppMeasParams.ptr()) {
+            initParams->data()->mIsppMeasParams->data()->frame_id = 0;
         }
         applyAnalyzerResult(initParams);
     }
@@ -493,10 +493,9 @@ RkAiqManager::ispStatsCb(SmartPtr<VideoBuffer>& ispStats)
 }
 
 XCamReturn
-RkAiqManager::ispEvtsCb(ispHwEvt_t* evt)
+RkAiqManager::ispEvtsCb(SmartPtr<ispHwEvt_t> evts)
 {
-    //TODO
-    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    XCamReturn ret = mRkAiqAnalyzer->pushEvts(evts);
     return ret;
 }
 
@@ -518,15 +517,6 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
 #endif
 
     aiqParams = results->data().ptr();
-
-#ifndef RK_SIMULATOR_HW
-    if (mWorkingMode != RK_AIQ_WORKING_MODE_NORMAL) {
-        SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
-        bool isHdrGlobalTmo = aiqParams->mIspParams->data()->ahdr_proc_res.isHdrGlobalTmo;
-
-        mCamHwIsp20->setHdrGlobalTmoMode(aiqParams->mIspParams->data()->frame_id, isHdrGlobalTmo);
-    }
-#endif
 
 #ifdef RUNTIME_MODULE_DEBUG
 #ifndef RK_SIMULATOR_HW
@@ -559,12 +549,12 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
 #ifndef RK_SIMULATOR_HW
     if (aiqParams->mCpslParams.ptr()) {
         SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
-        int gray_mode = aiqParams->mIspParams->data()->ie.base.mode;
+        int gray_mode = aiqParams->mIspOtherParams->data()->ie.base.mode;
 
         bool cpsl_ir_en = aiqParams->mCpslParams->data()->update_ir &&
                           aiqParams->mCpslParams->data()->ir.irc_on;
         bool cpsl_update = aiqParams->mCpslParams->data()->update_ir ||
-                          aiqParams->mCpslParams->data()->update_fl;
+                           aiqParams->mCpslParams->data()->update_fl;
 
         if (cpsl_ir_en) {
             mDelayCpslApplyFrmNum = 2;
@@ -593,7 +583,7 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results)
 //#define DEBUG_FIXED_EXPOSURE
 #ifdef DEBUG_FIXED_EXPOSURE
         /* test aec with fixed sensor exposure */
-        int cnt = aiqParams->mIspParams->data()->frame_id ;
+        int cnt = aiqParams->mIspMeasParams->data()->frame_id ;
         if (aiqParams->mExposureParams->data()->algo_id == 0) {
             aiqParams->mExposureParams->data()->exp_tbl_size = 1;
             RKAiqAecExpInfo_t* exp_tbl = &aiqParams->mExposureParams->data()->exp_tbl[0];
@@ -652,11 +642,26 @@ set_exp_end:
 #endif
 #endif
 
-    if (aiqParams->mIspParams.ptr()) {
-        ret = mCamHw->setIspParams(aiqParams->mIspParams);
+    if (aiqParams->mIspOtherParams.ptr()) {
+        ret = mCamHw->setIspOtherParams(aiqParams->mIspOtherParams);
         if (ret)
             LOGE_ANALYZER("setIspParams error %d", ret);
     }
+
+    if (aiqParams->mIspMeasParams.ptr()) {
+#ifndef RK_SIMULATOR_HW
+        if (mWorkingMode != RK_AIQ_WORKING_MODE_NORMAL) {
+            SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
+            bool isHdrGlobalTmo = aiqParams->mIspMeasParams->data()->ahdr_proc_res.isHdrGlobalTmo;
+
+            mCamHwIsp20->setHdrGlobalTmoMode(aiqParams->mIspMeasParams->data()->frame_id, isHdrGlobalTmo);
+        }
+#endif
+        ret = mCamHw->setIspMeasParams(aiqParams->mIspMeasParams);
+        if (ret)
+            LOGE_ANALYZER("setIspParams error %d", ret);
+    }
+
 set_isp_end:
 
 #ifdef RUNTIME_MODULE_DEBUG
@@ -667,8 +672,14 @@ set_isp_end:
 #endif
 
 #ifndef DISABLE_PP
-    if (aiqParams->mIsppParams.ptr()) {
-        ret = mCamHw->setIsppParams(aiqParams->mIsppParams);
+    if (aiqParams->mIsppOtherParams.ptr()) {
+        ret = mCamHw->setIsppOtherParams(aiqParams->mIsppOtherParams);
+        if (ret)
+            LOGE_ANALYZER("setIsppParams error %d", ret);
+    }
+
+    if (aiqParams->mIsppMeasParams.ptr()) {
+        ret = mCamHw->setIsppMeasParams(aiqParams->mIsppMeasParams);
         if (ret)
             LOGE_ANALYZER("setIsppParams error %d", ret);
     }
@@ -684,8 +695,8 @@ set_ispp_end:
 // disable this feature now, this require the hdr mode set to auto
 #if 0
     // switch working mode by gray_mode ?
-    if (aiqParams->mIspParams.ptr()) {
-        SmartPtr<rk_aiq_isp_params_t> isp_params = aiqParams->mIspParams->data();
+    if (aiqParams->mIspMeasParams.ptr()) {
+        SmartPtr<rk_aiq_isp_params_t> isp_params = aiqParams->mIspMeasParams->data();
         LOGD_ANALYZER("ie mode %d, mWkSwitching %d, mWorkingMode %d, mOldWkModeForGray %d",
                       isp_params->ie.base.mode, mWkSwitching, mWorkingMode, mOldWkModeForGray);
         if (isp_params->ie.base.mode == RK_AIQ_IE_EFFECT_BW &&
@@ -724,6 +735,12 @@ RkAiqManager::rkAiqCalcDone(SmartPtr<RkAiqFullParamsProxy> &results)
 
     XCAM_ASSERT (mAiqRstAppTh.ptr());
     mAiqRstAppTh->push_results(results);
+    LOGD_ANALYZER("mIspParams(%p-%p), mIsppParams(%p-%p)",
+            results->data()->mIspMeasParams.ptr(),
+            results->data()->mIspOtherParams.ptr(),
+            results->data()->mIsppMeasParams.ptr(),
+            results->data()->mIsppOtherParams.ptr());
+
 
     EXIT_XCORE_FUNCTION();
 }
@@ -738,11 +755,11 @@ RkAiqManager::rkAiqCalcFailed(const char* msg)
 }
 
 void
-RkAiqManager::rkLumaCalcDone(int frame_id, int count)
+RkAiqManager::rkLumaCalcDone(rk_aiq_luma_params_t luma_params)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = mCamHw->setHdrProcessCount(frame_id, count);
+    ret = mCamHw->setHdrProcessCount(luma_params);
     EXIT_XCORE_FUNCTION();
 }
 

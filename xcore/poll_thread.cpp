@@ -534,6 +534,13 @@ PollThread::poll_subdev_event_loop ()
     }
 
     ret = handle_events (event);
+
+    XCAM_ASSERT (_poll_callback);
+
+    if (_poll_callback && event.type == V4L2_EVENT_FRAME_SYNC)
+        return _poll_callback->poll_event_ready (event.u.frame_sync.frame_sequence,
+                                                 event.type);
+
     return ret;
 }
 

@@ -2,6 +2,7 @@
 #define _RK_AIQ_CALIB_TYPES_H_
 #include "rk_aiq_algo_des.h"
 
+#pragma pack(4)
 #define CALIBDB_MAX_ISO_LEVEL 13
 #define CALIBDB_NR_SHARP_MAX_ISO_LEVEL CALIBDB_MAX_ISO_LEVEL
 #define CALIBDB_DPCC_MAX_ISO_LEVEL CALIBDB_MAX_ISO_LEVEL
@@ -10,6 +11,8 @@
 #define CALIBDB_MAX_MODE_NUM 5
 #define CALIBDB_MAX_MODE_NAME_LENGTH (20)
 #define CALIBDB_ZOOM_FOCUS_TBL_SIZE 10240
+#define CALIBDB_DEGAMMA_CRUVE_KNOTS 17
+
 
 /*****************************************************************************/
 /**
@@ -798,6 +801,11 @@ typedef struct cct_clip_cfg_s {
     float cri_bound_low[CALD_AWB_CT_CLIP_GRID_NUM_MAX];
 } cct_clip_cfg_t, CalibDb_Awb_Cct_Clip_Cfg_t;
 
+typedef struct CalibDb_Awb_gain_offset_cfg_s {
+    bool enable;
+    float offset[4];
+} CalibDb_Awb_gain_offset_cfg_t;
+
 typedef struct rk_aiq_wb_awb_runinterval_s {
     int num;
     float LV[CALD_AWB_LV_NUM_FOR_RUNINTERVAL];
@@ -859,6 +867,7 @@ typedef struct CalibDb_Awb_Stategy_Para_s {
     //wb gain shift 2 //to do  from xml
     int cct_lut_cfg_num;
     CalibDb_Awb_Cct_Lut_Cfg_Lv_t cct_lut_cfg[CALD_AWB_CT_LV_NUM_MAX];
+    CalibDb_Awb_gain_offset_cfg_t wbGainOffset;
 
     //single color
     unsigned short      sSelColorNUM;
@@ -1161,12 +1170,19 @@ typedef struct CalibDb_BayerNr_s {
     CalibDb_BayerNr_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_BayerNr_t;
 
+typedef struct CalibDb_BayerNr_2_s {
+    int enable;
+    char version[64];
+    CalibDb_BayerNr_ModeCell_t *mode_cell;
+    int mode_num;
+} CalibDb_BayerNr_2_t;
+
 
 #define CIFISP_LSC_DATA_TBL_SIZE           289
 #define CIFISP_LSC_GRAD_TBL_SIZE           8
 #define CIFISP_LSC_SIZE_TBL_SIZE           8
 #define LSC_GRAD_TBL_SIZE                  8
-#define LSC_ILLUMINATION_MAX               7
+#define LSC_ILLUMINATION_MAX               10
 typedef enum  CalibDb_Used_For_Case_e {
     USED_FOR_CASE_NORMAL = 0,
     USED_FOR_CASE_FLASH,
@@ -1219,6 +1235,7 @@ typedef struct CalibDb_AlscCof_s {
     int usedForCaseAll[USED_FOR_CASE_MAX * LSC_ILLUMINATION_MAX]; //for write xml
 } CalibDb_AlscCof_t;
 
+
 typedef struct CalibDb_LscTableProfile_s {
     CalibDb_Lsc_ProfileName_t     name;                                   /**< profile name */
     CalibDb_ResolutionName_t     resolution;                             /**< resolution link */
@@ -1243,7 +1260,7 @@ typedef struct CalibDb_Lsc_s {
     bool damp_enable;
     CalibDb_AlscCof_t aLscCof;
     int tableAllNum;
-    CalibDb_LscTableProfile_t tableAll[LSC_RESOLUTIONS_NUM_MAX * LSC_ILLUMINATION_MAX * LSC_PROFILES_NUM_MAX]; //type  CalibDb_LscTableProfile_t;
+    CalibDb_LscTableProfile_t *tableAll; //type  CalibDb_LscTableProfile_t;
 } CalibDb_Lsc_t;
 
 
@@ -1408,6 +1425,13 @@ typedef struct CalibDb_UVNR_s {
     CalibDb_UVNR_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_UVNR_t;
 
+typedef struct CalibDb_UVNR_2_s {
+    int enable;
+    char version[64];
+    CalibDb_UVNR_ModeCell_t *mode_cell;
+    int mode_num;
+} CalibDb_UVNR_2_t;
+
 typedef struct CalibDb_Gamma_s {
     unsigned char gamma_en;
     unsigned char gamma_out_segnum;
@@ -1416,6 +1440,20 @@ typedef struct CalibDb_Gamma_s {
     float curve_hdr[45];
     float curve_night[45];
 } CalibDb_Gamma_t;
+
+typedef struct CalibDb_Degamma_para_s {
+    unsigned char degamma_scene_en;
+    char name[CALIBDB_MAX_MODE_NAME_LENGTH];
+    float X_axis[CALIBDB_DEGAMMA_CRUVE_KNOTS];
+    float curve_R[CALIBDB_DEGAMMA_CRUVE_KNOTS];
+    float curve_G[CALIBDB_DEGAMMA_CRUVE_KNOTS];
+    float curve_B[CALIBDB_DEGAMMA_CRUVE_KNOTS];
+} CalibDb_Degamma_para_t;
+
+typedef struct CalibDb_Degamma_s {
+    unsigned char degamma_en;
+    CalibDb_Degamma_para_t mode[3];
+} CalibDb_Degamma_t;
 
 typedef struct CalibDb_YNR_ISO_s {
     float iso;
@@ -1462,6 +1500,14 @@ typedef struct CalibDb_YNR_s {
     char version[64];
     CalibDb_YNR_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_YNR_t;
+
+typedef struct CalibDb_YNR_2_s {
+    int enable;
+    char version[64];
+    CalibDb_YNR_ModeCell_t *mode_cell;
+    int mode_num;
+} CalibDb_YNR_2_t;
+
 
 struct CalibDb_Gic_ISO_s {
     float iso;
@@ -1611,6 +1657,21 @@ typedef struct CalibDb_MFNR_s {
     CalibDb_MFNR_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_MFNR_t;
 
+typedef struct CalibDb_MFNR_2_s {
+    int enable;
+    char version[64];
+    unsigned char local_gain_en;
+    unsigned char motion_detect_en;
+    unsigned char mode_3to1;
+    unsigned char max_level;
+    unsigned char max_level_uv;
+    unsigned char back_ref_num;
+    struct CalibDb_awb_uv_ratio_s uv_ratio[4];
+    CalibDb_MFNR_ModeCell_t *mode_cell;
+    int mode_num;
+} CalibDb_MFNR_2_t;
+
+
 struct CalibDb_Sharp_ISO_s {
     float iso;
     float hratio;
@@ -1646,12 +1707,12 @@ typedef struct CalibDb_Sharp_ModeCell_s {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float gauss_luma_coeff[9];
     float mbf_coeff[221];
-    #if 0
+#if 0
     float pbf_coeff[9];
-    float rf_m_coeff[25];    
+    float rf_m_coeff[25];
     float rf_h_coeff[25];
     float hbf_coeff[9];
-    #else
+#else
     //v2
     float pbf_coeff_l[9];
     float pbf_coeff_h[9];
@@ -1661,7 +1722,7 @@ typedef struct CalibDb_Sharp_ModeCell_s {
     float rf_h_coeff_h[25];
     float hbf_coeff_l[9];
     float hbf_coeff_h[9];
-    #endif
+#endif
     CalibDb_Sharp_Setting_t setting[CALIBDB_NR_SHARP_SETTING_LEVEL];
 } CalibDb_Sharp_ModeCell_t;
 
@@ -1671,6 +1732,15 @@ typedef struct CalibDb_Sharp_s {
     float luma_point[8];
     CalibDb_Sharp_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_Sharp_t;
+
+typedef struct CalibDb_Sharp_2_s {
+    int enable;
+    char version[64];
+    float luma_point[8];
+    CalibDb_Sharp_ModeCell_t* mode_cell;
+    int mode_num;
+} CalibDb_Sharp_2_t;
+
 
 struct CalibDb_EdgeFilter_ISO_s {
     float iso;
@@ -1711,6 +1781,14 @@ typedef struct CalibDb_EdgeFilter_s {
     float luma_point[8];
     CalibDb_EdgeFilter_ModeCell_t mode_cell[CALIBDB_MAX_MODE_NUM];
 } CalibDb_EdgeFilter_t;
+
+typedef struct CalibDb_EdgeFilter_2_s {
+    int enable;
+    char version[64];
+    float luma_point[8];
+    CalibDb_EdgeFilter_ModeCell_t *mode_cell;
+    int mode_num;
+} CalibDb_EdgeFilter_2_t;
 
 struct CalibDb_IIR_setting_s {
     float stab_fnum;
@@ -1804,6 +1882,7 @@ typedef struct CalibDb_Af_Contrast_s {
     unsigned char           AdaptiveSteps;
     unsigned short          AdaptRangeTbl[65];                /**< adaptive range search table*/
     float                   TrigThers;                    /**< AF trigger threshold */
+    float                   LumaTrigThers;
 
     float                   StableThers;                  /**< AF stable threshold */
     unsigned short          StableFrames;                 /**< AF stable  status must hold frames */
@@ -1822,6 +1901,13 @@ typedef struct CalibDb_Af_Contrast_s {
 
     unsigned char           WeightEnable;
     unsigned short          Weight[225];                  /**< weight */
+
+    unsigned char           SearchPauseLumaEnable;
+    float                   SearchPauseLumaThers;
+    unsigned short          SearchLumaStableFrames;
+    float                   SearchLumaStableThers;
+
+    float                   FlatValue;
 } CalibDb_Af_Contrast_t;
 
 typedef struct CalibDb_Af_Laser_s {
@@ -1861,6 +1947,7 @@ typedef struct CalibDb_Af_ZoomFocusTbl_s {
 } CalibDb_Af_ZoomFocusTbl_t;
 
 typedef struct CalibDb_AF_s {
+    signed char af_mode;
     unsigned short win_h_offs;
     unsigned short win_v_offs;
     unsigned short win_h_size;
@@ -2016,17 +2103,18 @@ typedef struct CamCalibDbContext_s {
     CalibDb_Ahdr_Para_t ahdr;
     CalibDb_Blc_t blc;
     CalibDb_Dpcc_t dpcc;
-    CalibDb_BayerNr_t bayerNr;
+    CalibDb_BayerNr_2_t bayerNr;
     CalibDb_Lsc_t lsc;
     CalibDb_RKDM_t dm;
     CalibDb_Ccm_t ccm;
-    CalibDb_UVNR_t uvnr;
+    CalibDb_UVNR_2_t uvnr;
     CalibDb_Gamma_t gamma;
-    CalibDb_YNR_t ynr;
+    CalibDb_Degamma_t degamma;
+    CalibDb_YNR_2_t ynr;
     CalibDb_Gic_t gic;
-    CalibDb_MFNR_t mfnr;
-    CalibDb_Sharp_t sharp;
-    CalibDb_EdgeFilter_t edgeFilter;
+    CalibDb_MFNR_2_t mfnr;
+    CalibDb_Sharp_2_t sharp;
+    CalibDb_EdgeFilter_2_t edgeFilter;
     CalibDb_Dehaze_t dehaze;
     CalibDb_FEC_t afec;
     CalibDb_LDCH_t aldch;
@@ -2040,5 +2128,7 @@ typedef struct CamCalibDbContext_s {
     CalibDb_IE_t    ie;
     CalibDb_System_t  sysContrl;
 } CamCalibDbContext_t;
+
+#pragma pack()
 
 #endif

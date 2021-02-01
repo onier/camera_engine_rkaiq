@@ -24,22 +24,24 @@
 #define RKAIQ_ISP_HIST_ID          (1 << 1)
 #define RKAIQ_ISP_AWB_ID           (1 << 2)
 #define RKAIQ_ISP_AWB_GAIN_ID      (1 << 3)
-#define RKAIQ_ISP_AHDR_ID          (1 << 4)
-#define RKAIQ_ISP_AF_ID            (1 << 5)
-#define RKAIQ_ISP_BLC_ID           (1 << 6)
-#define RKAIQ_ISP_DPCC_ID          (1 << 7)
-#define RKAIQ_ISP_RAWNR_ID         (1 << 8)
-#define RKAIQ_ISP_GIC_ID           (1 << 9)
-#define RKAIQ_ISP_LUT3D_ID         (1 << 10)
-#define RKAIQ_ISP_DEHAZE_ID        (1 << 11)
-#define RKAIQ_ISP_CCM_ID           (1 << 12)
-#define RKAIQ_ISP_GAMMA_ID         (1 << 13)
-#define RKAIQ_ISP_LSC_ID           (1 << 14)
-#define RKAIQ_ISP_GAIN_ID          (1 << 15)
-#define RKAIQ_ISP_DEBAYER_ID       (1 << 16)
-#define RKAIQ_ISP_IE_ID            (1 << 17)
-#define RKAIQ_ISP_CP_ID            (1 << 18)
-#define RKAIQ_ISP_LDCH_ID          (1 << 19)
+#define RKAIQ_ISP_AHDRMGE_ID       (1 << 4)
+#define RKAIQ_ISP_AHDRTMO_ID       (1 << 5)
+#define RKAIQ_ISP_AF_ID            (1 << 6)
+#define RKAIQ_ISP_BLC_ID           (1 << 7)
+#define RKAIQ_ISP_DPCC_ID          (1 << 8)
+#define RKAIQ_ISP_RAWNR_ID         (1 << 9)
+#define RKAIQ_ISP_GIC_ID           (1 << 10)
+#define RKAIQ_ISP_LUT3D_ID         (1 << 11)
+#define RKAIQ_ISP_DEHAZE_ID        (1 << 12)
+#define RKAIQ_ISP_CCM_ID           (1 << 13)
+#define RKAIQ_ISP_GAMMA_ID         (1 << 14)
+#define RKAIQ_ISP_LSC_ID           (1 << 15)
+#define RKAIQ_ISP_GAIN_ID          (1 << 16)
+#define RKAIQ_ISP_DEBAYER_ID       (1 << 17)
+#define RKAIQ_ISP_IE_ID            (1 << 18)
+#define RKAIQ_ISP_CP_ID            (1 << 19)
+#define RKAIQ_ISP_LDCH_ID          (1 << 20)
+#define RKAIQ_ISP_DEGAMMA_ID       (1 << 21)
 
 typedef struct {
     uint32_t update_mask;
@@ -54,35 +56,62 @@ typedef struct {
     rk_aiq_wb_gain_t       awb_gain;
     rk_aiq_isp_af_meas_t    af_meas;
     bool af_cfg_update;
-    rk_aiq_isp_blc_t        blc;
     rk_aiq_isp_dpcc_t       dpcc;
     RkAiqAhdrProcResult_t   ahdr_proc_res;//porc data for hw/simulator
-    rk_aiq_isp_rawnr_t      rawnr;
     rk_aiq_isp_drc_t        drc;
-    rk_aiq_isp_gic_t        gic;
+    rk_aiq_ccm_cfg_t        ccm;
     rk_aiq_lsc_cfg_t        lsc;
+    //rk_aiq_isp_goc_t        goc;
+
+    //anr result
+    rkaiq_anr_procRes_t     rkaiq_anr_proc_res;
+    rkaiq_asharp_procRes_t  rkaiq_asharp_proc_res;
+#ifdef RK_SIMULATOR_HW
+    rk_aiq_isp_blc_t        blc;
+    rk_aiq_isp_rawnr_t      rawnr;
+    rk_aiq_isp_gic_t        gic;
     rk_aiq_isp_demosaic_t   demosaic;
     rk_aiq_isp_ldch_t       ldch;
     //rk_aiq_isp_fec_t        fec;
     rk_aiq_lut3d_cfg_t      lut3d;
     //rk_aiq_isp_dehaze_t     dehaze;
     rk_aiq_dehaze_cfg_t     adhaz_config;
-    rk_aiq_ccm_cfg_t        ccm;
-    //rk_aiq_isp_goc_t        goc;
     AgammaProcRes_t         agamma;
+    AdegammaProcRes_t       adegamma;
     rk_aiq_isp_wdr_t        wdr;
     rk_aiq_isp_csm_t        csm;
     rk_aiq_isp_cgc_t        cgc;
     rk_aiq_isp_conv422_t    conv22;
     rk_aiq_isp_yuvconv_t    yuvconv;
     rk_aiq_isp_gain_t       gain_config;
-    //anr result
-    rkaiq_anr_procRes_t     rkaiq_anr_proc_res;
-    rkaiq_asharp_procRes_t  rkaiq_asharp_proc_res;
     rk_aiq_acp_params_t     cp;
     rk_aiq_isp_ie_t         ie;
-    CalibDb_MFNR_Motion_t   motion;
-} rk_aiq_isp_params_t;
+#endif
+} rk_aiq_isp_meas_params_t;
+
+typedef struct {
+    uint32_t update_mask;
+    uint32_t module_enable_mask;
+    sint32_t frame_id;
+    rk_aiq_isp_rawnr_t      rawnr;
+    rk_aiq_isp_gain_t       gain_config;
+    ANRMotionParam_t        motion_param;
+    rk_aiq_isp_blc_t        blc;
+    rk_aiq_isp_gic_t        gic;
+    rk_aiq_isp_demosaic_t   demosaic;
+    rk_aiq_isp_ldch_t       ldch;
+    rk_aiq_lut3d_cfg_t      lut3d;
+    rk_aiq_dehaze_cfg_t     adhaz_config;
+    AgammaProcRes_t         agamma;
+    AdegammaProcRes_t       adegamma;
+    rk_aiq_isp_wdr_t        wdr;
+    rk_aiq_isp_csm_t        csm;
+    rk_aiq_isp_cgc_t        cgc;
+    rk_aiq_isp_conv422_t    conv22;
+    rk_aiq_isp_yuvconv_t    yuvconv;
+    rk_aiq_acp_params_t     cp;
+    rk_aiq_isp_ie_t         ie;
+} rk_aiq_isp_other_params_t;
 
 #define RKAIQ_ISPP_TNR_ID           (1 << 0)
 #define RKAIQ_ISPP_NR_ID            (1 << 1)
@@ -93,14 +122,27 @@ typedef struct {
 typedef struct {
     uint32_t update_mask;
     sint32_t frame_id;
+#ifdef RK_SIMULATOR_HW
     rk_aiq_isp_tnr_t        tnr;
     rk_aiq_isp_ynr_t        ynr;
     rk_aiq_isp_uvnr_t       uvnr;
     rk_aiq_isp_sharpen_t    sharpen;
     rk_aiq_isp_edgeflt_t    edgeflt;
-    rk_aiq_isp_orb_t        orb;
     rk_aiq_isp_fec_t        fec;
-} rk_aiq_ispp_params_t;
+#endif
+    rk_aiq_isp_orb_t        orb;
+} rk_aiq_ispp_meas_params_t;
+
+typedef struct {
+    uint32_t update_mask;
+    sint32_t frame_id;
+    rk_aiq_isp_tnr_t        tnr;
+    rk_aiq_isp_ynr_t        ynr;
+    rk_aiq_isp_uvnr_t       uvnr;
+    rk_aiq_isp_sharpen_t    sharpen;
+    rk_aiq_isp_edgeflt_t    edgeflt;
+    rk_aiq_isp_fec_t        fec;
+} rk_aiq_ispp_other_params_t;
 
 typedef enum rk_aiq_drv_share_mem_type_e {
     MEM_TYPE_LDCH,
@@ -114,7 +156,7 @@ typedef struct isp_drv_share_mem_ops_s {
     alloc_mem_t alloc_mem;
     release_mem_t release_mem;
     get_free_item_t get_free_item;
-}isp_drv_share_mem_ops_t;
+} isp_drv_share_mem_ops_t;
 
 typedef struct rk_aiq_ldch_share_mem_info_s {
     int size;
@@ -159,7 +201,7 @@ struct rk_aiq_vbuf_info {
 };
 
 struct rk_aiq_vbuf {
-        void *base_addr;
+    void *base_addr;
     uint32_t frame_width;
     uint32_t frame_height;
     struct rk_aiq_vbuf_info buf_info[3];/*index: 0-short,1-medium,2-long*/

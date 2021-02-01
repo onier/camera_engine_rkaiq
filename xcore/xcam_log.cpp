@@ -50,8 +50,8 @@ static char log_file_name[XCAM_MAX_STR_SIZE] = {0};
  * bit:      31        30       29      28       27     26     25        24     23       22
  * meaning: [ASHARP]  [AIE]    [ACP]    [AR2Y] [ALDCH][A3DLUT] [ADEHAZE] [AWDR] [AGAMMA][ACCM]
  *
- * bit:     [63-39]                     38       37     36     35        34     33       32
- * meaning:  [U]                        [CAMHW]  [ANALYZER][XCORE][ASD]  [AFEC] [ACGC]  [AORB]
+ * bit:     [63-39]               39      38       37     36     35        34     33       32
+ * meaning:  [U]              [ADEGAMMA ]   [CAMHW]  [ANALYZER][XCORE][ASD]  [AFEC] [ACGC]  [AORB]
  *
  * [U] means unused now.
  * [level]: use 4 bits to define log levels.
@@ -116,6 +116,7 @@ static xcore_cam_log_module_info_t g_xcore_log_infos[XCORE_LOG_MODULE_MAX] = {
     { "XCORE", XCORE_LOG_LEVEL_ERR, 0xff}, // XCORE_LOG_MODULE_XCORE
     { "ANALYZER", XCORE_LOG_LEVEL_ERR, 0xff}, // XCORE_LOG_MODULE_ANALYZER
     { "CAMHW", XCORE_LOG_LEVEL_ERR, 0xff}, // XCORE_LOG_MODULE_CAMHW
+    { "ADEGAMMA", XCORE_LOG_LEVEL_ERR, 0xff}, // XCORE_LOG_MODULE_ADEGAMMA
 };
 
 bool xcam_get_enviroment_value(const char* variable, unsigned long long* value)

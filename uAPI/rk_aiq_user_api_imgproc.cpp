@@ -1387,6 +1387,17 @@ XCamReturn rk_aiq_uapi_getSearchPath(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_sec_
     return ret;
 }
 
+XCamReturn rk_aiq_uapi_getSearchResult(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_result_t* result)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_GetSearchResult(ctx, result);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
 XCamReturn rk_aiq_uapi_FocusCorrestion(const rk_aiq_sys_ctx_t* ctx)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;

@@ -329,10 +329,26 @@
  * - motion detection stable issues
  * - system stuck issues when enable fec
  * - dump raw issues
+ * v1.0x56.1
+ * - isp driver v1.0x5.1
+ * - ensure isp/pp params are syncronized with frame
+ * - support vicap dvp interface
+ * - support dynamic lsc&nr iq cell
+ * v1.0x56.3
+ * - update motion detection algo from jimmy
+ * v1.0x66.0
+ * - fix some api bugs
+ *   - fix rk_aiq_uapi_getBrightness uapi bug
+     - fix ahdr api bug
+     - Fix adehaze enable bug
+     - NR & Sharp: modify api for get strength
+ *   - API updateIq may be stucked, fix it
+ * - motion detection: v1.4.0
+ * - uvnr: use last frame in default
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x45.4"
-#define RK_AIQ_RELEASE_DATE "2020-01-28"
+#define RK_AIQ_VERSION_REAL_V "v1.0x66.0"
+#define RK_AIQ_RELEASE_DATE "2020-03-30"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

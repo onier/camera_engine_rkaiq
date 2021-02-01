@@ -34,7 +34,7 @@ public:
     virtual XCamReturn stop();
     virtual XCamReturn getSensorModeData(const char* sns_ent_name,
                                          rk_aiq_exposure_sensor_descriptor& sns_des);
-    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams);
+    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispParams);
     virtual XCamReturn setHdrProcessCount(int frame_id, int count);
     virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar);
     virtual XCamReturn setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params);
@@ -65,7 +65,7 @@ public:
     }
     virtual XCamReturn rawdataPrepare(rk_aiq_raw_prop_t prop) {
         return  XCAM_RETURN_ERROR_FAILED;
-    }    
+    }
 private:
     XCAM_DEAD_COPY (CamHwSimulator);
 };

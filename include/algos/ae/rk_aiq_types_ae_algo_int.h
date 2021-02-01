@@ -398,14 +398,6 @@ typedef struct AeInstanceConfig_s {
  * @brief   ISP2.0 AEC Algo Result Params
  */
 /*****************************************************************************/
-
-typedef struct CISFeature_s {
-    uint8_t SNR;
-    uint8_t DR;
-    uint8_t Sat;
-    uint8_t SEN;
-} CISFeature_t;
-
 typedef struct AecPreResult_s {
     float MeanLuma[MAX_HDR_FRAMENUM];
     float LowLightLuma[MAX_HDR_FRAMENUM];
@@ -428,8 +420,6 @@ typedef struct AecPreResult_s {
     RkAiqExpParamComb_t HdrExp[MAX_HDR_FRAMENUM];
 
     CamerIcHistBins_t AeRawHistBin[3];
-    CISFeature_t CISFeature;
-
 } AecPreResult_t;
 
 /*****************************************************************************/
@@ -463,7 +453,7 @@ typedef struct AecProcResult_s {
 
     RKAiqAecExpInfo_t             InterpExp[MAX_AEC_EFFECT_FNUM];
 
-    RKAiqAecExpInfo_t             exp_set_tbl[MAX_AEC_EFFECT_FNUM];
+    RKAiqAecExpInfo_t             exp_set_tbl[MAX_AEC_EFFECT_FNUM + 1];
     int                           exp_set_cnt;
 
     /***LinearAe results****/

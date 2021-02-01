@@ -1,6 +1,6 @@
 #include "rk_aiq_anr_algo_mfnr.h"
 
-ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name, int *mode_idx)
+ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_2_t *pCalibdb, const char *name, int *mode_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -20,13 +20,18 @@ ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name,
 		return ANR_RET_NULL_POINTER;
 	}
 
-	for(i=0; i<CALIBDB_NR_SHARP_SETTING_LEVEL; i++){
+	if(pCalibdb->mode_num < 1){
+		LOGE_ANR("%s(%d): mfnr mode cell num is zero\n", __FUNCTION__, __LINE__);
+		return ANR_RET_NULL_POINTER;
+	}
+
+	for(i=0; i<pCalibdb->mode_num; i++){
 		if(strncmp(name, pCalibdb->mode_cell[i].name, sizeof(pCalibdb->mode_cell[i].name)) == 0){
 			break;
 		}
 	}
 
-	if(i<CALIBDB_MAX_MODE_NUM){
+	if(i<pCalibdb->mode_num){
 		*mode_idx = i;
 		res = ANR_RET_SUCCESS;
 	}else{
@@ -40,7 +45,7 @@ ANRresult_t mfnr_get_mode_cell_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name,
 }
 
 
-ANRresult_t mfnr_get_setting_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
+ANRresult_t mfnr_get_setting_idx_by_name(CalibDb_MFNR_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -79,7 +84,7 @@ ANRresult_t mfnr_get_setting_idx_by_name(CalibDb_MFNR_t *pCalibdb, char *name, i
 
 }
 
-ANRresult_t init_mfnr_dynamic_params(RKAnr_Mfnr_Dynamic_t *pDynamic, CalibDb_MFNR_t *pCalibdb, int mode_idx)
+ANRresult_t init_mfnr_dynamic_params(RKAnr_Mfnr_Dynamic_t *pDynamic, CalibDb_MFNR_2_t *pCalibdb, int mode_idx)
 {
     ANRresult_t res = ANR_RET_SUCCESS;
     int i = 0;
@@ -106,7 +111,7 @@ ANRresult_t init_mfnr_dynamic_params(RKAnr_Mfnr_Dynamic_t *pDynamic, CalibDb_MFN
 
 }
 
-ANRresult_t mfnr_config_dynamic_param(RKAnr_Mfnr_Dynamic_t *pDynamic,  CalibDb_MFNR_t *pCalibdb, char* param_mode)
+ANRresult_t mfnr_config_dynamic_param(RKAnr_Mfnr_Dynamic_t *pDynamic,  CalibDb_MFNR_2_t *pCalibdb, char* param_mode)
 {
 	
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -140,7 +145,7 @@ ANRresult_t mfnr_config_dynamic_param(RKAnr_Mfnr_Dynamic_t *pDynamic,  CalibDb_M
 	
 }
 
-ANRresult_t mfnr_config_setting_param(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCalibdb, char* param_mode, char* snr_name)
+ANRresult_t mfnr_config_setting_param(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_2_t *pCalibdb, char* param_mode, char* snr_name)
 {
 	ANRresult_t res = ANR_RET_SUCCESS;
 	int mode_idx = 0;
@@ -183,7 +188,7 @@ ANRresult_t mfnr_config_setting_param(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR
 
 }
 
-ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_t *pCalibdb, int mode_idx, int setting_idx)
+ANRresult_t init_mfnr_params(RKAnr_Mfnr_Params_t *pParams, CalibDb_MFNR_2_t *pCalibdb, int mode_idx, int setting_idx)
 {
     ANRresult_t res = ANR_RET_SUCCESS;
     int i = 0;
@@ -423,7 +428,11 @@ ANRresult_t select_mfnr_params_by_ISO(RKAnr_Mfnr_Params_t *stmfnrParams,    RKAn
         return ANR_RET_NULL_POINTER;
     }
 
-    iso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	if(pExpInfo->mfnr_mode_3to1){
+		iso = pExpInfo->preIso[pExpInfo->hdr_mode];
+	}else{
+    	iso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}
 
     int i, j;
     int iso_low = iso, iso_high = iso;
@@ -959,8 +968,15 @@ ANRresult_t mfnr_fix_transfer(RKAnr_Mfnr_Params_Select_t* tnr, RKAnr_Mfnr_Fix_t 
 	
     int i = 0;
     unsigned long tmp = 0;
-    int mIso_last = pExpInfo->arIso[pExpInfo->hdr_mode];
-    int mIso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	int mIso_last = 50;
+	int mIso = 50;
+	if(pExpInfo->mfnr_mode_3to1){
+    	mIso_last = pExpInfo->preIso[pExpInfo->hdr_mode];
+    	mIso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}else{
+		mIso_last = pExpInfo->arIso[pExpInfo->hdr_mode];
+    	mIso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}
     double gain_glb_filt;
     double gain_glb_ref1;
     double gain_glb_filt_sqrt;
@@ -1198,7 +1214,7 @@ ANRresult_t mfnr_fix_Printf(RKAnr_Mfnr_Fix_t  * pMfnrCfg)
              pMfnrCfg->pk1_c);
 
     //0x008c
-    LOGD_ANR("(0x008c) glb_gain_cur:%d glb_gain_nxt:%d \n",
+    LOGD_ANR("mfnr (0x008c) glb_gain_cur:%d glb_gain_nxt:%d \n",
              pMfnrCfg->glb_gain_cur,
              pMfnrCfg->glb_gain_nxt);
 

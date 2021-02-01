@@ -530,8 +530,15 @@ XCamReturn AccmAutoConfig
     //1)
     int dominateIlluListSize = 15;//to do from xml;
     float varianceLumaTh = 0.006;//to do from xml;
-
-    pCcm = &hAccm->mCurAtt.stTool;
+    if (hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_TOOL){
+        LOGD_ACCM("%s (%d): ACCM TOOL MODE !\n", __FUNCTION__, __LINE__);
+        pCcm = &hAccm->mCurAtt.stTool;
+        ret = pCcmMatrixAll_init(hAccm, &hAccm->mCurAtt.stTool.mode_cell[mode_idx], mode_idx);
+        RETURN_RESULT_IF_DIFFERENT(ret, XCAM_RETURN_NO_ERROR);
+    } else {
+        LOGD_ACCM("%s (%d): ACCM AUTO MODE !\n", __FUNCTION__, __LINE__);
+        pCcm = hAccm->calibCcm;
+    }
 
     ret = illuminant_index_estimation_ccm(pCcm->mode_cell[mode_idx].aCcmCof.illuNum, pCcm->mode_cell[mode_idx].aCcmCof.illAll,
                                           hAccm->accmSwInfo.awbGain, &dominateIlluProfileIdx);
@@ -553,6 +560,7 @@ XCamReturn AccmAutoConfig
                   sensorGain, &fSaturation);
 
     hAccm->accmRest.fSaturation =  fSaturation;
+    hAccm->mCurAtt.finalSat = hAccm->accmRest.fSaturation;
 
     //3)
     ret = SatSelectCcmProfiles( hAccm->accmRest.fSaturation, pDomIlluProfile->matrixUsedNO, hAccm->pCcmMatrixAll[mode_idx][dominateIlluProfileIdx],
@@ -578,6 +586,10 @@ XCamReturn AccmAutoConfig
     }
        hAccm->accmRest.pCcmProfile1 = pCcmProfile1;
        hAccm->accmRest.pCcmProfile2 = pCcmProfile2;
+       memcpy(&hAccm->mCurAtt.usedCcmProf1, hAccm->accmRest.pCcmProfile1, sizeof(CalibDb_CcmMatrixProfile_t));
+
+       if (hAccm->accmRest.pCcmProfile2)
+           memcpy(&hAccm->mCurAtt.usedCcmProf2, hAccm->accmRest.pCcmProfile2, sizeof(CalibDb_CcmMatrixProfile_t));
    //end
 
     //4) calc scale for y_alpha_curve
@@ -694,7 +706,18 @@ XCamReturn AccmConfig
 
     LOGD_ACCM("%s: updateAtt: %d\n", __FUNCTION__, hAccm->updateAtt);
     if(hAccm->updateAtt) {
-        hAccm->mCurAtt = hAccm->mNewAtt;
+        hAccm->mCurAtt.mode = hAccm->mNewAtt.mode;
+        hAccm->mCurAtt.byPass = hAccm->mNewAtt.byPass;
+
+        if (hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_TOOL)
+        {
+            hAccm->mCurAtt.byPass = !(hAccm->mNewAtt.stTool.enable);
+            hAccm->mCurAtt.stTool = hAccm->mNewAtt.stTool;
+            }
+        else if (hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_AUTO)
+            hAccm->mCurAtt.stAuto = hAccm->mNewAtt.stAuto;
+        else
+            hAccm->mCurAtt.stManual = hAccm->mNewAtt.stManual;
     }
 
     memcpy(hAccm->mCurAtt.curr_wbgain, hAccm->accmSwInfo.awbGain, sizeof(hAccm->accmSwInfo.awbGain));
@@ -705,7 +728,7 @@ XCamReturn AccmConfig
 
         CalibDb_CcmHdrNormalMode_t currentHdrNormalMode = hAccm->accmRest.currentHdrNormalMode;
 
-        if(hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_AUTO) {
+        if((hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_AUTO)|| (hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_TOOL)){
             AccmAutoConfig(hAccm, currentHdrNormalMode);
         } else if(hAccm->mCurAtt.mode == RK_AIQ_CCM_MODE_MANUAL) {
             AccmManualConfig(hAccm);
@@ -804,6 +827,7 @@ static XCamReturn UpdateCcmCalibPara(accm_handle_t hAccm, CalibDb_CcmHdrNormalMo
     for (int idx = 0; idx < hAccm->mCurAtt.stTool.modecellNum; idx++){
         ret = pCcmMatrixAll_init(hAccm, &hAccm->mCurAtt.stTool.mode_cell[idx], idx);
     }
+
     hAccm->ccmHwConf.bound_bit = hAccm->mCurAtt.stTool.mode_cell[currentHdrNormalMode].luma_ccm.low_bound_pos_bit;
     memcpy( hAccm->ccmHwConf.rgb2y_para, hAccm->mCurAtt.stTool.mode_cell[currentHdrNormalMode].luma_ccm.rgb2y_para,
             sizeof(hAccm->mCurAtt.stTool.mode_cell[currentHdrNormalMode].luma_ccm.rgb2y_para));
@@ -846,7 +870,7 @@ XCamReturn AccmInit(accm_handle_t *hAccm, const CamCalibDbContext_t* calib)
 
     if (accm_context->accmSwInfo.hdr_mode== RK_AIQ_WORKING_MODE_NORMAL){
         currentHdrNormalMode = CCM_FOR_MODE_NORMAL;
-    }else if(accm_context->accmSwInfo.hdr_mode > RK_AIQ_WORKING_MODE_NORMAL && accm_context->accmSwInfo.hdr_mode <= RK_AIQ_WORKING_MODE_ISP_HDR3){
+    }else if(accm_context->accmSwInfo.hdr_mode > RK_AIQ_WORKING_MODE_NORMAL && accm_context->accmSwInfo.hdr_mode <= RK_AIQ_ISP_HDR_MODE_3_LINE_HDR){
         currentHdrNormalMode = CCM_FOR_MODE_HDR;
     }else{
         LOGE_ACCM("%s: Current hdr mode (%d) is invalid!Defaults to normal mode.  \n", __FUNCTION__, accm_context->accmSwInfo.hdr_mode);
@@ -890,7 +914,7 @@ XCamReturn AccmPrepare(accm_handle_t hAccm)
 
     if (hAccm->accmSwInfo.hdr_mode== RK_AIQ_WORKING_MODE_NORMAL){
         currentHdrNormalMode = CCM_FOR_MODE_NORMAL;
-    }else if(hAccm->accmSwInfo.hdr_mode > RK_AIQ_WORKING_MODE_NORMAL && hAccm->accmSwInfo.hdr_mode <= RK_AIQ_WORKING_MODE_ISP_HDR3){
+    }else if(hAccm->accmSwInfo.hdr_mode > RK_AIQ_WORKING_MODE_NORMAL && hAccm->accmSwInfo.hdr_mode <= RK_AIQ_ISP_HDR_MODE_3_LINE_HDR){
         currentHdrNormalMode = CCM_FOR_MODE_HDR;
 
     }else{

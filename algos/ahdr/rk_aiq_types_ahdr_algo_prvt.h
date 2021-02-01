@@ -190,6 +190,15 @@ typedef struct CurrAeResult_s {
     float BlockLumaS[225];
     float BlockLumaM[25];
     float BlockLumaL[225];
+
+    //aec delay frame
+    int AecDelayframe;
+
+	//aec LumaDeviation
+	float LumaDeviationL;
+	float LumaDeviationM;
+	float LumaDeviationS;
+	float LumaDeviationLinear;
 } CurrAeResult_t;
 
 typedef struct {
@@ -240,6 +249,7 @@ typedef struct AhdrProcResData_s
     bool isHdrGlobalTmo;
     bool bTmoEn;
     bool isLinearTmo;
+    TmoFlickerPara_t TmoFlicker;
 } AhdrProcResData_t;
 
 typedef struct SensorInfo_s

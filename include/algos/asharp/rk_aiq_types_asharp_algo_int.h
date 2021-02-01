@@ -393,7 +393,18 @@ typedef struct AsharpExpInfo_s {
     float arAGain[3];
     float arDGain[3];
     int   arIso[3];
+    int   arDcgMode[3];
+    int   cur_snr_mode;
 	int   snr_mode;
+
+	float preTime[3];
+	float preAGain[3];
+	float preDGain[3];
+	int preIso[3];
+	int preDcgMode[3];
+    int pre_snr_mode;
+	
+	int mfnr_mode_3to1;
 } AsharpExpInfo_t;
 
 typedef enum rk_aiq_sharp_module_e{
@@ -408,6 +419,7 @@ typedef struct rk_aiq_sharp_IQpara_s{
 	CalibDb_Sharp_t stSharpPara;
     CalibDb_EdgeFilter_t stEdgeFltPara;
 }rk_aiq_sharp_IQpara_t;
+
 
 RKAIQ_END_DECLARE
 

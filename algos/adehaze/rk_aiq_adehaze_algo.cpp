@@ -531,7 +531,8 @@ XCamReturn AdehazeProcess(AdehazeHandle_t* para, int iso, int mode)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     LOG1_ADEHAZE("ENTER: %s \n", __func__);
 
-    para->adhaz_config.dehaze_en[4] = FUNCTION_ENABLE;
+    //bigmode
+    para->adhaz_config.dehaze_en[4] = para->width > DEHAZEBIGMODE ? 1 : 0;
 
     LOGD_ADEHAZE("%s ISO:%d mode:%d\n", __func__, iso, mode);
 

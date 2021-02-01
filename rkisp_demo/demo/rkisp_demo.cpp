@@ -37,6 +37,7 @@
 #define CAPTURE_CNT_FILENAME ".capture_cnt"
 #define ENABLE_UAPI_TEST
 #define IQFILE_PATH_MAX_LEN 256
+//#define OFFLINE_FRAME_TEST
 
 struct buffer {
     void *start;
@@ -1569,6 +1570,16 @@ static void* test_thread(void* args) {
     return 0;
 }
 
+static void* test_offline_thread(void* args) {
+    pthread_detach (pthread_self());
+    const demo_context_t* demo_ctx = (demo_context_t*) args;
+     for(int i=0; i<10; i++) {
+         rk_aiq_uapi_sysctl_enqueueRkRawFile(demo_ctx->aiq_ctx, "/tmp/frame_2688x1520");
+         usleep(500000);
+     }
+    return 0;
+}
+
 static void set_af_manual_meascfg(const rk_aiq_sys_ctx_t* ctx)
 {
     rk_aiq_af_attrib_t attr;
@@ -1661,6 +1672,10 @@ static void* stats_thread(void* args) {
     return 0;
 }
 
+void release_buffer(void *addr) {
+    printf("release buffer called: addr=%p\n",addr);
+}
+
 static void rkisp_routine(demo_context_t *ctx)
 {
     char sns_entity_name[64];
@@ -1726,6 +1741,14 @@ static void rkisp_routine(demo_context_t *ctx)
             if (ctx->writeFileSync)
                 rk_aiq_uapi_debug_captureRawYuvSync(ctx->aiq_ctx, CAPTURE_RAW_AND_YUV_SYNC);
 
+#ifdef OFFLINE_FRAME_TEST
+             rk_aiq_raw_prop_t prop;
+             prop.format = RK_PIX_FMT_SBGGR10;
+             prop.frame_width = 2688;
+             prop.frame_height = 1520;
+             prop.rawbuf_type = RK_AIQ_RAW_FILE;
+             rk_aiq_uapi_sysctl_prepareRkRaw(ctx->aiq_ctx, prop);
+#endif
             /*
              * rk_aiq_uapi_setFecEn(ctx->aiq_ctx, true);
              * rk_aiq_uapi_setFecCorrectDirection(ctx->aiq_ctx, FEC_CORRECT_DIRECTION_Y);
@@ -1735,6 +1758,9 @@ static void rkisp_routine(demo_context_t *ctx)
             if (ret != XCAM_RETURN_NO_ERROR)
                 ERR("%s:rk_aiq_uapi_sysctl_prepare failed: %d\n",get_sensor_name(ctx), ret);
             else {
+            	#ifdef OFFLINE_FRAME_TEST
+                rk_aiq_uapi_sysctl_registRkRawCb(ctx->aiq_ctx, release_buffer);
+                #endif
                 ret = rk_aiq_uapi_sysctl_start(ctx->aiq_ctx );
 
                 init_device(ctx);
@@ -1856,6 +1882,11 @@ int main(int argc, char **argv)
 #ifdef ENABLE_UAPI_TEST
     pthread_t tid;
     pthread_create(&tid, NULL, test_thread, &main_ctx);
+#endif
+
+#ifdef OFFLINE_FRAME_TEST
+    pthread_t tid_offline;
+    pthread_create(&tid_offline, NULL, test_offline_thread, &main_ctx);
 #endif
 
 //#define TEST_BLOCKED_STATS_FUNC

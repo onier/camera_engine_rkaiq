@@ -184,9 +184,11 @@ RKAIQ_BEGIN_DECLARE
 
 
 typedef struct ANRGainState_s {
+    int gain_stat_full_last;
     int gainState;
-    float gain_th0;
-    float gain_th1;
+    int gainState_last;
+    float gain_th0[2];
+    float gain_th1[2];
     float gain_cur;
     float ratio;
 } ANRGainState_t;
@@ -204,10 +206,10 @@ typedef struct ANRContext_s {
 
     int refYuvBit;
 
-    CalibDb_BayerNr_t stBayernrCalib;
-    CalibDb_MFNR_t stMfnrCalib;
-    CalibDb_UVNR_t stUvnrCalib;
-    CalibDb_YNR_t stYnrCalib;
+    CalibDb_BayerNr_2_t stBayernrCalib;
+    CalibDb_MFNR_2_t stMfnrCalib;
+    CalibDb_UVNR_2_t stUvnrCalib;
+    CalibDb_YNR_2_t stYnrCalib;
 
     ANRGainState_t stGainState;
 	

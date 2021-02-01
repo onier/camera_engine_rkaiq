@@ -171,8 +171,8 @@ void TmoGetCurrIOData
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_gain_ld_off1 = 10;
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_gain_ld_off2 = 5;
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_newhist_en = 1;
-    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_mode = 0;
-    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_vsize = (int)(pAhdrCtx->height - 32);
+    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_mode = 1;
+    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_vsize = (int)(pAhdrCtx->height - 256);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cfg_alpha = 255;
 
     //IO data from IQ
@@ -180,16 +180,12 @@ void TmoGetCurrIOData
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_0p18 =  (int)(pAhdrCtx->CurrHandleData.CurrTmoHandleData.GlobeLuma + 0.5);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_lw0p5 = (int)(pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsHighLight + 0.5);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_set_weightkey = (int)(pAhdrCtx->CurrHandleData.CurrTmoHandleData.LocalTmoStrength + 0.5);
-    if(pAhdrCtx->SensorInfo.LongFrmMode == false) {
-        float lwscl = pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight;
-        pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_lwscl = (int)(lwscl + 0.5);
-        pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_maxgain = (int)(SHIFT12BIT(lwscl / 16) + 0.5);
-    }
-    else
-    {
-        pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_lwscl = 63;
-        pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_maxgain = 4096;
-    }
+
+    float lwscl = pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight;
+    if(pAhdrCtx->SensorInfo.LongFrmMode)
+        lwscl = 16;
+    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_lwscl = (int)(lwscl + 0.5);
+    pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_maxgain = (int)(SHIFT12BIT(lwscl / 16) + 0.5);
 
     //calc other IO data
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_big_en = pAhdrCtx->width > BIGMODE ? 1 : 0;
@@ -213,6 +209,40 @@ void TmoGetCurrIOData
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_set_lgrange1 = GetSetLgRange1(pAhdrCtx, set_lgmin, set_lgmax);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_set_lgavgmax = GetSetLgAvgMax(pAhdrCtx, set_lgmin, set_lgmax);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_set_palpha = GetSetPalhpa(pAhdrCtx, set_lgmin, set_lgmax);
+
+    //for avoid tmo flicker
+    pAhdrCtx->AhdrProcRes.TmoFlicker.cnt_mode = pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_mode;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.cnt_vsize = pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_cnt_vsize;
+    if(pAhdrCtx->CurrHandleData.CurrTmoHandleData.GlobalTmoStrength > 0.5)
+        pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrengthDown = false;
+    else
+        pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrengthDown = true;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrength = pAhdrCtx->CurrHandleData.CurrTmoHandleData.GlobalTmoStrength - 0.5;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrength = pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrength < 0 ? (1 - pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrength)
+            : (1 + pAhdrCtx->AhdrProcRes.TmoFlicker.GlobalTmoStrength);
+
+    pAhdrCtx->AhdrProcRes.TmoFlicker.iir = (int)(pAhdrCtx->AhdrConfig.tmo_para.global.iir) +
+                                           3 * pAhdrCtx->CurrAeResult.AecDelayframe;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.iirmax = IIRMAX;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.height = pAhdrCtx->height;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.width = pAhdrCtx->width;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.PredictK.correction_factor = 1.05;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.PredictK.correction_offset = 0;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.PredictK.Hdr3xLongPercent = 0.5;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.PredictK.UseLongLowTh = 1.02;
+    pAhdrCtx->AhdrProcRes.TmoFlicker.PredictK.UseLongUpTh = 0.98;
+    if(pAhdrCtx->FrameNumber == 1)
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[0] = pAhdrCtx->CurrAeResult.LumaDeviationLinear;
+    else if(pAhdrCtx->FrameNumber == 2) {
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[0] = pAhdrCtx->CurrAeResult.LumaDeviationS;
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[1] = pAhdrCtx->CurrAeResult.LumaDeviationL;
+    }
+    else if(pAhdrCtx->FrameNumber == 3) {
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[0] = pAhdrCtx->CurrAeResult.LumaDeviationS;
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[1] = pAhdrCtx->CurrAeResult.LumaDeviationM;
+        pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[2] = pAhdrCtx->CurrAeResult.LumaDeviationL;
+    }
+    pAhdrCtx->AhdrProcRes.TmoFlicker.StableThr = 0.1;
 
     LOGV_AHDR("%s:  Tmo set IOdata to register:\n", __FUNCTION__);
     LOGV_AHDR("%s:  float lgmax:%f\n", __FUNCTION__, lgmax);
@@ -253,6 +283,8 @@ void TmoGetCurrIOData
     LOGV_AHDR("%s:  sw_hdrtmo_lgscl_ratio:%d\n", __FUNCTION__, pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_lgscl_ratio);
     LOGV_AHDR("%s:  sw_hdrtmo_gain_ld_off1:%d\n", __FUNCTION__, pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_gain_ld_off1);
     LOGV_AHDR("%s: sw_hdrtmo_gain_ld_off2:%d\n", __FUNCTION__, pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_gain_ld_off2);
+    LOGV_AHDR("%s: LumaDeviation:%f %f %f\n", __FUNCTION__, pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[0],
+              pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[1], pAhdrCtx->AhdrProcRes.TmoFlicker.LumaDeviation[2]);
 
     LOG1_AHDR("%s:Eixt!\n", __FUNCTION__);
 }

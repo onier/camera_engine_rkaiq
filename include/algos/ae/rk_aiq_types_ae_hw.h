@@ -171,20 +171,20 @@ struct rawaebig_stat {
     unsigned short channelr_xy[RAWAEBIG_WIN_NUM];
     unsigned short channelg_xy[RAWAEBIG_WIN_NUM];
     unsigned short channelb_xy[RAWAEBIG_WIN_NUM];
-    unsigned int   channely_xy[RAWAEBIG_WIN_NUM]; //not HW!
+    unsigned short channely_xy[RAWAEBIG_WIN_NUM]; //not HW!
     unsigned long int wndx_sumr[RAWAEBIG_SUBWIN_NUM];
     unsigned long int wndx_sumg[RAWAEBIG_SUBWIN_NUM];
     unsigned long int wndx_sumb[RAWAEBIG_SUBWIN_NUM];
     unsigned short wndx_channelr[RAWAEBIG_SUBWIN_NUM]; //not HW!
     unsigned short wndx_channelg[RAWAEBIG_SUBWIN_NUM]; //not HW!
     unsigned short wndx_channelb[RAWAEBIG_SUBWIN_NUM]; //not HW!
-    unsigned char wndx_channely[RAWAEBIG_SUBWIN_NUM]; //not HW!
+    unsigned short wndx_channely[RAWAEBIG_SUBWIN_NUM]; //not HW!
 };
 struct rawaelite_stat {
     unsigned short channelr_xy[RAWAELITE_WIN_NUM];
     unsigned short channelg_xy[RAWAELITE_WIN_NUM];
     unsigned short channelb_xy[RAWAELITE_WIN_NUM];
-    unsigned int   channely_xy[RAWAELITE_WIN_NUM]; //not HW!
+    unsigned short channely_xy[RAWAELITE_WIN_NUM]; //not HW!
 };
 
 struct yuvae_stat {
@@ -221,6 +221,12 @@ typedef struct RkAiqAecHwStatsRes_s {
  * @brief   ISP2.0 AEC Exposure Params
  */
 /*****************************************************************************/
+typedef struct CISFeature_s {
+    uint8_t SNR;
+    uint8_t DR;
+    uint8_t Sat;
+    uint8_t SEN;
+} CISFeature_t;
 
 typedef struct RkAiqExpRealParam_s {
     float integration_time;
@@ -267,6 +273,7 @@ typedef struct RKAiqAecExpInfo_s {
     unsigned short line_length_pixels;
     unsigned short frame_length_lines;
     float pixel_clock_freq_mhz;
+    CISFeature_t CISFeature;
 } RKAiqAecExpInfo_t;
 
 /*****************************************************************************/
