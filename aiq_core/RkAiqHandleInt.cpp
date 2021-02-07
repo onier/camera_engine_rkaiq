@@ -1358,13 +1358,13 @@ RkAiqAnrHandleInt::setAttrib(rk_aiq_nr_attrib_t *att)
     if (0 != memcmp(&mCurAtt, att, sizeof(rk_aiq_nr_attrib_t))) {
         RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
         if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
-            if ((att->eMode == ANR_OP_MODE_AUTO) && (!att->stAuto.mfnrEn || !att->stAuto.ynrEn || !att->stAuto.uvnrEn)) {
+            if ((att->eMode == ANR_OP_MODE_AUTO) && (!att->stAuto.mfnrEn)) {
+                att->stAuto.mfnrEn = !att->stAuto.mfnrEn;
                 LOGE("motion detect is running, operate not permit!");
-                ret = XCAM_RETURN_ERROR_FAILED;
                 goto EXIT;
-            } else if ((att->eMode == ANR_OP_MODE_MANUAL) && (!att->stManual.mfnrEn || !att->stManual.ynrEn || !att->stManual.uvnrEn)) {
+            } else if ((att->eMode == ANR_OP_MODE_MANUAL) && (!att->stManual.mfnrEn)) {
+                att->stManual.mfnrEn = !att->stManual.mfnrEn;
                 LOGE("motion detect is running, operate not permit!");
-                ret = XCAM_RETURN_ERROR_FAILED;
                 goto EXIT;
             }
         }
@@ -1412,14 +1412,6 @@ RkAiqAnrHandleInt::setIQPara(rk_aiq_nr_IQPara_t *para)
             if((para->module_bits & (1 << ANR_MODULE_MFNR)) && !para->stMfnrPara.enable){
                 para->stMfnrPara.enable = !para->stMfnrPara.enable;
                 LOGE("motion detect is running, disable mfnr is not permit!");
-            }
-            if((para->module_bits & (1 << ANR_MODULE_UVNR)) && !para->stUvnrPara.enable){
-                para->stUvnrPara.enable = !para->stUvnrPara.enable;
-                LOGE("motion detect is running, disable uvnr is not permit!");
-            }
-            if((para->module_bits & (1 << ANR_MODULE_YNR)) && !para->stYnrPara.enable){
-                para->stYnrPara.enable = !para->stYnrPara.enable;
-                LOGE("motion detect is running, disable ynr is not permit!");
             }
         }
         mNewIQpara = *para;

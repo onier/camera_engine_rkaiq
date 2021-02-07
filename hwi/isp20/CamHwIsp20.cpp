@@ -4306,7 +4306,7 @@ CamHwIsp20::setModuleCtl(rk_aiq_module_id_t moduleId, bool en)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     if (mCalibDb->mfnr.enable && mCalibDb->mfnr.motion_detect_en) {
-        if ((moduleId == RK_MODULE_TNR || moduleId == RK_MODULE_NR) && (en == false)) {
+        if ((moduleId == RK_MODULE_TNR) && (en == false)) {
            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "motion detect is running, operate not permit!");
            return XCAM_RETURN_ERROR_FAILED;
          }
