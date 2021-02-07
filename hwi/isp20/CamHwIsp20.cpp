@@ -664,12 +664,10 @@ CamHwIsp20::getStaticCamHwInfo(const char* sns_ent_name, uint16_t index)
         if (index >= 0 && index < mCamHwInfos.size()) {
             int i = 0, idx = index;
             for (it = mCamHwInfos.begin(); it != mCamHwInfos.end(); it++, i++) {
-                if (i == idx) {
-                    if (it->first == "FakeCamera")
-                        idx++;
-                    else
-                        return it->second.ptr();
-                }
+                if (it->first == "FakeCamera")
+                    index++;
+                else if (i == index)
+                    return it->second.ptr();
             }
         }
     }
