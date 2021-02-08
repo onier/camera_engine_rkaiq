@@ -1,4 +1,4 @@
-Current Version: v1.5.2
+Current Version: v1.6.0
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
 v0.1.0 - 2020.07.15
@@ -65,4 +65,8 @@ v1.5.2 -2021.01.16
 
 v1.5.3 -2021.01.19
   - add motion detect reserved8/9 to MFNR
+
+v1.6.0 -2021.02.08
+  - add XML2Bin function
+  - NR/SHARP module support dynamic number of scene
 ==================== RKISP2X TUNER VERSION HISTORY ====================
