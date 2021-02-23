@@ -10834,6 +10834,14 @@ bool RkAiqCalibParser::parseEntrySensorMFNRMotionDetection
             int no = ParseFloatArray(psubchild, mCalibDb->mfnr.mode_cell[index].motion.frame_limit_y, subTag.Size());
             DCT_ASSERT((no == subTag.Size()));
         }
+		else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_Y_TAG_ID)) {
+            int no = ParseFloatArray(psubchild, mCalibDb->mfnr.mode_cell[index].motion.frame_limit_y, subTag.Size());
+            DCT_ASSERT((no == subTag.Size()));
+        }
+		else if (XML_CHECK_TAGID_COMPARE(CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_UV_TAG_ID)) {
+            int no = ParseFloatArray(psubchild, mCalibDb->mfnr.mode_cell[index].motion.frame_limit_uv, subTag.Size());
+            DCT_ASSERT((no == subTag.Size()));
+        }
         else {
             LOGE("%s(%d): parse error in  mfnr dynamic (unknow tag: %s )\n", __FUNCTION__, __LINE__, subTagname.c_str());
         }

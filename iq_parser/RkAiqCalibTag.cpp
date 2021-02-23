@@ -1383,6 +1383,8 @@ uint32_t calib_sensor_MFNR_motion_detection_sub_tags[] = {
     CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED7_TAG_ID,
     CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED8_TAG_ID,
     CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED9_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_Y_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_UV_TAG_ID,
 };
 
 
@@ -5383,14 +5385,21 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED8_TAG_ID]         =
-    {   "frame_limit_uv", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    {   "reserved8", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED9_TAG_ID]         =
+    {   "reserved9", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_Y_TAG_ID]         =
     {   "frame_limit_y", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_UV_TAG_ID]         =
+    {   "frame_limit_uv", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
 
     // Sensor SHARP
     [CALIB_SENSOR_SHARP_TAG_ID]         =
