@@ -829,10 +829,14 @@ Isp20PollThread::trigger_readback()
                     if (_first_trigger) {
                         u8 *buf = (u8 *)buf_proxy->get_v4l2_userptr();
                         struct v4l2_format format = v4l2buf[i]->get_format();
+                        u32 bytesperline = format.fmt.pix_mp.plane_fmt[0].bytesperline;
 
                         if (buf) {
-                            for (u32 j = 0; j < format.fmt.pix.width / 2; j++)
-                                *buf++ += j % 16;
+                            for (u32 k = 0; k < 16; k++) {
+                                for (u32 j = 0; j < bytesperline / 2; j++)
+                                    *buf++ += (k + j) % 16;
+                                buf += bytesperline / 2;
+                            }
                         }
                     }
                     _isp_mipi_rx_infos[i].buf_list.push(buf_proxy);
