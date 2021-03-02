@@ -219,11 +219,13 @@ void AdehazeApiToolProcess(AdehazeHandle_t* para, int iso, int mode)
     //fuction enable
     if(para->AdehazeAtrr.stTool.en == 0)
     {
-        para->adhaz_config.dehaze_en[0] = FUNCTION_DISABLE;
-        LOGD_ADEHAZE(" %s: Dehaze fuction en:%d\n", __func__, FUNCTION_DISABLE);
-    }
-    else
-    {
+        para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
+        para->adhaz_config.dehaze_en[1] = FUNCTION_DISABLE;
+        para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
+        para->adhaz_config.dehaze_en[2] = FUNCTION_DISABLE;
+        LOGD_ADEHAZE(" %s: Dehaze fuction en:%d dehaze:%d enhance:%d hist:%d\n", __func__, FUNCTION_ENABLE, FUNCTION_DISABLE
+                     , FUNCTION_DISABLE, FUNCTION_DISABLE);
+    } else {
         LOGD_ADEHAZE(" %s: Dehaze fuction en:%d,", __func__, FUNCTION_ENABLE);
         para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
         if(para->AdehazeAtrr.stTool.dehaze_setting[mode].en != 0 && para->AdehazeAtrr.stTool.enhance_setting[mode].en != 0)
@@ -231,26 +233,21 @@ void AdehazeApiToolProcess(AdehazeHandle_t* para, int iso, int mode)
             para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
             para->adhaz_config.dehaze_enhance[0] = FUNCTION_ENABLE;
             LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_ENABLE );
-        }
-        else if(para->AdehazeAtrr.stTool.dehaze_setting[mode].en != 0 && para->AdehazeAtrr.stTool.enhance_setting[mode].en == 0)
-        {
+        } else if(para->AdehazeAtrr.stTool.dehaze_setting[mode].en != 0 && para->AdehazeAtrr.stTool.enhance_setting[mode].en == 0) {
             para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
             para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
             LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_ENABLE, FUNCTION_DISABLE );
-        }
-        else if(para->AdehazeAtrr.stTool.dehaze_setting[mode].en == 0 && para->AdehazeAtrr.stTool.enhance_setting[mode].en != 0)
-        {
+        } else if(para->AdehazeAtrr.stTool.dehaze_setting[mode].en == 0 && para->AdehazeAtrr.stTool.enhance_setting[mode].en != 0) {
             para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
             para->adhaz_config.dehaze_enhance[0] = FUNCTION_ENABLE;
             LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_ENABLE );
-        }
-        else
-        {
+        } else {
             para->adhaz_config.dehaze_en[1] = FUNCTION_DISABLE;
             para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
             LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_DISABLE );
         }
 
+        //hist en
         if(para->AdehazeAtrr.stTool.hist_setting[mode].en != 0)
             para->adhaz_config.dehaze_en[2] = FUNCTION_ENABLE;
         else
@@ -259,7 +256,6 @@ void AdehazeApiToolProcess(AdehazeHandle_t* para, int iso, int mode)
         LOGD_ADEHAZE(" Hist en:%d\n", para->adhaz_config.dehaze_en[2] );
 
     }
-
 
     //dehaze setting
     select_Dehaze_params_algo(&para->AdehazeAtrr.stTool, &para->adhaz_config, iso, mode);
@@ -295,35 +291,34 @@ void AdehazeEnhanceApiOnProcess(AdehazeHandle_t* para, int iso, int mode)
         //enable setting
         if(para->calib_dehaz.en == 0)
         {
-            para->adhaz_config.dehaze_en[0] = FUNCTION_DISABLE;
-            LOGD_ADEHAZE(" %s: Dehaze fuction en:%d,", __func__, FUNCTION_DISABLE);
-        }
-        else
-        {
             para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
-            LOGD_ADEHAZE(" %s: Dehaze fuction en:%d,", __func__, FUNCTION_ENABLE);
-        }
-
-        if(para->calib_dehaz.enhance_setting[mode].en != 0)
-        {
-            //dc en
-            para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
-            para->adhaz_config.dehaze_enhance[0] = FUNCTION_ENABLE;
-            LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_ENABLE );
-        }
-        else
-        {
             para->adhaz_config.dehaze_en[1] = FUNCTION_DISABLE;
             para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
-            LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_DISABLE );
-        }
-
-        //hist en setting
-        if(para->calib_dehaz.hist_setting[mode].en != 0)
-            para->adhaz_config.dehaze_en[2] = FUNCTION_ENABLE;
-        else
             para->adhaz_config.dehaze_en[2] = FUNCTION_DISABLE;
-        LOGD_ADEHAZE(" Hist en:%d\n", para->adhaz_config.dehaze_en[2] );
+            LOGD_ADEHAZE(" %s: Dehaze fuction en:%d dehaze:%d enhance:%d hist:%d\n", __func__, FUNCTION_ENABLE, FUNCTION_DISABLE
+                         , FUNCTION_DISABLE, para->adhaz_config.dehaze_en[2]);
+        } else {
+            para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
+            LOGD_ADEHAZE(" %s: Dehaze fuction en:%d,", __func__, FUNCTION_ENABLE);
+            if(para->calib_dehaz.enhance_setting[mode].en != 0)
+            {
+                //dc en
+                para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
+                para->adhaz_config.dehaze_enhance[0] = FUNCTION_ENABLE;
+                LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_ENABLE );
+            } else {
+                para->adhaz_config.dehaze_en[1] = FUNCTION_DISABLE;
+                para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
+                LOGD_ADEHAZE(" Dehaze en:%d, Enhance en:%d,", FUNCTION_DISABLE, FUNCTION_DISABLE );
+            }
+
+            //hist en setting
+            if(para->calib_dehaz.hist_setting[mode].en != 0)
+                para->adhaz_config.dehaze_en[2] = FUNCTION_ENABLE;
+            else
+                para->adhaz_config.dehaze_en[2] = FUNCTION_DISABLE;
+            LOGD_ADEHAZE(" Hist en:%d\n", para->adhaz_config.dehaze_en[2] );
+        }
 
         //dehaze seting
         select_Dehaze_params_algo(&para->calib_dehaz, &para->adhaz_config, iso, mode);
@@ -429,7 +424,10 @@ void AdehazeEnhanceApiOffProcess(AdehazeHandle_t* para, int iso, int mode)
     //fuction enable
     if(para->calib_dehaz.en == 0)
     {
-        para->adhaz_config.dehaze_en[0] = FUNCTION_DISABLE;
+        para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
+        para->adhaz_config.dehaze_en[1] = FUNCTION_DISABLE;
+        para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
+        para->adhaz_config.dehaze_en[2] = FUNCTION_DISABLE;
         LOGD_ADEHAZE(" %s: Dehaze fuction en:%d\n", __func__, FUNCTION_DISABLE);
     }
     else
