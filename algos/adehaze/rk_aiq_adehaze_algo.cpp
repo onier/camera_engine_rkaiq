@@ -483,6 +483,23 @@ void AdehazeEnhanceApiOffProcess(AdehazeHandle_t* para, int iso, int mode)
 
 }
 
+XCamReturn AdehazeReloadPara(AdehazeHandle_t* para, CamCalibDbContext_t* calib)
+{
+    LOG1_ADEHAZE("ENTER: %s \n", __func__);
+    LOGD_ADEHAZE(" %s(%d): Adehaze Reload Para, prepare type is %d!\n", __FUNCTION__, __LINE__, para->prepare_type);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if (NULL == para)
+        return XCAM_RETURN_ERROR_MEM;
+
+    para->pCalibDb = calib;
+    para->calib_dehaz = calib->dehaze;
+    para->AdehazeAtrr.stTool = calib->dehaze;
+
+    LOG1_ADEHAZE("EXIT: %s \n", __func__);
+    return(ret);
+}
+
 XCamReturn AdehazeInit(AdehazeHandle_t** para, CamCalibDbContext_t* calib)
 {
     LOG1_ADEHAZE("ENTER: %s \n", __func__);

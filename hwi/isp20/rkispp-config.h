@@ -102,11 +102,45 @@ typedef unsigned long long u64;
 #define FEC_MESH_XY_NUM         131072
 #define FEC_MESH_BUF_NUM		2
 
+#define TNR_BUF_IDXFD_NUM		64
+
 #define RKISPP_CMD_GET_FECBUF_INFO	\
 	_IOR('V', BASE_VIDIOC_PRIVATE + 0, struct rkispp_fecbuf_info)
 
 #define RKISPP_CMD_SET_FECBUF_SIZE	\
 	_IOW('V', BASE_VIDIOC_PRIVATE + 1, struct rkispp_fecbuf_size)
+
+#define RKISPP_V4L2_EVENT_TNR_COMPLETE	\
+	(V4L2_EVENT_PRIVATE_START + 3)
+
+#define RKISPP_CMD_TRIGGER_YNRRUN	\
+	_IOW('V', BASE_VIDIOC_PRIVATE + 11, struct rkispp_tnr_inf)
+
+#define RKISPP_CMD_GET_TNRBUF_FD \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 12, struct rkispp_buf_idxfd)
+
+#define RKISPP_CMD_TRIGGER_MODE		\
+	_IOW('V', BASE_VIDIOC_PRIVATE + 13, struct rkispp_trigger_mode)
+
+struct rkispp_tnr_inf {
+	u32 dev_id;
+	u32 frame_id;
+	u32 gainkg_idx;
+	u32 gainwr_idx;
+	u32 gainkg_size;
+	u32 gainwr_size;
+} __attribute__ ((packed));
+
+struct rkispp_buf_idxfd {
+	u32 buf_num;
+	u32 index[TNR_BUF_IDXFD_NUM];
+	s32 dmafd[TNR_BUF_IDXFD_NUM];
+} __attribute__ ((packed));
+
+struct rkispp_trigger_mode {
+	u32 module;
+	u32 on;
+} __attribute__ ((packed));
 
 struct rkispp_tnr_config {
     u8 opty_en;

@@ -71,6 +71,8 @@ typedef struct AsharpContext_s {
 	bool isIQParaUpdate;
 	bool isGrayMode;
 	AsharpParamMode_t eParamMode;
+
+	int prepare_type;
 } AsharpContext_t;
 
 

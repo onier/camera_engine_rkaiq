@@ -72,6 +72,7 @@ extern "C" {
 void xcam_set_log (const char* file_name);
 void xcam_print_log (int module, int sub_modules, int level, const char* format, ...);
 int xcam_get_log_level();
+void xcam_get_runtime_log_level();
 bool xcam_get_enviroment_value(const char* variable, unsigned long long* value);
 void xcam_get_awb_log_level(unsigned char *log_level, unsigned char *sub_modules);
 char* timeString();

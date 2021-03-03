@@ -53,8 +53,10 @@ typedef struct Uapi_ExpSwAttr_s {
     uint8_t                  AecRunInterval;
     RKAiqOPMode_t            AecOpType;
     //GridWeight
-    Cam5x5UCharMatrix_t      DayGridWeights;
-    Cam5x5UCharMatrix_t      NightGridWeights;
+    Cam15x15UCharMatrix_t      DayGridWeights;
+    Cam15x15UCharMatrix_t      NightGridWeights;
+    int                        DayWeightNum;
+    int                        NightWeightNum;
 
     //DayOrNight Switch
     uint8_t                  DNTrigger;

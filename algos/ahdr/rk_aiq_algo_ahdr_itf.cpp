@@ -94,7 +94,10 @@ static XCamReturn AhdrPrepare(RkAiqAlgoCom* params)
     else
         pAhdrCtx->FrameNumber = 3;
 
-    AhdrConfig(pAhdrCtx); //set default para
+    if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB ))
+        LOGD_AHDR("%s: Ahdr Reload Para!\n", __FUNCTION__);
+    else
+        AhdrConfig(pAhdrCtx); //set default para
     memcpy(&pAhdrCtx->pCalibDB, &pCalibDb->ahdr, sizeof(CalibDb_Ahdr_Para_t));//load iq paras
     memcpy(&pAhdrCtx->hdrAttr.stTool, &pCalibDb->ahdr, sizeof(CalibDb_Ahdr_Para_t));//load iq paras to stTool
 
@@ -135,9 +138,9 @@ static XCamReturn AhdrPreProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* 
 
     LOGD_AHDR("%s:Current mode:%d\n", __FUNCTION__, pAhdrCtx->sence_mode);
     if(pAhdrCtx->hdrAttr.opMode == HDR_OpMode_Tool)
-        AhdrSelectMode(pAhdrCtx, &pAhdrCtx->hdrAttr.stTool, pAhdrCtx->sence_mode);
+        AhdrUpdateConfig(pAhdrCtx, &pAhdrCtx->hdrAttr.stTool, pAhdrCtx->sence_mode);
     else
-        AhdrSelectMode(pAhdrCtx, &pAhdrCtx->pCalibDB, pAhdrCtx->sence_mode);
+        AhdrUpdateConfig(pAhdrCtx, &pAhdrCtx->pCalibDB, pAhdrCtx->sence_mode);
 
     LOG1_AHDR("%s:Exit!\n", __FUNCTION__);
     return(XCAM_RETURN_NO_ERROR);
@@ -170,30 +173,29 @@ static XCamReturn AhdrProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
     RkAiqAlgoPreResAfInt* af_pre_res_int =
         (RkAiqAlgoPreResAfInt*)(AhdrParams->rk_com.u.proc.pre_res_comb->af_pre_res);
     if (ae_pre_res_int && af_pre_res_int)
-        AhdrUpdateConfig(pAhdrCtx,
-                         ae_pre_res_int->ae_pre_res_rk,
-                         af_pre_res_int->af_pre_result);
+        AhdrProcessing(pAhdrCtx,
+                       ae_pre_res_int->ae_pre_res_rk,
+                       af_pre_res_int->af_pre_result);
     else if (ae_pre_res_int) {
         af_preprocess_result_t AfPreResult;
         LOGW_AHDR("%s: af Pre result is null!!!\n", __FUNCTION__);
-        AhdrUpdateConfig(pAhdrCtx,
-                         ae_pre_res_int->ae_pre_res_rk,
-                         AfPreResult);
+        AhdrProcessing(pAhdrCtx,
+                       ae_pre_res_int->ae_pre_res_rk,
+                       AfPreResult);
     }
     else {
         AecPreResult_t AecHdrPreResult;
         af_preprocess_result_t AfPreResult;
         LOGW_AHDR("%s: ae/af Pre result is null!!!\n", __FUNCTION__);
-        AhdrUpdateConfig(pAhdrCtx,
-                         AecHdrPreResult,
-                         AfPreResult);
+        AhdrProcessing(pAhdrCtx,
+                       AecHdrPreResult,
+                       AfPreResult);
     }
-    AhdrProcessing(pAhdrCtx);
 
     pAhdrCtx->AhdrProcRes.LongFrameMode = pAhdrCtx->SensorInfo.LongFrmMode;
     AhdrProcResParams->AhdrProcRes.isHdrGlobalTmo = pAhdrCtx->AhdrProcRes.isHdrGlobalTmo;
-    AhdrProcResParams->AhdrProcRes.bTmoEn = true;
-    AhdrProcResParams->AhdrProcRes.isLinearTmo = pAhdrCtx->FrameNumber == 1;
+    AhdrProcResParams->AhdrProcRes.bTmoEn = pAhdrCtx->AhdrProcRes.bTmoEn;
+    AhdrProcResParams->AhdrProcRes.isLinearTmo = pAhdrCtx->AhdrProcRes.isLinearTmo;
     memcpy(&AhdrProcResParams->AhdrProcRes.MgeProcRes, &pAhdrCtx->AhdrProcRes.MgeProcRes, sizeof(MgeProcRes_t));
     memcpy(&AhdrProcResParams->AhdrProcRes.TmoProcRes, &pAhdrCtx->AhdrProcRes.TmoProcRes, sizeof(TmoProcRes_t));
 

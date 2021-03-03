@@ -55,6 +55,8 @@ typedef struct RKAiqAfInfoWrapper_s {
     struct timeval zoomStartTim;
     struct timeval zoomEndTim;
     int64_t sofTime;
+    int32_t focusCode;
+    int32_t zoomCode;
 } RKAiqAfInfoWrapper_t;
 
 typedef struct RkAiqPirisInfoWrapper_s {

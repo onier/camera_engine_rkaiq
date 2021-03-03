@@ -62,6 +62,7 @@ typedef struct {
     rkaiq_asharp_procRes_t  rkaiq_asharp_proc_res;
     rk_aiq_acp_params_t     cp;
     rk_aiq_isp_ie_t         ie;
+    CalibDb_MFNR_Motion_t   motion;
 } rk_aiq_isp_params_t;
 
 #define RKAIQ_ISPP_TNR_ID           (1 << 0)
@@ -125,5 +126,24 @@ typedef struct rk_aiq_share_mem_config_s {
     rk_aiq_drv_share_mem_type_t mem_type;
     rk_aiq_share_mem_alloc_param_t alloc_param;
 } rk_aiq_share_mem_config_t;
+
+struct rk_aiq_vbuf_info {
+    uint32_t frame_id;
+    uint32_t timestamp;
+    uint32_t exp_time;
+    uint32_t exp_gain;
+    uint32_t data_fd;
+    uint8_t *data_addr;
+    uint32_t data_length;
+    rk_aiq_rawbuf_type_t buf_type;
+    bool valid;
+};
+
+struct rk_aiq_vbuf {
+        void *base_addr;
+    uint32_t frame_width;
+    uint32_t frame_height;
+    struct rk_aiq_vbuf_info buf_info[3];/*index: 0-short,1-medium,2-long*/
+};
 
 #endif

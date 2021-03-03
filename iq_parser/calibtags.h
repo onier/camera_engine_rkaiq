@@ -788,6 +788,7 @@
 #define CALIB_SENSOR_MFNR_SETTING_NAME                                    "name"
 #define CALIB_SENSOR_MFNR_SETTING_MODE                                    "mode"
 #define CALIB_SENSOR_MFNR_LOCAL_GAIN_EN                                   "local_gain_en"
+#define CALIB_SENSOR_MFNR_MOTION_DETECT_EN                                "motion_detect_en"
 #define CALIB_SENSOR_MFNR_MODE                                            "mode"
 #define CALIB_SENSOR_MFNR_MAX_LEVEL                                       "max_level"
 #define CALIB_SENSOR_MFNR_MAX_LEVEL_UV                                    "max_level_uv"
@@ -992,6 +993,7 @@
 #define    CALIB_SENSOR_AF_SEARCH_STRATEGY_ADAPTIVE    "ADAPTIVE_RANGE"
 #define    CALIB_SENSOR_AF_SEARCH_STRATEGY_HILLCLIMB   "HILLCLIMBING"
 #define    CALIB_SENSOR_AF_SEARCH_STRATEGY_FULL        "FULL_RANGE"
+#define    CALIB_SENSOR_AF_SEARCH_STRATEGY_MUTIWIN     "MUTI_WINDOW"
 #define    CALIB_SENSOR_AF_DIR_POSITIVE                "POSITIVE"
 #define    CALIB_SENSOR_AF_DIR_NEGATIVE                "NEGATIVE"
 #define    CALIB_SENSOR_AF_DIR_ADAPTIVE                "ADAPTIVE"
@@ -1063,6 +1065,16 @@
 *****************************************************************************/
 #define    CALIB_SENSOR_COLOR_AS_GREY                     "COLOR_AS_GREY"
 #define    CALIB_SENSOR_COLOR_AS_GREY_ENABLE              "enable"
+
+/******************************************************************************
+* XML CPROC section
+*****************************************************************************/
+#define    CALIB_SENSOR_CPROC                             "CPROC"
+#define    CALIB_SENSOR_CPROC_ENABLE                      "enable"
+#define    CALIB_SENSOR_CPROC_BRIGHTNESS                  "brightness"
+#define    CALIB_SENSOR_CPROC_CONTRAST                    "contrast"
+#define    CALIB_SENSOR_CPROC_SATURATION                  "saturation"
+#define    CALIB_SENSOR_CPROC_HUE                         "hue"
 
 /******************************************************************************
  * XML system section

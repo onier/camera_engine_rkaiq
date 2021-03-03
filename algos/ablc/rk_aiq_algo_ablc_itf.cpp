@@ -82,6 +82,12 @@ prepare(RkAiqAlgoCom* params)
     AblcContext_t* pAblcCtx = (AblcContext_t *)params->ctx;
     RkAiqAlgoConfigAblcInt* pCfgParam = (RkAiqAlgoConfigAblcInt*)params;
     AblcConfig_t *pAblc_config = &pCfgParam->ablc_config;
+	pAblcCtx->prepare_type = params->u.prepare.conf_type;
+
+	if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+        pAblcCtx->stBlcCalib = pCfgParam->rk_com.u.prepare.calib->blc;
+		pAblcCtx->isIQParaUpdate = true;
+    }
 
     AblcResult_t ret = AblcConfig(pAblcCtx, pAblc_config);
     if(ret != ABLC_RET_SUCCESS) {

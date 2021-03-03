@@ -15,6 +15,8 @@ AsharpResult_t AsharpStart(AsharpContext_t *pAsharpCtx);
 
 AsharpResult_t AsharpStop(AsharpContext_t *pAsharpCtx);
 
+AsharpResult_t AsharpIQParaUpdate(AsharpContext_t *pAsharpCtx);
+
 AsharpResult_t AsharpInit(AsharpContext_t **ppAsharpCtx, CamCalibDbContext_t *pCalibDb);
 
 AsharpResult_t AsharpRelease(AsharpContext_t *pAsharpCtx);

@@ -18,6 +18,12 @@
 #include "RkAiqCalibTag.h"
 
 //#define CALIBDB_CHECK_DEBUG
+#ifndef XML_STRICT_CHECK
+#ifdef DCT_ASSERT
+#undef DCT_ASSERT
+#define DCT_ASSERT(x)
+#endif
+#endif
 
 #define calib_uint32_array_size(x) (sizeof(x)/sizeof(uint32_t))
 #define check_tags_array_info(x) \
@@ -73,6 +79,8 @@ uint32_t calib_sensor_sub_tags[] = {
     CALIB_SENSOR_LUMA_DETECT_TAG_ID,
     CALIB_SENSOR_ORB_TAG_ID,
     CALIB_SENSOR_COLOR_AS_GREY_TAG_ID,
+    CALIB_SENSOR_CPROC_TAG_ID,
+    CALIB_SENSOR_IE_TAG_ID,
 };
 
 uint32_t calib_sensor_awb_sub_tags[] = {
@@ -682,6 +690,7 @@ uint32_t calib_sensor_af_sub_tags[] = {
     CALIB_SENSOR_AF_PDAF_TAG_ID,
     CALIB_SENSOR_AF_VCM_TAG_ID,
     CALIB_SENSOR_AF_MEAS_ISO_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_TBL_TAG_ID
 };
 
 uint32_t calib_sensor_af_Window_sub_tags[] = {
@@ -714,8 +723,16 @@ uint32_t calib_sensor_af_contrast_af_sub_tags[] = {
     CALIB_SENSOR_AF_STABLE_THERS_TAG_ID,
     CALIB_SENSOR_AF_STABLE_FRAMES_TAG_ID,
     CALIB_SENSOR_AF_STABLE_TIME_TAG_ID,
+    CALIB_SENSOR_AF_SCENE_DIFF_ENABLE_TAG_ID,
+    CALIB_SENSOR_AF_SCENE_DIFF_THERS_TAG_ID,
+    CALIB_SENSOR_AF_SCENE_DIFF_BLK_THERS_TAG_ID,
+    CALIB_SENSOR_AF_CENTER_SCENE_DIFF_THERS_TAG_ID,
+    CALIB_SENSOR_AF_VALID_MAX_MIN_RATIO_TAG_ID,
+    CALIB_SENSOR_AF_VALID_VALUE_THERS_TAG_ID,
     CALIB_SENSOR_AF_OUT_FOCUS_VALUE_TAG_ID,
     CALIB_SENSOR_AF_OUT_FOCUS_POS_TAG_ID,
+    CALIB_SENSOR_AF_WEIGHT_ENABLE_TAG_ID,
+    CALIB_SENSOR_AF_WEIGHT_MATRIX_TAG_ID,
 };
 
 uint32_t calib_sensor_af_laser_af_sub_tags[] = {
@@ -733,6 +750,13 @@ uint32_t calib_sensor_af_meas_iso_sub_tags[] = {
     CALIB_SENSOR_AF_MEAS_ISO_AFMTHRES_TAG_ID,
     CALIB_SENSOR_AF_MEAS_ISO_GAMMA_Y_TAG_ID,
     CALIB_SENSOR_AF_MEAS_ISO_GAUSS_WEIGHT_TAG_ID,
+};
+
+uint32_t calib_sensor_af_zoomfocus_tbl_sub_tags[] = {
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUS_LENGTH_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOMPOS_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSINFPOS_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSMACROPOS_TAG_ID,
 };
 
 uint32_t calib_sensor_af_vcmcfg_sub_tags[] = {
@@ -1257,6 +1281,7 @@ uint32_t calib_sensor_mfnr_sub_tags[] = {
     CALIB_SENSOR_MFNR_ENABLE_TAG_ID,
     CALIB_SENSOR_MFNR_VERSION_TAG_ID,
     CALIB_SENSOR_MFNR_LOCAL_GAIN_EN_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECT_EN_TAG_ID,
     CALIB_SENSOR_MFNR_MODE_3TO1_TAG_ID,
     CALIB_SENSOR_MFNR_MAX_LEVEL_TAG_ID,
     CALIB_SENSOR_MFNR_MAX_LEVEL_UV_TAG_ID,
@@ -1274,6 +1299,7 @@ uint32_t calib_sensor_mfnr_mode_cell_sub_tags[] = {
     CALIB_SENSOR_MFNR_MODE_NAME_TAG_ID,
     CALIB_SENSOR_MFNR_DYNAMIC_TAG_ID,
     CALIB_SENSOR_MFNR_SETTING_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_TAG_ID,
 };
 
 uint32_t calib_sensor_MFNR_DynamicEN_sub_tags[] = {
@@ -1336,6 +1362,35 @@ uint32_t calib_sensor_MFNR_ISO_sub_tags[] = {
     CALIB_SENSOR_MFNR_ISO_LVL3_GFSIGMA_TAG_ID,
 };
 
+uint32_t calib_sensor_MFNR_motion_detection_sub_tags[] = {
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_ENABLE_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_ISO_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_SIGMAHSCALE_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_SIGMALSCALE_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_LIGHT_CLP_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_UV_WEIGHT_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_MFNR_SIGMA_SCALE_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE0_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE1_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE2_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED0_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED1_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED2_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED3_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED4_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED5_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED6_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED7_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED8_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED9_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_Y_TAG_ID,
+    CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_UV_TAG_ID,
+};
+
+
+
+
+
 uint32_t calib_sensor_sharp_sub_tags[] = {
     CALIB_SENSOR_SHARP_ENABLE_TAG_ID,
     CALIB_SENSOR_SHARP_VERSION_TAG_ID,
@@ -1346,6 +1401,24 @@ uint32_t calib_sensor_sharp_sub_tags[] = {
 uint32_t calib_sensor_sharp_mode_cell_sub_tags[] = {
     CALIB_SENSOR_SHARP_MODE_NAME_TAG_ID,
     CALIB_SENSOR_SHARP_SETTING_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_GAUSS_LUMA_COEFF_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_MBF_COEFF_TAG_ID,
+    #if 1
+    CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_TAG_ID,    
+    CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_TAG_ID,
+    #endif
+    //v2
+    CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_L_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_H_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_L_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_H_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_L_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_H_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_L_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_H_TAG_ID,
+    
 };
 
 uint32_t calib_sensor_SHARP_Setting_sub_tags[] = {
@@ -1373,6 +1446,10 @@ uint32_t calib_sensor_SHARP_ISO_sub_tags[] = {
     CALIB_SENSOR_SHARP_SHARP_ISO_MBF_ADD_TAG_ID,
     CALIB_SENSOR_SHARP_SHARP_ISO_HBF_ADD_TAG_ID,
     CALIB_SENSOR_SHARP_SHARP_ISO_LOCAL_SHARP_STRENGTH_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_PERCENT_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_PERCENT_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_PERCENT_TAG_ID,
+    CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_PERCENT_TAG_ID,
 };
 
 uint32_t calib_sensor_edgefilter_sub_tags[] = {
@@ -1385,6 +1462,8 @@ uint32_t calib_sensor_edgefilter_sub_tags[] = {
 uint32_t calib_sensor_edgefilter_mode_cell_sub_tags[] = {
     CALIB_SENSOR_EDGEFILTER_MODE_NAME_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_SETTING_TAG_ID,
+    CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_L_TAG_ID,
+    CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_H_TAG_ID,
 };
 
 uint32_t calib_sensor_EDGEFILTER_Setting_sub_tags[] = {
@@ -1405,11 +1484,14 @@ uint32_t calib_sensor_EDGEFILTER_ISO_sub_tags[] = {
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_CLIP_NEG_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_ALPHA_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DIRECT_FILTER_COEFF_TAG_ID,
+    #if 1
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW0_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW1_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW2_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW3_TAG_ID,
     CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW4_TAG_ID,
+    #endif
+    CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_PERCENT_TAG_ID,
 };
 
 uint32_t calib_sensor_dehaze_sub_tags[] = {
@@ -1480,8 +1562,11 @@ uint32_t calib_sensor_sensorinfo_sub_tags[] = {
     CALIB_SENSOR_SENSORINFO_CISLINTIMEREG_MAXFAC_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_SUMFAC_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISTIMEREG_ODEVITY_TAG_ID,
-    CALIB_SENSOR_SENSORINFO_CISTIMEREG_UNEQUALEN_TAG_ID,
+    CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_ODEVITY_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISTIMEREG_MIN_TAG_ID,
+    CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_MIN_TAG_ID,
+    CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_MAX_TAG_ID,
+    CALIB_SENSOR_SENSORINFO_CISTIMEREG_UNEQUALEN_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISMINFPS_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISAGAIN_RANGE_TAG_ID,
     CALIB_SENSOR_SENSORINFO_CISEXTRAAGAIN_RANGE_TAG_ID,
@@ -1554,6 +1639,19 @@ uint32_t calib_sensor_orb_sub_tags[] = {
 
 uint32_t calib_sensor_color_as_grey_sub_tags[] = {
     CALIB_SENSOR_COLOR_AS_GREY_ENABLE_TAG_ID,
+};
+
+uint32_t calib_sensor_cproc_sub_tags[] = {
+    CALIB_SENSOR_CPROC_ENABLE_TAG_ID,
+    CALIB_SENSOR_CPROC_BRIGHTNESS_TAG_ID,
+    CALIB_SENSOR_CPROC_CONTRAST_TAG_ID,
+    CALIB_SENSOR_CPROC_SATURATION_TAG_ID,
+    CALIB_SENSOR_CPROC_HUE_TAG_ID,
+};
+
+uint32_t calib_sensor_ie_sub_tags[] = {
+    CALIB_SENSOR_IE_ENABLE_TAG_ID,
+    CALIB_SENSOR_IE_MODE_TAG_ID,
 };
 
 uint32_t calib_system_sub_tags[] = {
@@ -3322,12 +3420,44 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "StableTime", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_AF_SCENE_DIFF_ENABLE_TAG_ID]         =
+    {   "SceneDiffEnable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_SCENE_DIFF_THERS_TAG_ID]         =
+    {   "SceneDiffThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_SCENE_DIFF_BLK_THERS_TAG_ID]         =
+    {   "SceneDiffBlkThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_CENTER_SCENE_DIFF_THERS_TAG_ID]         =
+    {   "CenterSceneDiffThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_VALID_MAX_MIN_RATIO_TAG_ID]         =
+    {   "ValidMaxMinRatio", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_VALID_VALUE_THERS_TAG_ID]         =
+    {   "ValidValueThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
     [CALIB_SENSOR_AF_OUT_FOCUS_VALUE_TAG_ID]         =
     {   "OutFocusValue", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_AF_OUT_FOCUS_POS_TAG_ID]         =
     {   "OutFocusPos", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_WEIGHT_ENABLE_TAG_ID]         =
+    {   "WeightEnable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_WEIGHT_MATRIX_TAG_ID]         =
+    {   "WeightMatrix", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_AF_VCM_TAG_ID]         =
@@ -3337,6 +3467,10 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     [CALIB_SENSOR_AF_MEAS_ISO_TAG_ID]         =
     {   "afmeas_iso", CALIB_TAG_TYPE_CELL, {-1, -1},
         check_tags_array_info(calib_sensor_af_meas_iso_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_TBL_TAG_ID]         =
+    {   "zoomfocus_tbl", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_af_zoomfocus_tbl_sub_tags), NULL
     },
     [CALIB_SENSOR_AF_LASERAF_ENABLE_TAG_ID]         =
     {   "enable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
@@ -3384,6 +3518,22 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     },
     [CALIB_SENSOR_AF_MEAS_ISO_GAUSS_WEIGHT_TAG_ID]         =
     {   "gaussWeight", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUS_LENGTH_TAG_ID]         =
+    {   "focusLength", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOMPOS_TAG_ID]         =
+    {   "zoomPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSINFPOS_TAG_ID]         =
+    {   "focusInfPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSMACROPOS_TAG_ID]         =
+    {   "focusMacroPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
 
@@ -4899,6 +5049,10 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "local_gain_en", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_MFNR_MOTION_DETECT_EN_TAG_ID]         =
+    {   "motion_detect_en", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
 
     [CALIB_SENSOR_MFNR_MODE_3TO1_TAG_ID]         =
     {   "mode_3to1", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
@@ -5153,6 +5307,100 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     },
 
 
+    //mfnr motion detect
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_TAG_ID]         =
+    {   "motion_detection", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_MFNR_motion_detection_sub_tags), NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_ENABLE_TAG_ID]         =
+    {   "Enable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_ISO_TAG_ID]         =
+    {   "ISO", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_SIGMAHSCALE_TAG_ID]         =
+    {   "sigmaHScale", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_SIGMALSCALE_TAG_ID]         =
+    {   "sigmaLScale", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_LIGHT_CLP_TAG_ID]         =
+    {   "light_clp", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_UV_WEIGHT_TAG_ID]         =
+    {   "uv_weight", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_MFNR_SIGMA_SCALE_TAG_ID]         =
+    {   "mfnr_sigma_scale", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE0_TAG_ID]         =
+    {   "yuvnr_gain_scale0", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE1_TAG_ID]         =
+    {   "yuvnr_gain_scale1", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_YUVNR_GAIN_SCALE2_TAG_ID]         =
+    {   "yuvnr_gain_scale2", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED0_TAG_ID]         =
+    {   "reserved0", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED1_TAG_ID]         =
+    {   "reserved1", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED2_TAG_ID]         =
+    {   "reserved2", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED3_TAG_ID]         =
+    {   "reserved3", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED4_TAG_ID]         =
+    {   "reserved4", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED5_TAG_ID]         =
+    {   "reserved5", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED6_TAG_ID]         =
+    {   "reserved6", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED7_TAG_ID]         =
+    {   "reserved7", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED8_TAG_ID]         =
+    {   "reserved8", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_RESERVED9_TAG_ID]         =
+    {   "reserved9", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_Y_TAG_ID]         =
+    {   "frame_limit_y", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_MFNR_MOTION_DETECTION_FRAME_LIMIT_UV_TAG_ID]         =
+    {   "frame_limit_uv", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+
     // Sensor SHARP
     [CALIB_SENSOR_SHARP_TAG_ID]         =
     {   "SHARP", CALIB_TAG_TYPE_STRUCT, {-1, -1},
@@ -5266,7 +5514,82 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "local_sharp_strength", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-
+    [CALIB_SENSOR_SHARP_SHARP_GAUSS_LUMA_COEFF_TAG_ID]         =
+    {   "gauss_luma_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_MBF_COEFF_TAG_ID]         =
+    {   "mbf_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    #if 1
+    [CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_TAG_ID]         =
+    {   "pbf_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_TAG_ID]         =
+    {   "rf_m_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    
+    [CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_TAG_ID]         =
+    {   "rf_h_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_TAG_ID]         =
+    {   "hbf_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    #endif
+    //add sharp coeff v2
+	[CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_L_TAG_ID]         =
+    {   "pbf_coeff_l", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_H_TAG_ID]         =
+    {   "pbf_coeff_h", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_L_TAG_ID]         =
+    {   "rf_m_coeff_l", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_H_TAG_ID]         =
+    {   "rf_m_coeff_h", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_L_TAG_ID]         =
+    {   "rf_h_coeff_l", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_H_TAG_ID]         =
+    {   "rf_h_coeff_h", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_L_TAG_ID]         =
+    {   "hbf_coeff_l", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_H_TAG_ID]         =
+    {   "hbf_coeff_h", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_PBF_COEFF_PERCENT_TAG_ID]         =
+    {   "pbf_coeff_percent", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_M_COEFF_PERCENT_TAG_ID]         =
+    {   "rf_m_coeff_Percent", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_RF_H_COEFF_PERCENT_TAG_ID]         =
+    {   "rf_h_coeff_percent", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SHARP_SHARP_HBF_COEFF_PERCENT_TAG_ID]         =
+    {   "hbf_coeff_percent", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
 
     // Sensor EDGEFILTER
     [CALIB_SENSOR_EDGEFILTER_TAG_ID]         =
@@ -5356,6 +5679,7 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "direct_filter_coeff", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    #if 1
     [CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_ROW0_TAG_ID]         =
     {   "dog_kernel_row0", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
@@ -5376,7 +5700,19 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "dog_kernel_row4", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-
+    #endif
+	[CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_L_TAG_ID]         =
+    {   "dog_kernel_l", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_H_TAG_ID]         =
+    {   "dog_kernel_h", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_EDGEFILTER_EDGEFILTER_ISO_DOG_KERNEL_PERCENT_TAG_ID]         =
+    {   "dog_kernel_percent", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
 
     // Sensor DEHAZE
     [CALIB_SENSOR_DEHAZE_TAG_ID]         =
@@ -5625,20 +5961,28 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "CISTimeRegOdevity", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-    [CALIB_SENSOR_SENSORINFO_CISTIMEREG_UNEQUALEN_TAG_ID]         =
-    {   "CISTimeRegUnEqualEn", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    [CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_ODEVITY_TAG_ID]         =
+    {   "CISHdrTimeRegOdevity", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_SENSORINFO_CISTIMEREG_MIN_TAG_ID]         =
     {   "CISTimeRegMin", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-    [CALIB_SENSOR_SENSORINFO_CISMINFPS_TAG_ID]         =
-    {   "CISMinFps", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    [CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_MIN_TAG_ID]         =
+    {   "CISHdrTimeRegMin", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-    [CALIB_SENSOR_SENSORINFO_CISTIMEREG_MAX_TAG_ID]         =
-    {   "CISTimeRegMax", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    [CALIB_SENSOR_SENSORINFO_CISHDRTIMEREG_MAX_TAG_ID]         =
+    {   "CISHdrTimeRegMax", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SENSORINFO_CISTIMEREG_UNEQUALEN_TAG_ID]         =
+    {   "CISTimeRegUnEqualEn", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_SENSORINFO_CISMINFPS_TAG_ID]         =
+    {   "CISMinFps", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_SENSORINFO_CISAGAIN_RANGE_TAG_ID]         =
@@ -5852,6 +6196,46 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     },
     [CALIB_SENSOR_COLOR_AS_GREY_ENABLE_TAG_ID]         =
     {   "enable", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+
+    // Sensor CPROC
+    [CALIB_SENSOR_CPROC_TAG_ID]         =
+    {   "CPROC", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_cproc_sub_tags), NULL
+    },
+    [CALIB_SENSOR_CPROC_ENABLE_TAG_ID]         =
+    {   "enable", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_CPROC_BRIGHTNESS_TAG_ID]         =
+    {   "brightness", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_CPROC_CONTRAST_TAG_ID]         =
+    {   "contrast", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_CPROC_SATURATION_TAG_ID]         =
+    {   "saturation", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_CPROC_HUE_TAG_ID]         =
+    {   "hue", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+
+    // Sensor IE
+    [CALIB_SENSOR_IE_TAG_ID]         =
+    {   "IE", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_ie_sub_tags), NULL
+    },
+    [CALIB_SENSOR_IE_ENABLE_TAG_ID]         =
+    {   "enable", CALIB_TAG_TYPE_INT, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_IE_MODE_TAG_ID]         =
+    {   "mode", CALIB_TAG_TYPE_INT, {-1, -1},
         check_tags_array_ignore, NULL
     },
 
@@ -6075,7 +6459,6 @@ int calib_check_getID_by_name(char* tag_name, CALIB_IQ_TAG_ID_T parent_tag_id, C
         return -1;
     }
 }
-
 
 /***************************************************************
  * name: calib_check_tag_attrs
@@ -6370,14 +6753,14 @@ int calib_check_tag_mark(CALIB_IQ_TAG_ID_T tag_id, CALIB_IQ_TAG_ID_T parent_tag_
             break;
         }
     }
-
     if (!found_checking_tag) {
         LOGE("%s(%d): parent_tag_id:%d parent_tag_name:%s tag_id:%d tag_name:%s can't find this tag, assert!!!\n",
              __FUNCTION__, __LINE__, parent_tag_id, TAG_NAME(parent_tag_id), tag_id, TAG_NAME(tag_id));
+#ifdef XML_STRICT_CHECK
         DCT_ASSERT(false);
         return -1;
+#endif
     }
-
     return 0;
 }
 
@@ -6421,18 +6804,19 @@ int calib_check_nonleaf_tag_end(CALIB_IQ_TAG_ID_T tag_id)
     // check if all tags have been checked successfully
     for (uint32_t i = 0; i < check_info->count; i++) {
         if (check_info->tag_counts_remain[i] != 0) {
-            LOGE("%s(%d): parent_id:%d parent_name:%s tag_id:%d tag_name:%s --- tag_counts_remain[%d]:%d != 0  assert!!!\n",
+            LOGW("%s(%d): parent_id:%d parent_name:%s tag_id:%d tag_name:%s --- tag_counts_remain[%d]:%d != 0  assert!!!\n",
                  __FUNCTION__, __LINE__,
                  tag_id,
                  TAG_NAME(tag_id),
                  check_info->checking_tags[i],
                  TAG_NAME(check_info->checking_tags[i]),
                  i, check_info->tag_counts_remain[i]);
+#ifdef XML_STRICT_CHECK
             DCT_ASSERT(false);
             return -1;
+#endif
         }
     }
-
     // free check info
     if (check_info->tag_counts_remain)
         free(check_info->tag_counts_remain);
@@ -6445,4 +6829,3 @@ int calib_check_nonleaf_tag_end(CALIB_IQ_TAG_ID_T tag_id)
 
     return 0;
 }
-

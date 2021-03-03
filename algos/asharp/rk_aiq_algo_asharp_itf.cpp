@@ -81,6 +81,13 @@ prepare(RkAiqAlgoCom* params)
 #if 1
     AsharpContext_t* pAsharpCtx = (AsharpContext_t *)params->ctx;
     RkAiqAlgoConfigAsharpInt* pCfgParam = (RkAiqAlgoConfigAsharpInt*)params;
+	pAsharpCtx->prepare_type = params->u.prepare.conf_type;
+
+	if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+        pAsharpCtx->stSharpCalib = pCfgParam->rk_com.u.prepare.calib->sharp;
+		pAsharpCtx->stEdgeFltCalib = pCfgParam->rk_com.u.prepare.calib->edgeFilter;
+		pAsharpCtx->isIQParaUpdate = true;
+    }
 
     AsharpResult_t ret = AsharpPrepare(pAsharpCtx, &pCfgParam->stAsharpConfig);
     if(ret != ASHARP_RET_SUCCESS) {

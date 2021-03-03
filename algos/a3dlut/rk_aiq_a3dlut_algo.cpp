@@ -113,6 +113,29 @@ XCamReturn Alut3dConfig
     return (ret);
 }
 
+static XCamReturn UpdateLut3dCalibPara(alut3d_handle_t  hAlut3d)
+{
+    LOGI_A3DLUT("%s: (enter)  \n", __FUNCTION__);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    bool config_calib = !!(hAlut3d->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB);
+    if(!config_calib)
+    {
+        return(ret);
+    }
+
+    hAlut3d->lut3d_hw_conf.lut3d_lut_wsize = 0x2d9;
+    memcpy(hAlut3d->lut3d_hw_conf.look_up_table_r, hAlut3d->calib_lut3d->look_up_table_r,
+           sizeof(hAlut3d->calib_lut3d->look_up_table_r));
+    memcpy(hAlut3d->lut3d_hw_conf.look_up_table_g, hAlut3d->calib_lut3d->look_up_table_g,
+           sizeof(hAlut3d->calib_lut3d->look_up_table_g));
+    memcpy(hAlut3d->lut3d_hw_conf.look_up_table_b, hAlut3d->calib_lut3d->look_up_table_b,
+           sizeof(hAlut3d->calib_lut3d->look_up_table_b));
+
+
+    hAlut3d->mCurAtt.byPass = !(hAlut3d->calib_lut3d->enable);
+    LOGI_A3DLUT("%s: (exit)  \n", __FUNCTION__);
+    return(ret);
+}
 
 XCamReturn Alut3dInit(alut3d_handle_t *hAlut3d, const CamCalibDbContext_t* calib)
 {
@@ -128,19 +151,9 @@ XCamReturn Alut3dInit(alut3d_handle_t *hAlut3d, const CamCalibDbContext_t* calib
     }
     const CalibDb_Lut3d_t *calib_lut3d = &calib->lut3d;
     alut3d_contex->calib_lut3d = calib_lut3d;
-
-    alut3d_contex->lut3d_hw_conf.lut3d_lut_wsize = 0x2d9;
-    memcpy(alut3d_contex->lut3d_hw_conf.look_up_table_r, alut3d_contex->calib_lut3d->look_up_table_r,
-           sizeof(alut3d_contex->calib_lut3d->look_up_table_r));
-    memcpy(alut3d_contex->lut3d_hw_conf.look_up_table_g, alut3d_contex->calib_lut3d->look_up_table_g,
-           sizeof(alut3d_contex->calib_lut3d->look_up_table_g));
-    memcpy(alut3d_contex->lut3d_hw_conf.look_up_table_b, alut3d_contex->calib_lut3d->look_up_table_b,
-           sizeof(alut3d_contex->calib_lut3d->look_up_table_b));
-
-
-    alut3d_contex->mCurAtt.byPass = !(calib_lut3d->enable);
     alut3d_contex->mCurAtt.mode = RK_AIQ_LUT3D_MODE_AUTO;
-
+    alut3d_contex->prepare_type = RK_AIQ_ALGO_CONFTYPE_UPDATECALIB | RK_AIQ_ALGO_CONFTYPE_NEEDRESET;
+    ret = UpdateLut3dCalibPara(alut3d_contex);
     LOGI_A3DLUT("%s: (exit)\n", __FUNCTION__);
     return(ret);
 
@@ -165,7 +178,7 @@ XCamReturn Alut3dPrepare(alut3d_handle_t hAlut3d)
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-
+    ret = UpdateLut3dCalibPara(hAlut3d);
     LOGI_A3DLUT("%s: (exit)\n", __FUNCTION__);
     return ret;
 }

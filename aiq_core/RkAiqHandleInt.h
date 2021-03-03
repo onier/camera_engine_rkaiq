@@ -42,6 +42,7 @@
 #include "asd/rk_aiq_uapi_asd_int.h"
 #include "aldch/rk_aiq_uapi_aldch_int.h"
 #include "acp/rk_aiq_uapi_acp_int.h"
+#include "aie/rk_aiq_uapi_aie_int.h"
 
 namespace RkCam {
 
@@ -103,7 +104,7 @@ RKAIQHANDLEINT(Acgc);
 // RKAIQHANDLEINT(Afec);
 //RKAIQHANDLEINT(Agamma);
 //RKAIQHANDLEINT(Agic);
-RKAIQHANDLEINT(Aie);
+//RKAIQHANDLEINT(Aie);
 // RKAIQHANDLEINT(Aldch);
 RKAIQHANDLEINT(Ar2y);
 RKAIQHANDLEINT(Awdr);
@@ -815,6 +816,34 @@ protected:
 private:
     acp_attrib_t mCurAtt;
     acp_attrib_t mNewAtt;
+};
+
+class RkAiqAieHandleInt:
+    virtual public RkAiqAieHandle,
+    virtual public RkAiqHandleIntCom {
+public:
+    explicit RkAiqAieHandleInt(RkAiqAlgoDesComm* des, RkAiqCore* aiqCore)
+        : RkAiqHandle(des, aiqCore)
+        , RkAiqAieHandle(des, aiqCore)
+        , RkAiqHandleIntCom(des, aiqCore) {};
+    virtual ~RkAiqAieHandleInt() {
+        RkAiqAieHandle::deInit();
+    };
+    virtual XCamReturn updateConfig(bool needSync);
+    virtual XCamReturn prepare();
+    virtual XCamReturn preProcess();
+    virtual XCamReturn processing();
+    virtual XCamReturn postProcess();
+    XCamReturn setAttrib(aie_attrib_t att);
+    XCamReturn getAttrib(aie_attrib_t *att);
+protected:
+    virtual void init();
+    virtual void deInit() {
+        RkAiqAieHandle::deInit();
+    };
+private:
+    aie_attrib_t mCurAtt;
+    aie_attrib_t mNewAtt;
 };
 
 }; //namespace RkCam

@@ -24,4 +24,10 @@ typedef enum fec_correct_direction_e {
     FEC_CORRECT_DIRECTION_XY
 } fec_correct_direction_t;
 
+typedef enum fec_correct_mode_e {
+    FEC_COMPRES_IMAGE_KEEP_FOV = 0x1,
+    FEC_KEEP_ASPECT_RATIO_REDUCE_FOV,
+    FEC_ALTER_ASPECT_RATIO_KEEP_FOV
+} fec_correct_mode_t;
+
 #endif

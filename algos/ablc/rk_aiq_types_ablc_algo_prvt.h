@@ -37,6 +37,9 @@ typedef struct AblcContext_s {
 
     CalibDb_Blc_t stBlcCalib;
 	AblcParamMode_t eParamMode;
+
+	bool isIQParaUpdate;
+	int prepare_type;
 } AblcContext_t;
 
 

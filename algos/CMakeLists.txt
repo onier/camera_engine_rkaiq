@@ -148,6 +148,34 @@ else()
 endif()
 
 # ----------------------------------------------------------------------------
+# add tnr_md implement
+# ----------------------------------------------------------------------------
+if(RK_SIMULATOR_HW)
+set (TNR_MD_SRC
+        anr/tnr_md/motion_detect.cpp
+        )
+else()
+set (TNR_MD_SRC
+        anr/tnr_md/motion_detect.cpp
+        )
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/algos/anr/tnr_md/motion_detect.cpp")
+    message(${LIBRARY_OUTPUT_PATH})
+    add_library(rkaiq_tnr_md STATIC ${TNR_MD_SRC})
+    set_target_properties(rkaiq_tnr_md PROPERTIES 			FOLDER "algos/anr/tnr_md")
+    set_target_properties(rkaiq_tnr_md PROPERTIES 			CLEAN_DIRECT_OUTPUT 1)
+    set_target_properties(rkaiq_tnr_md PROPERTIES 			C_VISIBILITY_PRESET default)
+    set_target_properties(rkaiq_tnr_md PROPERTIES 			CXX_VISIBILITY_PRESET default)
+else()
+    message(STATUS "Can Not found ${CMAKE_SOURCE_DIR}/algos/anr/tnr_md/motion_detect.cpp. Using lib")
+    file(COPY ${CMAKE_SOURCE_DIR}/algos/anr/tnr_md/librkaiq_tnr_md.a 	DESTINATION ${LIBRARY_OUTPUT_PATH})
+    add_library(rkaiq_tnr_md STATIC IMPORTED)
+    set_target_properties(rkaiq_tnr_md PROPERTIES IMPORTED_LOCATION 	"${PREFIX}rkaiq_tnr_md.${SUFFIX}")
+    set_target_properties(rkaiq_tnr_md PROPERTIES IMPORTED_IMPLIB 	"${PREFIX}rkaiq_tnr_md.${SUFFIX}")
+endif()
+
+# ----------------------------------------------------------------------------
 # add anr implement
 # ----------------------------------------------------------------------------
 set (ANR_SRC
@@ -511,6 +539,7 @@ endif()
 # ----------------------------------------------------------------------------
 set (AIE_SRC
 	aie/rk_aiq_algo_aie_itf.cpp
+	aie/rk_aiq_algo_aie_int.cpp
     )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/algos/aie/rk_aiq_algo_aie_itf.cpp")

@@ -26,7 +26,7 @@
 
 
 RKAIQ_BEGIN_DECLARE
-
+XCamReturn AdehazeReloadPara(AdehazeHandle_t* para, CamCalibDbContext_t* calib);
 XCamReturn AdehazeInit(AdehazeHandle_t** para, CamCalibDbContext_t* calib);
 XCamReturn AdehazeRelease(AdehazeHandle_t* para);
 XCamReturn AdehazeProcess(AdehazeHandle_t* para, int iso, int mode);

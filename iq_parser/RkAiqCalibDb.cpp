@@ -132,6 +132,7 @@ CamCalibDbContext_t* RkAiqCalibDb::createCalibDb(char* iqFile)
     } else {
         CamCalibDbContext_t *pCalibDb = new CamCalibDbContext_t();
         if (pCalibDb) {
+            initCalibDb(pCalibDb);
             if (0 == access(iqFile, F_OK)) {
                 RkAiqCalibParser  parser(pCalibDb);
                 mMutex.lock();
@@ -139,26 +140,22 @@ CamCalibDbContext_t* RkAiqCalibDb::createCalibDb(char* iqFile)
                 mMutex.unlock();
                 if (ret) {
                     uint32_t magicCode = calib_check_calc_checksum();
-                    if (magicCode != pCalibDb->header.magic_code) {
-                        LOGE("magic code is not matched! calculated:%u, readed:%u", magicCode, pCalibDb->header.magic_code);
-                    }else {
-                        mCalibDbsMap[str] = pCalibDb;
-                        LOGD("create calibdb from %s success.", iqFile);
-                        return pCalibDb;
-                    }
+                    if (magicCode != pCalibDb->header.magic_code)
+                        LOGW("magic code is not matched! calculated:%u, readed:%u", magicCode, pCalibDb->header.magic_code);
+                    mCalibDbsMap[str] = pCalibDb;
+                    LOGD("create calibdb from %s success.", iqFile);
+                    return pCalibDb;
                 } else {
                     LOGE("parse %s failed.", iqFile);
                 }
             } else if(isDataBinExist(iqFile)) {
                 if (calibReadFromFile(iqFile, pCalibDb)) {
                     uint32_t magicCode = calib_check_calc_checksum();
-                    if (magicCode != pCalibDb->header.magic_code) {
+                    if (magicCode != pCalibDb->header.magic_code)
                         LOGE("magic code is not matched! calculated:%u, readed:%u", magicCode, pCalibDb->header.magic_code);
-                    }else {
-                        mCalibDbsMap[str] = pCalibDb;
-                        LOGD("get calibdb from bin success.");
-                        return pCalibDb;
-                    }
+                    mCalibDbsMap[str] = pCalibDb;
+                    LOGD("get calibdb from bin success.");
+                    return pCalibDb;
                 } else {
                     LOGE("get calibdb from bin failed.");
                 }
@@ -232,15 +229,13 @@ void RkAiqCalibDb::createCalibDbBinFromXml(char* iqFile)
             RkAiqCalibParser  parser(pCalibDb);
             if (parser.doParse(iqFile)) {
                 uint32_t magicCode = calib_check_calc_checksum();
-                if (magicCode != pCalibDb->header.magic_code) {
-                    LOGE("magic code is not matched! calculated:%u, readed:%u", magicCode, pCalibDb->header.magic_code);
-                }else {
-                    LOGI("create calibdb from %s success, magic code %u.", iqFile, magicCode);
-                    if (calibSaveToFile(iqFile, pCalibDb))
-                        LOGD("save to bin success.");
-                    else
-                        LOGE("save to bin failed.");
-                }
+                if (magicCode != pCalibDb->header.magic_code)
+                    LOGW("magic code is not matched! calculated:%u, readed:%u", magicCode, pCalibDb->header.magic_code);
+                LOGI("create calibdb from %s success, magic code %u.", iqFile, magicCode);
+                if (calibSaveToFile(iqFile, pCalibDb))
+                    LOGD("save to bin success.");
+                else
+                    LOGE("save to bin failed.");
             } else {
                 LOGE("parse %s failed.", iqFile);
             }
@@ -248,6 +243,19 @@ void RkAiqCalibDb::createCalibDbBinFromXml(char* iqFile)
             LOGE("%s is not found!", iqFile);
         }
         delete pCalibDb;
+    }
+}
+
+void RkAiqCalibDb::initCalibDb(CamCalibDbContext_t* pCalibDb)
+{
+    if (pCalibDb) {
+        memset(pCalibDb, 0, sizeof(CamCalibDbContext_t));
+        /* initialize cproc */
+        pCalibDb->cProc.enable = 1;
+        pCalibDb->cProc.brightness = 128;
+        pCalibDb->cProc.contrast = 128;
+        pCalibDb->cProc.saturation = 128;
+        pCalibDb->cProc.hue = 128;
     }
 }
 

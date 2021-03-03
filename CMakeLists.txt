@@ -57,9 +57,11 @@ algos
 common
 common/linux
 hwi
+hwi/isp20
 ipc
 iq_parser
 uAPI
+ipc_server
 #algos/awb
 #../core/inc/luma
 #../core/inc/stat_3a_ae
@@ -93,6 +95,7 @@ include/algos/aie
 include/algos/aldch
 include/algos/alsc
 include/algos/anr
+include/algos/anr/tnr_md
 include/algos/aorb
 include/algos/ar2y
 include/algos/asd
@@ -100,6 +103,7 @@ include/algos/asharp
 include/algos/awb
 include/algos/awdr
 include/common/gen_mesh
+include/ipc_server
 )
 #source directory
 #AUX_SOURCE_DIRECTORY(demo/src DIR_SRCS)
@@ -135,10 +139,12 @@ set (HWI_SRC
         hwi/isp20/Isp20PollThread.cpp
         hwi/isp20/Isp20StatsBuffer.cpp
         hwi/isp20/Isp20_module_dbg.cpp
-        hwi/isp20/Isp20OfflineFrmRead.cpp
+        hwi/isp20/Isp20SpThread.cpp
         hwi/SensorHw.cpp
         hwi/LensHw.cpp
         hwi/FlashLight.cpp
+        hwi/fakecamera/FakeSensorHw.cpp
+        hwi/fakecamera/FakeCamHwIsp20.cpp
         )
 endif()
 set (IPC_SRC
@@ -162,9 +168,19 @@ set (XCORE_SRC
 	xcore/video_buffer.cpp
 	xcore/v4l2_buffer_proxy.cpp
 	xcore/v4l2_device.cpp
+	xcore/fake_v4l2_device.cpp
 	xcore/buffer_pool.cpp
 	xcore/poll_thread.cpp
 	)
+set (IPC_SERVER_SRC
+    ipc_server/socket_server.cpp
+    ipc_server/rkaiq_tool_ae.cpp
+    ipc_server/rkaiq_tool_anr.cpp
+    ipc_server/rkaiq_tool_imgproc.cpp
+    ipc_server/rkaiq_tool_sharp.cpp
+    ipc_server/rkaiq_tool_sysctl.cpp
+    ipc_server/command_process.cpp
+    )
 set (RK_AIQ_SRC
 	${ALGO_COMMON_SRC}
 	${COMMON_SRC}
@@ -174,6 +190,7 @@ set (RK_AIQ_SRC
 	${UAPI_SRC}
 	${XCORE_SRC}
 	${AIQ_CORE_SRC}
+    ${IPC_SERVER_SRC}
 	RkAiqManager.cpp
     )
 if(OPENCV_SUPPORT)
@@ -273,7 +290,7 @@ set_target_properties(rkaiq PROPERTIES CXX_VISIBILITY_PRESET default)
 #
 link_directories("${LIBRARY_OUTPUT_PATH}")
 
-target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkaiq_ahdr
+target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_tnr_md rkaiq_asd rkaiq_ahdr
 	rkaiq_acp rkaiq_asharp rkaiq_adhaz rkaiq_a3dlut rkaiq_ablc rkaiq_accm rkaiq_acgc
 	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_agic rkaiq_aie rkaiq_aldch
 	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}

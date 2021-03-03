@@ -265,9 +265,10 @@ ANRresult_t select_uvnr_params_by_ISO(RKAnr_Uvnr_Params_t *stRKUVNrParams, RKAnr
     int isoIndexHigh = 0;
     int iso_div         = 50;
     int max_iso_step  = MAX_ISO_STEP;
+	int i = 0;
 
 #ifndef RK_SIMULATOR_HW
-    for (int i = 0; i < max_iso_step - 1 ; i++)
+    for ( i = 0; i < max_iso_step - 1 ; i++)
     {
         if (iso >=  stRKUVNrParams->iso[i]  &&  iso <= stRKUVNrParams->iso[i + 1])
         {
@@ -276,28 +277,31 @@ ANRresult_t select_uvnr_params_by_ISO(RKAnr_Uvnr_Params_t *stRKUVNrParams, RKAnr
             isoIndexLow = i;
             isoIndexHigh = i + 1;
             isoIndex = isoIndexLow;
+			break;
         }
     }
 
-    if(iso < stRKUVNrParams->iso[0] ) {
-        isoGainLow =  stRKUVNrParams->iso[0];
-        isoGainHigh = stRKUVNrParams->iso[1];
-        isoIndexLow = 0;
-        isoIndexHigh = 1;
-        isoIndex = 0;
-    }
+	if(i == max_iso_step - 1){
+	    if(iso < stRKUVNrParams->iso[0] ) {
+	        isoGainLow =  stRKUVNrParams->iso[0];
+	        isoGainHigh = stRKUVNrParams->iso[1];
+	        isoIndexLow = 0;
+	        isoIndexHigh = 1;
+	        isoIndex = 0;
+	    }
 
-    if(iso >  stRKUVNrParams->iso[max_iso_step - 1] ) {
-        isoGainLow =  stRKUVNrParams->iso[max_iso_step - 2] ;
-        isoGainHigh = stRKUVNrParams->iso[max_iso_step - 1];
-        isoIndexLow = max_iso_step - 2;
-        isoIndexHigh = max_iso_step - 1;
-        isoIndex = max_iso_step - 1;
-    }
+	    if(iso >  stRKUVNrParams->iso[max_iso_step - 1] ) {
+	        isoGainLow =  stRKUVNrParams->iso[max_iso_step - 2] ;
+	        isoGainHigh = stRKUVNrParams->iso[max_iso_step - 1];
+	        isoIndexLow = max_iso_step - 2;
+	        isoIndexHigh = max_iso_step - 1;
+	        isoIndex = max_iso_step - 1;
+	    }
+	}
 #else
     isoIndex = int(log(float(iso / iso_div)) / log(2.0f));
 
-    for (int i = max_iso_step - 1; i >= 0; i--)
+    for (i = max_iso_step - 1; i >= 0; i--)
     {
         if (iso < iso_div * (2 << i))
         {

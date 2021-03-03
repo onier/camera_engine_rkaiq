@@ -17,10 +17,12 @@
 
 #include "rk_aiq_user_api_sysctl.h"
 #include "RkAiqManager.h"
+#include "socket_server.h"
 #ifdef RK_SIMULATOR_HW
 #include "simulator/CamHwSimulator.h"
 #else
 #include "isp20/CamHwIsp20.h"
+#include "fakecamera/FakeCamHwIsp20.h"
 #include "isp20/Isp20_module_dbg.h"
 #endif
 
@@ -34,6 +36,8 @@ typedef struct rk_aiq_sys_ctx_s {
     SmartPtr<RkAiqCore> _analyzer;
     SmartPtr<RkLumaCore> _lumaAnalyzer;
     CamCalibDbContext_t *_calibDb;
+    SocketServer *  _socket;
+    SmartPtr<Mutex> _apiMutex;
 } rk_aiq_sys_ctx_t;
 
 #define RKAIQSYS_CHECK_RET(cond, ret, format, ...) \
@@ -45,6 +49,9 @@ typedef struct rk_aiq_sys_ctx_s {
 #define RKAIQ_DEFAULT_IQ_PATH "/etc/iqfiles/"
 
 RKAIQ_BEGIN_DECLARE
+
+#define RKAIQ_API_SMART_LOCK(ctx) \
+    SmartLock lock (*ctx->_apiMutex.ptr());
 
 typedef struct rk_aiq_sys_preinit_cfg_s {
    rk_aiq_working_mode_t mode;
@@ -69,6 +76,9 @@ rk_aiq_uapi_sysctl_preInit(const char* sns_ent_name,
     return XCAM_RETURN_NO_ERROR;
 }
 
+static void
+rk_aiq_uapi_sysctl_deinit_locked(rk_aiq_sys_ctx_t* ctx);
+
 rk_aiq_sys_ctx_t*
 rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
                         const char* config_file_dir,
@@ -76,7 +86,6 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
                         rk_aiq_metas_cb metas_cb)
 {
     ENTER_XCORE_FUNCTION();
-
     char config_file[256];
 
     XCAM_ASSERT(sns_ent_name);
@@ -94,6 +103,9 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
     rk_aiq_sys_ctx_t* ctx = new rk_aiq_sys_ctx_t();
     RKAIQSYS_CHECK_RET(!ctx, NULL, "malloc ctx error !");
 
+    ctx->_apiMutex = new Mutex();
+    RKAIQ_API_SMART_LOCK(ctx);
+
     ctx->_sensor_entity_name = strndup(sns_ent_name, 128);
     RKAIQSYS_CHECK_RET(!ctx->_sensor_entity_name, NULL, "dup sensor name error !");
 
@@ -103,7 +115,11 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
 #ifdef RK_SIMULATOR_HW
     ctx->_camHw = new CamHwSimulator();
 #else
-    ctx->_camHw = new CamHwIsp20();
+    if (0 == strcmp(sns_ent_name, "FakeCamera")) {
+        ctx->_camHw = new FakeCamHwIsp20();
+    } else {
+        ctx->_camHw = new CamHwIsp20();
+    }
 
     // use user defined iq file
     std::map<std::string, rk_aiq_sys_preinit_cfg_t>::iterator it =
@@ -172,11 +188,13 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
     ctx->_lumaAnalyzer = new RkLumaCore();
     ctx->_rkAiqManager->setLumaAnalyzer(ctx->_lumaAnalyzer);
     ctx->_calibDb = RkAiqCalibDb::createCalibDb(config_file);
+    ctx->_socket  = new SocketServer();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     if (!ctx->_calibDb)
         goto error;
     ctx->_rkAiqManager->setAiqCalibDb(ctx->_calibDb);
     ret = ctx->_rkAiqManager->init();
+    ctx->_socket->Process(ctx);
     if (ret)
         goto error;
 
@@ -186,15 +204,13 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
 
 error:
     LOGE("_rkAiqManager init error!");
-    rk_aiq_uapi_sysctl_deinit(ctx);
+    rk_aiq_uapi_sysctl_deinit_locked(ctx);
     return NULL;
 }
 
 void
-rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
+rk_aiq_uapi_sysctl_deinit_locked(rk_aiq_sys_ctx_t* ctx)
 {
-    ENTER_XCORE_FUNCTION();
-
     std::map<std::string, rk_aiq_sys_preinit_cfg_t>::iterator it =
         g_rk_aiq_sys_preinit_cfg_map.find(std::string(ctx->_sensor_entity_name));
     if (it != g_rk_aiq_sys_preinit_cfg_map.end()) {
@@ -205,18 +221,26 @@ rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
     if (ctx->_rkAiqManager.ptr())
         ctx->_rkAiqManager->deInit();
 
+    ctx->_socket->Deinit();
     ctx->_camHw.release();
     ctx->_analyzer.release();
     ctx->_lumaAnalyzer.release();
     ctx->_rkAiqManager.release();
-
+    
     if (ctx->_sensor_entity_name)
         xcam_free((void*)(ctx->_sensor_entity_name));
 
     //RkAiqCalibDb::releaseCalibDb();
 
     delete ctx;
+}
 
+void
+rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
+{
+    ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
+    rk_aiq_uapi_sysctl_deinit_locked(ctx);
     EXIT_XCORE_FUNCTION();
 }
 
@@ -226,6 +250,7 @@ rk_aiq_uapi_sysctl_prepare(const rk_aiq_sys_ctx_t* ctx,
                            rk_aiq_working_mode_t mode)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
@@ -241,6 +266,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_start(const rk_aiq_sys_ctx_t* ctx)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
@@ -255,6 +281,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_stop(const rk_aiq_sys_ctx_t* ctx, bool keep_ext_hw_st)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
@@ -317,6 +344,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_regLib(const rk_aiq_sys_ctx_t* ctx,
                           RkAiqAlgoDesComm* algo_lib_des)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->addAlgo(*algo_lib_des);
 }
 
@@ -325,6 +353,7 @@ rk_aiq_uapi_sysctl_unRegLib(const rk_aiq_sys_ctx_t* ctx,
                             const int algo_type,
                             const int lib_id)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->rmAlgo(algo_type, lib_id);
 }
 
@@ -334,6 +363,7 @@ rk_aiq_uapi_sysctl_enableAxlib(const rk_aiq_sys_ctx_t* ctx,
                                const int lib_id,
                                bool enable)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->enableAlgo(algo_type, lib_id, enable);
 }
 
@@ -342,12 +372,14 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
                                   const int algo_type,
                                   const int lib_id)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->getAxlibStatus(algo_type, lib_id);
 }
 
 const RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->getEnabledAxlibCtx(algo_type);
 }
 
@@ -355,6 +387,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_get3AStats(const rk_aiq_sys_ctx_t* ctx,
                               rk_aiq_isp_stats_t *stats)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->get3AStatsFromCachedList(*stats);
 }
 
@@ -362,6 +395,8 @@ XCamReturn
 rk_aiq_uapi_sysctl_get3AStatsBlk(const rk_aiq_sys_ctx_t* ctx,
                               rk_aiq_isp_stats_t **stats, int timeout_ms)
 {
+    // blocked API, add lock ? 
+    //RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->get3AStatsFromCachedList(stats, timeout_ms);
 }
 
@@ -369,6 +404,7 @@ void
 rk_aiq_uapi_sysctl_release3AStatsRef(const rk_aiq_sys_ctx_t* ctx,
                                      rk_aiq_isp_stats_t *stats)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     ctx->_analyzer->release3AStatsRef(stats);
 }
 
@@ -413,6 +449,7 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_asd.cpp"
 #include "rk_aiq_user_api_aldch.cpp"
 #include "rk_aiq_user_api_acp.cpp"
+#include "rk_aiq_user_api_aie.cpp"
 
 #define RK_AIQ_ALGO_TYPE_MODULES (RK_AIQ_ALGO_TYPE_MAX + 1)
 
@@ -421,6 +458,7 @@ rk_aiq_uapi_sysctl_setModuleCtl(const rk_aiq_sys_ctx_t* ctx, rk_aiq_module_id_t 
 {
     ENTER_XCORE_FUNCTION();
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_MODULES);
+    RKAIQ_API_SMART_LOCK(ctx);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     if (mId > RK_MODULE_INVAL && mId < RK_MODULE_MAX) {
@@ -446,6 +484,7 @@ int32_t
 rk_aiq_uapi_sysctl_getModuleCtl(const rk_aiq_sys_ctx_t* ctx, rk_aiq_module_id_t mId, bool *mod_en)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     bool en;
@@ -460,6 +499,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_setCpsLtCfg(const rk_aiq_sys_ctx_t* ctx,
                                rk_aiq_cpsl_cfg_t* cfg)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->setCpsLtCfg(*cfg);
 }
 
@@ -467,6 +507,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_getCpsLtInfo(const rk_aiq_sys_ctx_t* ctx,
                                 rk_aiq_cpsl_info_t* info)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->getCpsLtInfo(*info);
 }
 
@@ -474,6 +515,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_queryCpsLtCap(const rk_aiq_sys_ctx_t* ctx,
                                  rk_aiq_cpsl_cap_t* cap)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->queryCpsLtCap(*cap);
 }
 
@@ -624,34 +666,49 @@ static void rk_aiq_deinit_lib(void)
     EXIT_XCORE_FUNCTION();
 }
 
-int32_t
-rk_aiq_uapi_enqueue_buffer(const rk_aiq_sys_ctx_t* ctx, struct rk_aiq_vbuf *vbuf)
+XCamReturn
+rk_aiq_uapi_sysctl_enqueueRkRawBuf(const rk_aiq_sys_ctx_t* ctx, void *rawdata, bool sync)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = ctx->_rkAiqManager->enqueueBuffer(vbuf);
+    ret = ctx->_rkAiqManager->enqueueRawBuffer(rawdata, sync);
     EXIT_XCORE_FUNCTION();
 
     return ret;
 }
 
-int32_t
-offlineRdJobPrepare(const rk_aiq_sys_ctx_t* ctx)
+XCamReturn
+rk_aiq_uapi_sysctl_enqueueRkRawFile(const rk_aiq_sys_ctx_t* ctx, const char *path)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = ctx->_rkAiqManager->offlineRdJobPrepare();
+    ret = ctx->_rkAiqManager->enqueueRawFile(path);
+    EXIT_XCORE_FUNCTION();
+
+    return ret;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_registRkRawCb(const rk_aiq_sys_ctx_t* ctx, void (*callback)(void*))
+{
+    ENTER_XCORE_FUNCTION();
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (callback == NULL)
+        ret = XCAM_RETURN_ERROR_PARAM;
+    else
+        ret = ctx->_rkAiqManager->registRawdataCb(callback);
     EXIT_XCORE_FUNCTION();
     return ret;
 }
 
-int32_t
-offlineRdJobDone(const rk_aiq_sys_ctx_t* ctx)
+XCamReturn
+rk_aiq_uapi_sysctl_prepareRkRaw(const rk_aiq_sys_ctx_t* ctx, rk_aiq_raw_prop_t prop)
 {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = ctx->_rkAiqManager->offlineRdJobDone();
+    ret = ctx->_rkAiqManager->rawdataPrepare(prop);
     EXIT_XCORE_FUNCTION();
+
     return ret;
 }
 
@@ -659,6 +716,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_setSharpFbcRotation(const rk_aiq_sys_ctx_t* ctx, rk_aiq_rotation_t rot)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ret = ctx->_rkAiqManager->setSharpFbcRotation(rot);
     EXIT_XCORE_FUNCTION();
@@ -675,6 +733,7 @@ XCamReturn
 rk_aiq_uapi_sysctl_swWorkingModeDyn(const rk_aiq_sys_ctx_t* ctx, rk_aiq_working_mode_t mode)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     /* ret = ctx->_rkAiqManager->swWorkingModeDyn(mode); */
     ret = ctx->_rkAiqManager->swWorkingModeDyn_msg(mode);
@@ -686,6 +745,7 @@ void
 rk_aiq_uapi_sysctl_setMulCamConc(const rk_aiq_sys_ctx_t* ctx, bool cc)
 {
     ENTER_XCORE_FUNCTION();
+    RKAIQ_API_SMART_LOCK(ctx);
     ctx->_rkAiqManager->setMulCamConc(cc);
     EXIT_XCORE_FUNCTION();
 }
@@ -693,6 +753,7 @@ rk_aiq_uapi_sysctl_setMulCamConc(const rk_aiq_sys_ctx_t* ctx, bool cc)
 XCamReturn
 rk_aiq_uapi_sysctl_setCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t rect)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ret = sys_ctx->_camHw->setSensorCrop(rect);
     return ret;
@@ -701,8 +762,38 @@ rk_aiq_uapi_sysctl_setCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t rect)
 XCamReturn
 rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t* rect)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ret = sys_ctx->_camHw->getSensorCrop(*rect);
+
+    return ret;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
+{
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    LOGI("applying new iq file:%s\n", iqfile);
+
+    if (!sys_ctx) {
+      LOGE("%s: sys_ctx is invalied\n", __func__);
+      return XCAM_RETURN_ERROR_FAILED;
+    }
+
+    auto newCalibDb = RkAiqCalibDb::createCalibDb(iqfile);
+    if (!newCalibDb) {
+      LOGE("failed to create new CalibDb for:%s\n", iqfile);
+      return XCAM_RETURN_ERROR_FAILED;
+    }
+
+    ret = sys_ctx->_rkAiqManager->updateCalibDb(newCalibDb);
+
+    if (ret) {
+      LOGE("failed to update iqfile\n");
+      ret = XCAM_RETURN_ERROR_FAILED;
+    }
 
     return ret;
 }

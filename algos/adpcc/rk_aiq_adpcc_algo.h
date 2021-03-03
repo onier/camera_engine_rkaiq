@@ -9,6 +9,7 @@
 #include "RkAiqCalibDbTypes.h"
 #include "adpcc/rk_aiq_types_adpcc_algo_prvt.h"
 
+AdpccResult_t AdpccReloadPara(AdpccContext_t *pAdpccCtx, CamCalibDbContext_t *pCalibDb);
 
 AdpccResult_t AdpccInit(AdpccContext_t **ppAdpccCtx, CamCalibDbContext_t *pCalibDb);
 

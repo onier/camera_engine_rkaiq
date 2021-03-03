@@ -28,6 +28,7 @@ XCamReturn
 rk_aiq_user_api_anr_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_attrib_t *attr)
 {
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_ANR);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -41,6 +42,7 @@ rk_aiq_user_api_anr_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_attrib_
 XCamReturn
 rk_aiq_user_api_anr_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -55,6 +57,7 @@ rk_aiq_user_api_anr_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_attrib_
 XCamReturn
 rk_aiq_user_api_anr_SetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_IQPara_t *para)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -68,6 +71,7 @@ rk_aiq_user_api_anr_SetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_IQPara_
 XCamReturn
 rk_aiq_user_api_anr_GetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_IQPara_t *para)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -82,6 +86,7 @@ rk_aiq_user_api_anr_GetIQPara(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_nr_IQPara_
 XCamReturn
 rk_aiq_user_api_anr_SetLumaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -95,6 +100,7 @@ rk_aiq_user_api_anr_SetLumaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPe
 XCamReturn
 rk_aiq_user_api_anr_SetLumaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -108,6 +114,7 @@ rk_aiq_user_api_anr_SetLumaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPe
 XCamReturn
 rk_aiq_user_api_anr_GetLumaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -121,6 +128,7 @@ rk_aiq_user_api_anr_GetLumaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pP
 XCamReturn
 rk_aiq_user_api_anr_GetLumaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -134,6 +142,7 @@ rk_aiq_user_api_anr_GetLumaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pP
 XCamReturn
 rk_aiq_user_api_anr_SetChromaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -147,6 +156,7 @@ rk_aiq_user_api_anr_SetChromaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float f
 XCamReturn
 rk_aiq_user_api_anr_SetChromaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -160,6 +170,7 @@ rk_aiq_user_api_anr_SetChromaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float f
 XCamReturn
 rk_aiq_user_api_anr_GetChromaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -173,6 +184,7 @@ rk_aiq_user_api_anr_GetChromaSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *
 XCamReturn
 rk_aiq_user_api_anr_GetChromaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -186,6 +198,7 @@ rk_aiq_user_api_anr_GetChromaTFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *
 XCamReturn
 rk_aiq_user_api_anr_SetRawnrSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 
@@ -199,6 +212,7 @@ rk_aiq_user_api_anr_SetRawnrSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float fP
 XCamReturn
 rk_aiq_user_api_anr_GetRawnrSFStrength(const rk_aiq_sys_ctx_t* sys_ctx, float *pPercnt)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAnrHandleInt* algo_handle =
         algoHandle<RkAiqAnrHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ANR);
 

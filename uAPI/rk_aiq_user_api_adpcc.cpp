@@ -27,6 +27,7 @@ RKAIQ_BEGIN_DECLARE
 XCamReturn
 rk_aiq_user_api_adpcc_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_dpcc_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_ADPCC);
     RkAiqAdpccHandleInt* algo_handle =
         algoHandle<RkAiqAdpccHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ADPCC);
@@ -41,6 +42,7 @@ rk_aiq_user_api_adpcc_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_dpcc_att
 XCamReturn
 rk_aiq_user_api_adpcc_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_dpcc_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAdpccHandleInt* algo_handle =
         algoHandle<RkAiqAdpccHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_ADPCC);
 

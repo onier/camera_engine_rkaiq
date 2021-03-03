@@ -36,6 +36,7 @@
 #define CAPTURE_RAW_PATH "/tmp"
 #define CAPTURE_CNT_FILENAME ".capture_cnt"
 #define ENABLE_UAPI_TEST
+#define IQFILE_PATH_MAX_LEN 256
 
 struct buffer {
     void *start;
@@ -44,6 +45,12 @@ struct buffer {
     int sequence;
 };
 
+enum TEST_CTL_TYPE {
+    TEST_CTL_TYPE_DEFAULT,
+    TEST_CTL_TYPE_REPEAT_INIT_PREPARE_START_STOP_DEINIT,
+    TEST_CTL_TYPE_REPEAT_START_STOP,
+    TEST_CTL_TYPE_REPEAT_PREPARE_START_STOP,
+};
 typedef struct _demo_context {
      char out_file[255];
      char dev_name[255];
@@ -78,6 +85,8 @@ typedef struct _demo_context {
      bool _is_yuv_dir_exist;
      int capture_yuv_num;
      bool is_capture_yuv;
+     int ctl_type;
+     char iqpath[256];
 }demo_context_t;
 
 static struct termios oldt;
@@ -128,6 +137,30 @@ char* get_dev_name(demo_context_t* ctx)
 char* get_sensor_name(demo_context_t* ctx)
 {
       return ctx->sns_name;
+}
+
+void test_update_iqfile(const rk_aiq_sys_ctx_t* ctx)
+{
+  char iqfile[IQFILE_PATH_MAX_LEN] = {0};
+  printf("\nspecial an new iqfile:\n");
+  printf("\t1) /oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-60IRC-4MP-F16.xml\n");
+  printf("\t2) /oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-40IRC-4MP-F16.xml\n");
+  printf("\ninput 1/2 use default xml or input full path end of ENTER\n");
+  fgets(iqfile, IQFILE_PATH_MAX_LEN, stdin);
+  if (iqfile[0] == '1') {
+    snprintf(iqfile, IQFILE_PATH_MAX_LEN, "%s",
+             "/oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-60IRC-4MP-F16.xml");
+  } else if (iqfile[0] == '2') {
+    snprintf(iqfile, IQFILE_PATH_MAX_LEN, "%s",
+             "/oem/etc/iqfiles/os04a10_CMK-OT1607-FV1_M12-40IRC-4MP-F16.xml");
+  } else if (!strstr(iqfile, "xml")) {
+    printf("[AIQ]input is not an valide xml:%s\n", iqfile);
+    return;
+  }
+
+  printf("[AIQ] appling new iq file:%s\n", iqfile);
+
+  rk_aiq_uapi_sysctl_updateIq(ctx, iqfile);
 }
 
 void test_imgproc(const demo_context_t* demo_ctx) {
@@ -314,38 +347,43 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         rk_aiq_uapi_sysctl_getModuleCtl(ctx, RK_MODULE_TNR, &mod_en);
         printf("getModuleCtl=%d\n",mod_en);
         break;
-    case 'A':
+    case 'z':
         rk_aiq_uapi_setFocusMode(ctx, OP_AUTO);
         printf("setFocusMode OP_AUTO\n");
+        break;
+    case 'A':
+        rk_aiq_uapi_setFocusMode(ctx, OP_SEMI_AUTO);
+        printf("setFocusMode OP_SEMI_AUTO\n");
         break;
     case 'B':
         rk_aiq_uapi_setFocusMode(ctx, OP_MANUAL);
         printf("setFocusMode OP_MANUAL\n");
         break;
     case 'C':
-        paRect_t rect;
-        rect.x = -1000;
-        rect.y = -1000;
-        rect.w = 1000;
-        rect.h = 1000;
-        rk_aiq_uapi_setFocusWin(ctx, &rect);
-        printf("setFocusWin 0\n");
+        rk_aiq_uapi_manualTrigerFocus(ctx);
+        printf("manualTrigerFocus\n");
         break;
-    case 'D':
-        rect.x = 0;
-        rect.y = 0;
-        rect.w = 1000;
-        rect.h = 1000;
-        rk_aiq_uapi_setFocusWin(ctx, &rect);
-        printf("setFocusWin 1\n");
+    case 'D': {
+        int code;
+        rk_aiq_uapi_getOpZoomPosition(ctx, &code);
+
+        code += 1000;
+        if (code > 7000)
+            code = 0;
+        rk_aiq_uapi_setOpZoomPosition(ctx, code);
+        printf("setOpZoomPosition %d\n", code);
+    }
         break;
-    case 'E':
-        rect.x = 0;
-        rect.y = -1000;
-        rect.w = 1000;
-        rect.h = 1000;
-        rk_aiq_uapi_setFocusWin(ctx, &rect);
-        printf("setFocusWin 2\n");
+    case 'E': {
+        int code;
+        rk_aiq_uapi_getOpZoomPosition(ctx, &code);
+
+        code -= 1000;
+        if (code < 0)
+            code = 7000;
+        rk_aiq_uapi_setOpZoomPosition(ctx, code);
+        printf("setOpZoomPosition %d\n", code);
+    }
         break;
     case 'F': {
         unsigned short code;
@@ -669,6 +707,11 @@ void test_imgproc(const demo_context_t* demo_ctx) {
            printf("test to capture raw sync\n");
            rk_aiq_uapi_debug_captureRawSync(ctx, CAPTURE_RAW_SYNC, 5, "/tmp", output_dir);
            printf("Raw's storage directory is (%s)\n", output_dir);
+       }
+       break;
+    case 'V':
+       {
+         test_update_iqfile(ctx);
        }
        break;
     default:
@@ -1368,12 +1411,14 @@ static void parse_args(int argc, char **argv, demo_context_t *ctx)
            {"hdr",   required_argument,       0, 'a' },
            {"sync-to-raw", no_argument, 0, 'e' },
            {"limit", no_argument, 0, 'l' },
+           {"ctl", required_argument, 0, 't' },
+           {"iqpath", required_argument, 0, '1' },
            //{"sensor",   required_argument,       0, 'b' },
            {0,          0,                 0,  0  }
        };
 
        //c = getopt_long(argc, argv, "w:h:f:i:d:o:c:ps",
-       c = getopt_long(argc, argv, "w:h:f:i:d:o:c:n:k:a:mpsevrl",
+       c = getopt_long(argc, argv, "w:h:f:i:d:o:c:n:k:a:t:1:mpsevrl",
            long_options, &option_index);
        if (c == -1)
            break;
@@ -1427,6 +1472,11 @@ static void parse_args(int argc, char **argv, demo_context_t *ctx)
            break;
        case 'l':
            ctx->limit_range = 1;
+       case '1':
+           strcpy(ctx->iqpath, optarg);
+           break;
+       case 't':
+           ctx->ctl_type = atoi(optarg);
            break;
        case '?':
        case 'p':
@@ -1447,6 +1497,8 @@ static void parse_args(int argc, char **argv, demo_context_t *ctx)
                   "         --hdr <val>,                       optional, hdr mode, val 2 means hdrx2, 3 means hdrx3 \n"
                   "         --sync-to-raw,                     optional, write yuv files in sync with raw\n"
                   "         --limit,                           optional, yuv limit range\n",
+                  "         --ctl <val>,                       optional, sysctl procedure test \n",
+                  "         --iqpath <val>,                    optional, absolute path of iq file dir \n",
                   "         --sensor,  default os04a10,        optional, sensor names\n",
                   argv[0]);
            exit(-1);
@@ -1664,7 +1716,10 @@ static void rkisp_routine(demo_context_t *ctx)
     }
 
     if (ctx->rkaiq) {
-        ctx->aiq_ctx = rk_aiq_uapi_sysctl_init(sns_entity_name, "/oem/etc/iqfiles", NULL, NULL);
+        if (strlen(ctx->iqpath))
+            ctx->aiq_ctx = rk_aiq_uapi_sysctl_init(sns_entity_name, ctx->iqpath, NULL, NULL);
+        else
+            ctx->aiq_ctx = rk_aiq_uapi_sysctl_init(sns_entity_name, "/oem/etc/iqfiles", NULL, NULL);
 
         if (ctx->aiq_ctx) {
             printf("%s:-------- init mipi tx/rx -------------\n",get_sensor_name(ctx));
@@ -1689,6 +1744,33 @@ static void rkisp_routine(demo_context_t *ctx)
                 if (ctx->pponeframe)
                     start_capturing_pp_oneframe(ctx);
                 printf("%s:-------- stream on mipi tx/rx -------------\n",get_sensor_name(ctx));
+
+                if (ctx->ctl_type != TEST_CTL_TYPE_DEFAULT) {
+                    restart:
+                    static int test_ctl_cnts = 0;
+                    ctx->frame_count = 60;
+                    while ((ctx->frame_count-- > 0))
+                        read_frame(ctx);
+                    printf("+++++++ TEST SYSCTL COUNTS %d ++++++++++++ \n", test_ctl_cnts++);
+                    printf("aiq stop .....\n");
+                    rk_aiq_uapi_sysctl_stop(ctx->aiq_ctx, false);
+                    if (ctx->ctl_type == TEST_CTL_TYPE_REPEAT_INIT_PREPARE_START_STOP_DEINIT) {
+                        printf("aiq deinit .....\n");
+                        rk_aiq_uapi_sysctl_deinit(ctx->aiq_ctx);
+                        printf("aiq init .....\n");
+                        ctx->aiq_ctx = rk_aiq_uapi_sysctl_init(sns_entity_name, "/oem/etc/iqfiles", NULL, NULL);
+                        printf("aiq prepare .....\n");
+                        XCamReturn ret = rk_aiq_uapi_sysctl_prepare(ctx->aiq_ctx, ctx->width, ctx->height, work_mode);
+                    } else if (ctx->ctl_type == TEST_CTL_TYPE_REPEAT_PREPARE_START_STOP) {
+                        printf("aiq prepare .....\n");
+                        XCamReturn ret = rk_aiq_uapi_sysctl_prepare(ctx->aiq_ctx, ctx->width, ctx->height, work_mode);
+                    } else if (ctx->ctl_type == TEST_CTL_TYPE_REPEAT_START_STOP) {
+                        // do nothing
+                    }
+                    printf("aiq start .....\n");
+                    ret = rk_aiq_uapi_sysctl_start(ctx->aiq_ctx );
+                    goto restart;
+                }
             }
 
         }
@@ -1741,6 +1823,8 @@ int main(int argc, char **argv)
         .skipCnt = 30,
         .capture_yuv_num = 0,
         .is_capture_yuv = false,
+        .ctl_type = TEST_CTL_TYPE_DEFAULT,
+        .iqpath = {'\0'}, 
     };
     demo_context_t second_ctx;
 

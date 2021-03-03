@@ -58,22 +58,23 @@ prepare(RkAiqAlgoCom* params)
 {
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    //int iso;
 
     RkAiqAlgoConfigAdhazInt* config = (RkAiqAlgoConfigAdhazInt*)params;
     AdehazeHandle_t * AdehazeHandle = (AdehazeHandle_t *)params->ctx;
-
-    //CamCalibDbContext_t* calib = config->rk_com.u.prepare.calib;
-    //const CalibDb_Dehaze_t *calib_dehaze = &calib->dehaze;
-
     AdehazeHandle->working_mode = config->adhaz_config_com.com.u.prepare.working_mode;
+    AdehazeHandle->prepare_type = params->u.prepare.conf_type;
 
-    //TO DO
-//    iso = 50;
-//    ret = AdehazeConfig(calib_dehaze, AdehazeHandle, iso, AdehazeHandle->Dehaze_Scene_mode);
+
+
+    if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
+        XCamReturn ret = AdehazeReloadPara(AdehazeHandle, config->rk_com.u.prepare.calib);
+        if(ret != XCAM_RETURN_NO_ERROR) {
+            ret = XCAM_RETURN_ERROR_FAILED;
+            LOGE_ADPCC("%s: Adehaze Reload Para failed (%d)\n", __FUNCTION__, ret);
+        }
+    }
 
     return ret;
-
 }
 
 static XCamReturn

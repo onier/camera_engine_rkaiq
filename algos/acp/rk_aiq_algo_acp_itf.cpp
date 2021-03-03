@@ -34,10 +34,12 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
     }
     ctx->acpCtx.calib = cfg_int->calib;
     rk_aiq_acp_params_t* params = &ctx->acpCtx.params;
-    params->brightness = 128;
-    params->hue = 128;
-    params->saturation = 128;
-    params->contrast = 128;
+    CalibDb_cProc_t *cproc = &ctx->acpCtx.calib->cProc;
+    params->enable = cproc->enable;
+    params->brightness = cproc->brightness;
+    params->hue = cproc->hue;
+    params->saturation = cproc->saturation;
+    params->contrast = cproc->contrast;
 
     *context = ctx;
 
@@ -54,6 +56,18 @@ destroy_context(RkAiqAlgoContext *context)
 static XCamReturn
 prepare(RkAiqAlgoCom* params)
 {
+    rk_aiq_acp_params_t* acp_params = &params->ctx->acpCtx.params;
+    RkAiqAlgoConfigAdebayerInt* pCfgParam = (RkAiqAlgoConfigAdebayerInt*)params;
+
+	if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+	    CalibDb_cProc_t *cproc = &pCfgParam->rk_com.u.prepare.calib->cProc;
+        acp_params->enable = cproc->enable;
+        acp_params->brightness = cproc->brightness;
+        acp_params->hue = cproc->hue;
+        acp_params->saturation = cproc->saturation;
+        acp_params->contrast = cproc->contrast;
+    }
+
     return XCAM_RETURN_NO_ERROR;
 }
 

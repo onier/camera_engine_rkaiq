@@ -371,8 +371,29 @@ ANRresult_t select_bayernr_params_by_ISO(RKAnr_Bayernr_Params_t *stBayerNrParams
             isoLevelHig = i + 1;
             isoGainCorrect = ((isoGain - isoGainStd[i]) <= (isoGainStd[i + 1] - isoGain)) ? isoGainStd[i] : isoGainStd[i + 1];
             isoLevelCorrect = ((isoGain - isoGainStd[i]) <= (isoGainStd[i + 1] - isoGain)) ? i : (i + 1);
+			break;
         }
     }
+
+	if(i == MAX_ISO_STEP - 1){
+		if(isoGain < isoGainStd[0]){
+			isoGainLow = isoGainStd[0];
+            isoGainHig = isoGainStd[1];
+            isoLevelLow = 0;
+            isoLevelHig = 1;
+            isoGainCorrect = ((isoGain - isoGainStd[0]) <= (isoGainStd[1] - isoGain)) ? isoGainStd[0] : isoGainStd[1];
+            isoLevelCorrect = ((isoGain - isoGainStd[0]) <= (isoGainStd[1] - isoGain)) ? 0 : (1);
+		}
+
+		if(isoGain > isoGainStd[MAX_ISO_STEP - 1]){
+			isoGainLow = isoGainStd[MAX_ISO_STEP - 2];
+            isoGainHig = isoGainStd[MAX_ISO_STEP - 1];
+            isoLevelLow = MAX_ISO_STEP - 2;
+            isoLevelHig = MAX_ISO_STEP - 1;
+            isoGainCorrect = ((isoGain - isoGainStd[MAX_ISO_STEP - 2]) <= (isoGainStd[MAX_ISO_STEP - 1] - isoGain)) ? isoGainStd[MAX_ISO_STEP - 2] : isoGainStd[MAX_ISO_STEP - 1];
+            isoLevelCorrect = ((isoGain - isoGainStd[MAX_ISO_STEP - 2]) <= (isoGainStd[MAX_ISO_STEP - 1] - isoGain)) ? (MAX_ISO_STEP - 2) : (MAX_ISO_STEP - 1);
+		}
+	}
 
     LOGD_ANR("%s:%d iso:%d high:%d low:%d\n",
              __FUNCTION__, __LINE__,

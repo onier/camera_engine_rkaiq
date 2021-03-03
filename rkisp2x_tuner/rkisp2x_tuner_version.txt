@@ -1,4 +1,4 @@
-Current Version: v1.3.2
+Current Version: v1.5.2
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
 v0.1.0 - 2020.07.15
@@ -45,4 +45,24 @@ v1.3.2 - 2020.12.07
   - fix the bug that tmo get function using wrong structure
   - other optimizations
 
+v1.3.3 - 2020.12.16
+  - add ccm module
+  - add cproc module
+  - add awb module to tuning assistant
+
+v1.4.0 - 2020.12.28
+  - fix some bug
+  - change version matching rule
+
+v1.5.0 -2021.01.07
+  - add motion detect parameter to MFNR
+  - adapt to AIQ v1.0x45.1
+
+v1.5.2 -2021.01.16
+  - fixes some bugs
+  - add sharp coeff and strength
+  - add edge filter coeff and strength
+
+v1.5.3 -2021.01.19
+  - add motion detect reserved8/9 to MFNR
 ==================== RKISP2X TUNER VERSION HISTORY ====================

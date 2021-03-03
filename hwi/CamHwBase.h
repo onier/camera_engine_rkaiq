@@ -23,6 +23,7 @@
 #include "xcam_thread.h"
 #include "ICamHw.h"
 #include "v4l2_device.h"
+#include "fake_v4l2_device.h"
 #include "poll_thread.h"
 #ifndef RK_SIMULATOR_HW
 #include "FlashLight.h"
@@ -81,13 +82,16 @@ public:
                                        char* output_dir = nullptr) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
-    virtual XCamReturn enqueueBuffer(struct rk_aiq_vbuf *vbuf) {
+    virtual XCamReturn enqueueRawBuffer(void *vbuf, bool sync) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
-    virtual XCamReturn offlineRdJobPrepare() {
+    virtual XCamReturn enqueueRawFile(const char *path) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
-    virtual XCamReturn offlineRdJobDone() {
+    virtual XCamReturn registRawdataCb(void (*callback)(void *)) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    }
+    virtual XCamReturn rawdataPrepare(rk_aiq_raw_prop_t prop) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
     virtual XCamReturn setSensorFlip(bool mirror, bool flip, int skip_frm_cnt) {
@@ -105,6 +109,12 @@ public:
     virtual XCamReturn getLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
+    virtual XCamReturn FocusCorrection() {
+        return  XCAM_RETURN_ERROR_FAILED;
+    }
+    virtual XCamReturn ZoomCorrection() {
+        return  XCAM_RETURN_ERROR_FAILED;
+    }
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops) {};
 protected:
     SmartPtr<V4l2Device> mIsppStatsDev;
@@ -116,6 +126,7 @@ protected:
     SmartPtr<V4l2SubDevice> mSensorDev;
     SmartPtr<V4l2SubDevice> mLensDev;
     SmartPtr<V4l2SubDevice> mIrcutDev;
+    SmartPtr<V4l2Device> mIspSpDev;
 #ifndef RK_SIMULATOR_HW
     SmartPtr<FlashLightHw> mFlashLight;
     SmartPtr<FlashLightHw> mFlashLightIr;
@@ -123,7 +134,6 @@ protected:
     SmartPtr<PollThread> mPollthread;
     SmartPtr<PollThread> mPollLumathread;
     SmartPtr<PollThread> mPollIsppthread;
-    SmartPtr<Thread> mOfflineRdThread;
     IsppStatsListener* mIsppStatsListener;
     IspLumaListener* mIspLumaListener;
     IspStatsListener* mIspStatsLintener;
