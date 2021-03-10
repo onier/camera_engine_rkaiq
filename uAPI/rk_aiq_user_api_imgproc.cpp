@@ -34,6 +34,7 @@ RKAIQ_BEGIN_DECLARE
 
 static bool isHDRmode(const rk_aiq_sys_ctx_t* ctx)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     int mode = ctx->_analyzer->mAlogsSharedParams.working_mode;
     if (RK_AIQ_WORKING_MODE_NORMAL == mode)
         return false;
@@ -43,6 +44,7 @@ static bool isHDRmode(const rk_aiq_sys_ctx_t* ctx)
 
 static int getHDRFrameNum(const rk_aiq_sys_ctx_t* ctx)
 {
+    RKAIQ_API_SMART_LOCK(ctx);
     int FrameNum = 1;
     switch (ctx->_analyzer->mAlogsSharedParams.working_mode)
     {
@@ -484,7 +486,8 @@ XCamReturn rk_aiq_uapi_setHLCStrength(const rk_aiq_sys_ctx_t* ctx, int strength)
         RKAIQ_IMGPROC_CHECK_RET(ret, "getLinExpAttr error!");
         if(0 == lineExpAttr.OverExpCtrl.enable)
             RKAIQ_IMGPROC_CHECK_RET(ret, "hlc mode is not enabled!");
-        lineExpAttr.OverExpCtrl.StrBias = strength;
+        for(int i = 0; i < 6; i++)
+            lineExpAttr.OverExpCtrl.HighLightWeight.fCoeff[i] = (float)strength / 100.0f * lineExpAttr.OverExpCtrl.MaxWeight;
         ret = rk_aiq_user_api_ae_setLinExpAttr(ctx, lineExpAttr);
         RKAIQ_IMGPROC_CHECK_RET(ret, "setHLCStrength error!");
     }
@@ -1384,6 +1387,16 @@ XCamReturn rk_aiq_uapi_getSearchPath(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_sec_
     return ret;
 }
 
+XCamReturn rk_aiq_uapi_FocusCorrestion(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_FocusCorrection(ctx);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
 /*
 *****************************
 *
@@ -1478,6 +1491,41 @@ XCamReturn rk_aiq_uapi_getOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int *pos)
     ret = rk_aiq_user_api_af_GetZoomPos(ctx, pos);
     IMGPROC_FUNC_EXIT
 
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_getZoomRange(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_zoomrange* range)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_GetZoomRange(ctx, range);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_ZoomCorrestion(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_ZoomCorrection(ctx);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_setZoomZeroPos(const rk_aiq_sys_ctx_t* ctx, int zero_pos)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    rk_aiq_af_attrib_t attr;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_GetAttrib(ctx, &attr);
+    RKAIQ_IMGPROC_CHECK_RET(ret, "setZoomZeroPos failed!");
+
+    attr.zoom_zero_pos = zero_pos;
+    ret = rk_aiq_user_api_af_SetAttrib(ctx, &attr);
+    RKAIQ_IMGPROC_CHECK_RET(ret, "setZoomZeroPos failed!");
+    IMGPROC_FUNC_EXIT
     return ret;
 }
 
@@ -2431,7 +2479,7 @@ XCamReturn rk_aiq_uapi_setFecCorrectLevel(const rk_aiq_sys_ctx_t* ctx, int corre
 }
 
 XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
-                                              const fec_correct_direction_t direction)
+        const fec_correct_direction_t direction)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     IMGPROC_FUNC_ENTER
@@ -2443,6 +2491,24 @@ XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
     ret = rk_aiq_user_api_afec_GetAttrib(ctx, &fecAttr);
     RKAIQ_IMGPROC_CHECK_RET(ret, "get fec attrib failed!");
     fecAttr.direction = direction;
+    ret = rk_aiq_user_api_afec_SetAttrib(ctx, fecAttr);
+    IMGPROC_FUNC_EXIT
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_setFecCorrectMode(const rk_aiq_sys_ctx_t* ctx,
+                                         const fec_correct_mode_t mode)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    if (ctx == NULL) {
+        ret = XCAM_RETURN_ERROR_PARAM;
+        RKAIQ_IMGPROC_CHECK_RET(ret, "param error!");
+    }
+    rk_aiq_fec_attrib_t fecAttr;
+    ret = rk_aiq_user_api_afec_GetAttrib(ctx, &fecAttr);
+    RKAIQ_IMGPROC_CHECK_RET(ret, "get fec attrib failed!");
+    fecAttr.mode = mode;
     ret = rk_aiq_user_api_afec_SetAttrib(ctx, fecAttr);
     IMGPROC_FUNC_EXIT
     return ret;

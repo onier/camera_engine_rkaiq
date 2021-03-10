@@ -44,6 +44,23 @@ AsharpResult_t AsharpStop(AsharpContext_t *pAsharpCtx)
     return (ASHARP_RET_SUCCESS);
 }
 
+//anr reconfig
+AsharpResult_t AsharpIQParaUpdate(AsharpContext_t *pAsharpCtx)
+{
+    LOGI_ASHARP("%s(%d): enter!\n", __FUNCTION__, __LINE__);
+    //need todo what?
+	
+	if(pAsharpCtx->isIQParaUpdate){	
+		LOGD_ASHARP(" update iq para\n");
+		ASharpConfigSettingParam(pAsharpCtx, pAsharpCtx->eParamMode, pAsharpCtx->stExpInfo.snr_mode);
+		pAsharpCtx->isIQParaUpdate = false;
+	}
+	
+    LOGI_ASHARP("%s(%d): exit!\n", __FUNCTION__, __LINE__);
+    return ASHARP_RET_SUCCESS;
+}
+
+
 AsharpResult_t AsharpInit(AsharpContext_t **ppAsharpCtx, CamCalibDbContext_t *pCalibDb)
 {
     AsharpContext_t * pAsharpCtx;
@@ -152,7 +169,10 @@ AsharpResult_t AsharpPrepare(AsharpContext_t *pAsharpCtx, AsharpConfig_t* pAshar
 
     //pAsharpCtx->eMode = pAsharpConfig->eMode;
     //pAsharpCtx->eState = pAsharpConfig->eState;
-
+	if(!!(pAsharpCtx->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB)){	
+		AsharpIQParaUpdate(pAsharpCtx);
+	}
+		
 	AsharpStart(pAsharpCtx);
 	
     LOGI_ASHARP("%s(%d): exit!\n", __FUNCTION__, __LINE__);
@@ -165,22 +185,6 @@ AsharpResult_t AsharpReConfig(AsharpContext_t *pAsharpCtx, AsharpConfig_t* pAsha
     LOGI_ASHARP("%s(%d): enter!\n", __FUNCTION__, __LINE__);
     //need todo what?
 
-    LOGI_ASHARP("%s(%d): exit!\n", __FUNCTION__, __LINE__);
-    return ASHARP_RET_SUCCESS;
-}
-
-//anr reconfig
-AsharpResult_t AsharpIQParaUpdate(AsharpContext_t *pAsharpCtx)
-{
-    LOGI_ASHARP("%s(%d): enter!\n", __FUNCTION__, __LINE__);
-    //need todo what?
-	
-	if(pAsharpCtx->isIQParaUpdate){	
-		LOGD_ASHARP(" update iq para\n");
-		ASharpConfigSettingParam(pAsharpCtx, pAsharpCtx->eParamMode, pAsharpCtx->stExpInfo.snr_mode);
-		pAsharpCtx->isIQParaUpdate = false;
-	}
-	
     LOGI_ASHARP("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ASHARP_RET_SUCCESS;
 }

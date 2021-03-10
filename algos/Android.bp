@@ -24,15 +24,15 @@ cc_defaults {
 		"-Wno-missing-field-initializers"
 	],
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos",
-		"external/camera_engine_rkaiq/include",
-		"external/camera_engine_rkaiq/include/xcore/base",
-		"external/camera_engine_rkaiq/include/xcore",
-		"external/camera_engine_rkaiq/include/iq_parser",
-		"external/camera_engine_rkaiq/include/common",
-		"external/camera_engine_rkaiq/common",
-		"external/camera_engine_rkaiq/xcore/base",
-		"external/camera_engine_rkaiq/xcore",
+		"hardware/rockchip/rk_aiq/include/algos",
+		"hardware/rockchip/rk_aiq/include",
+		"hardware/rockchip/rk_aiq/include/xcore/base",
+		"hardware/rockchip/rk_aiq/include/xcore",
+		"hardware/rockchip/rk_aiq/include/iq_parser",
+		"hardware/rockchip/rk_aiq/include/common",
+		"hardware/rockchip/rk_aiq/common",
+		"hardware/rockchip/rk_aiq/xcore/base",
+		"hardware/rockchip/rk_aiq/xcore",
 	],
 }
 
@@ -49,7 +49,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/a3dlut",
+		"hardware/rockchip/rk_aiq/include/algos/a3dlut",
 	],
 	srcs: [
         "a3dlut/rk_aiq_algo_a3dlut_itf.cpp",
@@ -64,7 +64,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/ablc",
+		"hardware/rockchip/rk_aiq/include/algos/ablc",
 	],
 	srcs: [
         "ablc/rk_aiq_algo_ablc_itf.cpp",
@@ -79,7 +79,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/accm",
+		"hardware/rockchip/rk_aiq/include/algos/accm",
 	],
 	srcs: [
 		"accm/rk_aiq_algo_accm_itf.cpp",
@@ -94,7 +94,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/adebayer",
+		"hardware/rockchip/rk_aiq/include/algos/adebayer",
 	],
 	srcs: [
         "adebayer/rk_aiq_algo_adebayer_itf.cpp",
@@ -109,7 +109,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/adpcc",
+		"hardware/rockchip/rk_aiq/include/algos/adpcc",
 	],
 	srcs: [
         "adpcc/rk_aiq_algo_adpcc_itf.cpp",
@@ -124,7 +124,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/afec",
+		"hardware/rockchip/rk_aiq/include/algos/afec",
 	],
 	srcs: [
         "afec/rk_aiq_algo_afec_itf.cpp",
@@ -138,7 +138,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/agamma",
+		"hardware/rockchip/rk_aiq/include/algos/agamma",
 	],
 	srcs: [
         "agamma/rk_aiq_algo_agamma_itf.cpp",
@@ -153,7 +153,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/agic",
+		"hardware/rockchip/rk_aiq/include/algos/agic",
 	],
 	srcs: [
         "agic/rk_aiq_algo_agic_itf.cpp",
@@ -168,7 +168,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/aie",
+		"hardware/rockchip/rk_aiq/include/algos/aie",
 	],
 	srcs: [
         "aie/rk_aiq_algo_aie_itf.cpp",
@@ -181,7 +181,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/aldch",
+		"hardware/rockchip/rk_aiq/include/algos/aldch",
 	],
 	srcs: [
         "aldch/rk_aiq_algo_aldch_itf.cpp",
@@ -195,7 +195,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/alsc",
+		"hardware/rockchip/rk_aiq/include/algos/alsc",
 	],
 	srcs: [
         "alsc/rk_aiq_algo_alsc_itf.cpp",
@@ -210,7 +210,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/aorb",
+		"hardware/rockchip/rk_aiq/include/algos/aorb",
 	],
 	srcs: [
         "aorb/rk_aiq_algo_aorb_itf.cpp",
@@ -245,7 +245,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/ahdr",
+		"hardware/rockchip/rk_aiq/include/algos/ahdr",
 	],
 	srcs: [
 		"ahdr/rk_aiq_algo_ahdr_itf.cpp",
@@ -262,7 +262,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/anr",
+		"hardware/rockchip/rk_aiq/include/algos/anr",
 	],
 	srcs: [
 		"anr/rk_aiq_algo_anr_itf.cpp",
@@ -282,7 +282,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/asharp",
+		"hardware/rockchip/rk_aiq/include/algos/asharp",
 	],
 	srcs: [
 		"asharp/rk_aiq_algo_asharp_itf.cpp",
@@ -299,7 +299,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/acp",
+		"hardware/rockchip/rk_aiq/include/algos/acp",
 	],
 	srcs: [
 		"acp/rk_aiq_algo_acp_itf.cpp",
@@ -313,7 +313,7 @@ cc_library_static {
 	defaults: ["algo_defaults"],	
 	
 	include_dirs: [
-		"external/camera_engine_rkaiq/include/algos/adehaze",
+		"hardware/rockchip/rk_aiq/include/algos/adehaze",
 	],
 	srcs: [
 		"adehaze/rk_aiq_algo_adhaz_itf.cpp",

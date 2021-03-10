@@ -61,6 +61,7 @@ typedef struct accm_context_s {
     rk_aiq_ccm_attrib_t mCurAtt;
     rk_aiq_ccm_attrib_t mNewAtt;
     bool updateAtt;
+    //char lsForFirstFrame[CALD_AWB_ILLUMINATION_NAME];
 } accm_context_t ;
 
 typedef accm_context_t* accm_handle_t ;

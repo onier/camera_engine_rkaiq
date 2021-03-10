@@ -25,8 +25,10 @@
 #include "base/xcam_log.h"
 #include "base/xcam_common.h"
 
-RKAIQ_BEGIN_DECLARE
 
+#define LIMIT_VALUE(value,max_value,min_value)      (value > max_value? max_value : value < min_value ? min_value : value)
+#define FASTMODELEVELMAX     (10)
+#define FASTMODELEVELMIN     (1)
 
 
 typedef struct AdpccContext_s {
@@ -51,10 +53,15 @@ typedef struct AdpccContext_s {
     Adpcc_pre_ae_res_t PreAe;
 
     bool isBlackSensor;
+
+    int prepare_type;
 } AdpccContext_t;
 
+typedef struct _RkAiqAlgoContext {
+    AdpccContext_t pAdpccCtx;
+} RkAiqAlgoContext;
 
-RKAIQ_END_DECLARE
+
 
 #endif
 

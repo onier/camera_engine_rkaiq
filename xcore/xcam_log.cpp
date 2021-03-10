@@ -134,6 +134,36 @@ bool xcam_get_enviroment_value(const char* variable, unsigned long long* value)
     return false;
 }
 
+void xcam_get_runtime_log_level() {
+    const char* file_name = "/tmp/.rkaiq_log";
+
+    if (!access(file_name, F_OK)) {
+        FILE *fp = fopen(file_name, "r");
+        char level[64] = {'\0'};
+
+        if (!fp)
+            return;
+
+        fseek(fp, 0, SEEK_SET);
+        if (fp && fread(level, 1, sizeof (level), fp) > 0) {
+            for (int i = 0; i < XCORE_LOG_MODULE_MAX; i++) {
+                g_xcore_log_infos[i].log_level = 0;
+                g_xcore_log_infos[i].sub_modules = 0;
+            }
+            g_cam_engine_log_level = strtoull(level, nullptr, 16);
+            unsigned long long module_mask = g_cam_engine_log_level >> 12;
+            for (int i = 0; i < XCORE_LOG_MODULE_MAX; i++) {
+                if (module_mask & (1 << i)) {
+                    g_xcore_log_infos[i].log_level = g_cam_engine_log_level & 0xf;
+                    g_xcore_log_infos[i].sub_modules = (g_cam_engine_log_level >> 4) & 0xff;
+                }
+            }
+        }
+
+        fclose (fp);
+    }
+}
+
 int xcam_get_log_level() {
 #ifdef ANDROID_OS
     char property_value[PROPERTY_VALUE_MAX] = {0};
@@ -162,7 +192,7 @@ char* timeString() {
     gettimeofday(&tv, NULL);
     struct tm * timeinfo = localtime(&tv.tv_sec);
     static char timeStr[64];
-    sprintf(timeStr, "%.2d:%.2d:%.2d.%ld", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, tv.tv_usec);
+    sprintf(timeStr, "%.2d:%.2d:%.2d.%.6ld", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, tv.tv_usec);
     return timeStr;
 }
 

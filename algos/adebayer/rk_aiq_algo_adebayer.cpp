@@ -135,7 +135,8 @@ AdebayerFullParamsInit
 XCamReturn
 AdebayerInit
 (
-    AdebayerContext_t *pAdebayerCtx
+    AdebayerContext_t *pAdebayerCtx,
+    CamCalibDbContext_t *pCalibDb
 )
 {
     LOGI_ADEBAYER("%s(%d): enter!\n", __FUNCTION__, __LINE__);
@@ -144,6 +145,8 @@ AdebayerInit
         return XCAM_RETURN_ERROR_PARAM;
     }
     memset(pAdebayerCtx, 0, sizeof(AdebayerContext_t));
+    pAdebayerCtx->pCalibDb = pCalibDb;
+    AdebayerFullParamsInit(pAdebayerCtx);
     pAdebayerCtx->state = ADEBAYER_STATE_INITIALIZED;
 
     LOGI_ADEBAYER("%s(%d): exit!\n", __FUNCTION__, __LINE__);
@@ -205,7 +208,7 @@ AdebayerStart
         LOGE_ADEBAYER("%s(%d): null pointer\n", __FUNCTION__, __LINE__);
         return XCAM_RETURN_ERROR_PARAM;
     }
-    AdebayerFullParamsInit(pAdebayerCtx);
+
     pAdebayerCtx->state = ADEBAYER_STATE_RUNNING;
     LOGI_ADEBAYER("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return XCAM_RETURN_NO_ERROR;

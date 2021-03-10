@@ -31,13 +31,15 @@ create_context
 )
 {
     XCamReturn result = XCAM_RETURN_NO_ERROR;
+    AlgoCtxInstanceCfgInt* instanc_int = (AlgoCtxInstanceCfgInt*)cfg;
+    CamCalibDbContext_t* calib = instanc_int->calib;
     RkAiqAlgoContext *ctx = new RkAiqAlgoContext();
     if (ctx == NULL) {
         LOGE_ADEBAYER( "%s: create adebayer context fail!\n", __FUNCTION__);
         return XCAM_RETURN_ERROR_MEM;
     }
     LOGI_ADEBAYER("%s: (enter)\n", __FUNCTION__ );
-    AdebayerInit(&ctx->adebayerCtx);
+    AdebayerInit(&ctx->adebayerCtx, calib);
     *context = ctx;
     LOGI_ADEBAYER("%s: (exit)\n", __FUNCTION__ );
     return result;
@@ -70,7 +72,11 @@ prepare
     LOGI_ADEBAYER("%s: (enter)\n", __FUNCTION__ );
     AdebayerContext_t* pAdebayerCtx = (AdebayerContext_t *)&params->ctx->adebayerCtx;
     RkAiqAlgoConfigAdebayerInt* pCfgParam = (RkAiqAlgoConfigAdebayerInt*)params;
-    pAdebayerCtx->pCalibDb = pCfgParam->rk_com.u.prepare.calib;
+
+	if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )){
+		AdebayerInit(pAdebayerCtx, pCfgParam->rk_com.u.prepare.calib);
+    }
+
     AdebayerStart(pAdebayerCtx);
     LOGI_ADEBAYER("%s: (exit)\n", __FUNCTION__ );
     return result;

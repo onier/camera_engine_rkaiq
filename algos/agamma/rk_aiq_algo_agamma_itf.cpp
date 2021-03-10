@@ -58,8 +58,14 @@ prepare(RkAiqAlgoCom* params)
     AgammaHandle_t * AgammaHandle = (AgammaHandle_t *)params->ctx;
     RkAiqAlgoConfigAgammaInt* pCfgParam = (RkAiqAlgoConfigAgammaInt*)params;
     rk_aiq_gamma_cfg_t *agamma_config = &AgammaHandle->agamma_config;
-
     AgammaHandle->working_mode = pCfgParam->agamma_config_com.com.u.prepare.working_mode;
+    AgammaHandle->prepare_type = pCfgParam->agamma_config_com.com.u.prepare.conf_type;
+
+    if(!!(AgammaHandle->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
+        AgammaHandle->pCalibDb = &pCfgParam->rk_com.u.prepare.calib->gamma;//reload iq
+        LOGD_ADPCC("%s: Agamma Reload Para!!!\n", __FUNCTION__);
+    }
+
 
     return ret;
 }

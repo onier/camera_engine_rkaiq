@@ -28,6 +28,7 @@ XCamReturn
 rk_aiq_user_api_agamma_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_gamma_attrib_t attr)
 {
     CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_AGAMMA);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAgammaHandleInt* algo_handle =
         algoHandle<RkAiqAgammaHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AGAMMA);
 
@@ -41,6 +42,7 @@ rk_aiq_user_api_agamma_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_gamma_a
 XCamReturn
 rk_aiq_user_api_agamma_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_gamma_attrib_t *attr)
 {
+    RKAIQ_API_SMART_LOCK(sys_ctx);
     RkAiqAgammaHandleInt* algo_handle =
         algoHandle<RkAiqAgammaHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AGAMMA);
 

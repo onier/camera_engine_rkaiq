@@ -74,6 +74,10 @@ private:
                         uint32_t cur_id = 0, uint32_t parent_id = 0);
     bool parseEntryCell2(const XMLElement*, int, parseCellContent2, void* param = NULL,
                          uint32_t cur_id = 0, uint32_t parent_id = 0);
+    bool parseEntryCell3(XMLElement*  ,int , int, parseCellContent ,void* param = NULL,
+                         uint32_t cur_id = 0, uint32_t parent_id = 0);
+    bool parseEntryCell4(XMLElement*, int, int, parseCellContent2, void* param = NULL,
+                         uint32_t cur_id = 0, uint32_t parent_id = 0);
     // parse read/write control
     bool xmlParseReadWrite;
     char autoTabStr[128];
@@ -236,6 +240,7 @@ private:
     bool parseEntrySensorGicISO(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNR(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRDynamic(const XMLElement*   pelement, void* param = NULL, int index = 0);
+    bool parseEntrySensorMFNRMotionDetection(const XMLElement*   pelement, void* param = NULL, int index = 0);
     bool parseEntrySensorMFNRModeCell(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRAwbUvRatio(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorMFNRISO(const XMLElement* pelement, void* param = NULL, int index = 0);
@@ -262,6 +267,7 @@ private:
     bool parseEntrySensorAfPdaf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfVcmCfg(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfMeasISO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfZoomFocusTbl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLdch(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorFec(const XMLElement* pelement, void* param = NULL);
@@ -272,6 +278,8 @@ private:
     bool parseEntrySensorModuleInfo(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorCpsl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorColorAsGrey(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorCproc(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorIE(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySystemHDR(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySystemDcgNormalGainCtrl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySystemDcgHdrGainCtrl(const XMLElement* pelement, void* param = NULL);

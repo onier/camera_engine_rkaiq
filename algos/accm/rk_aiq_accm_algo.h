@@ -31,7 +31,9 @@ XCamReturn AccmConfig(accm_handle_t hAccm);
 XCamReturn AccmPreProc(accm_handle_t hAccm);
 XCamReturn AccmProcessing(accm_handle_t hAccm);
 XCamReturn illuminant_index_estimation_ccm(int light_num, const CalibDb_AccmCof_ill_t illAll[], float awbGain[2], int* illuminant_index);
-XCamReturn CamCalibDbGetCcmProfileByName(const CalibDb_Ccm_t *calibCcm,  int mode_idx, char* name, const CalibDb_CcmMatrixProfile_t **pCcmMatrixProfile);
+XCamReturn CamCalibDbGetCcmProfileByName(const CalibDb_Ccm_ModeCell_t *calibCcm, char* name, const CalibDb_CcmMatrixProfile_t **pCcmMatrixProfile);
+XCamReturn Swinfo_wbgain_init(float awbGain[2], const CalibDb_Ccm_ModeCell_t *pCalib, const char* illuName);
+XCamReturn pCcmMatrixAll_init(accm_context_t* accm_context, const CalibDb_Ccm_ModeCell_t *pCalib, int idx);
 
 RKAIQ_END_DECLARE
 

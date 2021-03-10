@@ -956,6 +956,7 @@ RkAiqCore::genIspAnrResult(RkAiqFullParams* params)
         LOGD_ANR("oyyf: %s:%d output isp param end \n", __FUNCTION__, __LINE__);
 
 #endif
+    isp_param->motion = anr_rk->stAnrProcResult.stMotion;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -3056,6 +3057,23 @@ RkAiqCore::setSensorFlip(bool mirror, bool flip)
     mAlogsSharedParams.sns_flip = flip;
 }
 
+XCamReturn
+RkAiqCore::setCalib(const CamCalibDbContext_t* aiqCalib)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    if (mState != RK_AIQ_CORE_STATE_STOPED) {
+        LOGE_ANALYZER("wrong state %d\n", mState);
+        return XCAM_RETURN_ERROR_ANALYZER;
+    }
+
+    mAlogsSharedParams.calib = aiqCalib;
+    mAlogsSharedParams.conf_type = RK_AIQ_ALGO_CONFTYPE_UPDATECALIB;
+
+    EXIT_ANALYZER_FUNCTION();
+
+    return XCAM_RETURN_NO_ERROR;
+}
 
 
 } //namespace RkCam

@@ -367,26 +367,10 @@ ANRresult_t select_ynr_params_by_ISO(RKAnr_Ynr_Params_t *stYnrParam, RKAnr_Ynr_P
     int iso_div = 50;
     int lowIso = 50;
     int highIso = 50;
-
-    for(int i = 0; i < MAX_ISO_STEP - 1; i++) {
-#ifndef RK_SIMULATOR_HW
-        int lowIso = stYnrParam->aYnrParamsISO[i].iso;
-        int highIso = stYnrParam->aYnrParamsISO[i + 1].iso;
-#else
-        int lowIso = iso_div * (1 << i);
-        int highIso = iso_div * (1 << (i + 1));
-#endif
-
-        if(isoValue >= lowIso && isoValue <= highIso) {
-            ratio = (isoValue - lowIso ) / (float)(highIso - lowIso);
-            pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[i + 1];
-            pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[i];
-            break;
-        }
-    }
+	int i=0;
 
 #ifndef RK_SIMULATOR_HW
-    for(int i = 0; i < MAX_ISO_STEP - 1; i++) {
+    for(i = 0; i < MAX_ISO_STEP - 1; i++) {
         lowIso = stYnrParam->aYnrParamsISO[i].iso;
         highIso = stYnrParam->aYnrParamsISO[i + 1].iso;
         if(isoValue >= lowIso && isoValue <= highIso) {
@@ -397,22 +381,24 @@ ANRresult_t select_ynr_params_by_ISO(RKAnr_Ynr_Params_t *stYnrParam, RKAnr_Ynr_P
         }
     }
 
-    if(isoValue < stYnrParam->aYnrParamsISO[0].iso) {
-        ratio = 0;
-        lowIso = stYnrParam->aYnrParamsISO[0].iso;
-        highIso = stYnrParam->aYnrParamsISO[1].iso;
-        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[1];
-        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[0];
-    }
-    if(isoValue > stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1].iso) {
-        ratio = 1;
-        lowIso = stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2].iso;
-        highIso = stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1].iso;
-        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2];
-        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1];
-    }
+	if(i == MAX_ISO_STEP - 1){
+	    if(isoValue < stYnrParam->aYnrParamsISO[0].iso) {
+	        ratio = 0;
+	        lowIso = stYnrParam->aYnrParamsISO[0].iso;
+	        highIso = stYnrParam->aYnrParamsISO[1].iso;
+	        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[1];
+	        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[0];
+	    }
+	    if(isoValue > stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1].iso) {
+	        ratio = 1;
+	        lowIso = stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2].iso;
+	        highIso = stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1].iso;
+	        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2];
+	        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1];
+	    }
+	}
 #else
-    for(int i = 0; i < MAX_ISO_STEP - 1; i++) {
+    for(i = 0; i < MAX_ISO_STEP - 1; i++) {
         int lowIso = iso_div * (1 << i);
         int highIso = iso_div * (1 << (i + 1));
         if(isoValue >= lowIso && isoValue <= highIso) {
@@ -423,17 +409,19 @@ ANRresult_t select_ynr_params_by_ISO(RKAnr_Ynr_Params_t *stYnrParam, RKAnr_Ynr_P
         }
     }
 
-    if(isoValue < iso_div) {
-        ratio = 0;
-        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[1];
-        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[0];
-    }
+	if(i == MAX_ISO_STEP - 1){
+	    if(isoValue < iso_div) {
+	        ratio = 0;
+	        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[1];
+	        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[0];
+	    }
 
-    if(isoValue > iso_div * (2 << MAX_ISO_STEP)) {
-        ratio = 1;
-        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2];
-        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1];
-    }
+	    if(isoValue > iso_div * (2 << MAX_ISO_STEP)) {
+	        ratio = 1;
+	        pstYNrTuneParamHi = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 2];
+	        pstYNrTuneParamLo = &stYnrParam->aYnrParamsISO[MAX_ISO_STEP - 1];
+	    }
+	}
 #endif
 
     LOGD_ANR("oyyf %s:%d  iso:%d low:%d hight:%d ratio:%f\n", __FUNCTION__, __LINE__,

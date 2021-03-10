@@ -2135,9 +2135,14 @@ Isp20Params::convertAiqCpToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
     /* cproc_cfg->y_out_range = 1; */
     /* cproc_cfg->c_out_range = 1; */
 
-    isp_cfg.module_ens |= ISP2X_MODULE_CPROC;
-    isp_cfg.module_en_update |= ISP2X_MODULE_CPROC;
-    isp_cfg.module_cfg_update |= ISP2X_MODULE_CPROC;
+    if (cp_cfg.enable) {
+        isp_cfg.module_ens |= ISP2X_MODULE_CPROC;
+        isp_cfg.module_en_update |= ISP2X_MODULE_CPROC;
+        isp_cfg.module_cfg_update |= ISP2X_MODULE_CPROC;
+    } else {
+        isp_cfg.module_ens &= ~ISP2X_MODULE_CPROC;
+        isp_cfg.module_en_update |= ISP2X_MODULE_CPROC;
+    }
 
     cproc_cfg->contrast = (uint8_t)(cp_cfg.contrast);
     cproc_cfg->sat = (uint8_t)(cp_cfg.saturation);

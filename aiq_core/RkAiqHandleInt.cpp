@@ -1356,11 +1356,23 @@ RkAiqAnrHandleInt::setAttrib(rk_aiq_nr_attrib_t *att)
 
     // if something changed
     if (0 != memcmp(&mCurAtt, att, sizeof(rk_aiq_nr_attrib_t))) {
+        RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+        if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
+            if ((att->eMode == ANR_OP_MODE_AUTO) && (!att->stAuto.mfnrEn)) {
+                att->stAuto.mfnrEn = !att->stAuto.mfnrEn;
+                LOGE("motion detect is running, operate not permit!");
+                goto EXIT;
+            } else if ((att->eMode == ANR_OP_MODE_MANUAL) && (!att->stManual.mfnrEn)) {
+                att->stManual.mfnrEn = !att->stManual.mfnrEn;
+                LOGE("motion detect is running, operate not permit!");
+                goto EXIT;
+            }
+        }
         mNewAtt = *att;
         updateAtt = true;
         waitSignal();
     }
-
+EXIT:
     mCfgMutex.unlock();
 
     EXIT_ANALYZER_FUNCTION();
@@ -1395,11 +1407,18 @@ RkAiqAnrHandleInt::setIQPara(rk_aiq_nr_IQPara_t *para)
 
     // if something changed
     if (0 != memcmp(&mCurIQpara, para, sizeof(rk_aiq_nr_IQPara_t))) {
+        RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+        if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
+            if((para->module_bits & (1 << ANR_MODULE_MFNR)) && !para->stMfnrPara.enable){
+                para->stMfnrPara.enable = !para->stMfnrPara.enable;
+                LOGE("motion detect is running, disable mfnr is not permit!");
+            }
+        }
         mNewIQpara = *para;
         UpdateIQpara = true;
         waitSignal();
     }
-
+EXIT:
     mCfgMutex.unlock();
 
     EXIT_ANALYZER_FUNCTION();
@@ -4538,6 +4557,64 @@ RkAiqAgicHandleInt::postProcess()
     RKAIQCORE_CHECK_RET(ret, "agic algo post_process failed");
     // set result to mAiqCore
     comb->agic_post_res = (RkAiqAlgoPostResAgic*)agic_post_res_int ;
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAieHandleInt::updateConfig(bool needSync)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (needSync)
+        mCfgMutex.lock();
+    // if something changed
+    if (updateAtt) {
+        mCurAtt = mNewAtt;
+        updateAtt = false;
+        rk_aiq_uapi_aie_SetAttrib(mAlgoCtx, mCurAtt, false);
+        sendSignal();
+    }
+    if (needSync)
+        mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAieHandleInt::setAttrib(aie_attrib_t att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    mCfgMutex.lock();
+    // check if there is different between att & mCurAtt
+    // if something changed, set att to mNewAtt, and
+    // the new params will be effective later when updateConfig
+    // called by RkAiqCore
+    if (0 != memcmp(&mCurAtt, &att, sizeof(aie_attrib_t))) {
+        mNewAtt = att;
+        updateAtt = true;
+        waitSignal();
+    }
+
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAieHandleInt::getAttrib(aie_attrib_t *att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_aie_GetAttrib(mAlgoCtx, att);
 
     EXIT_ANALYZER_FUNCTION();
     return ret;

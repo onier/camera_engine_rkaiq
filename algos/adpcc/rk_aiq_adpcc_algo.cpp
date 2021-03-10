@@ -3,6 +3,36 @@
 
 #define DPCC_RK_MODE
 
+int AdpccInterpolation(int inPara, int* inMatrixX, int* inMatrixY)
+{
+    LOGI_ADPCC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
+    int returnValue = 1;
+
+    float value = 1.0;
+    for(int i = 0; i < DPCC_MAX_ISO_LEVEL - 1; i++) {
+        if(inPara >= inMatrixX[i] && inPara < inMatrixX[i + 1]) {
+            value = ((float)inMatrixY[i] - (float)inMatrixY[i + 1])
+                    / ((float)inMatrixX[i] - (float)inMatrixX[i + 1]);
+            value *=  ((float)inPara - (float)inMatrixX[i] );
+            value += (float)inMatrixY[i];
+            break;
+        }
+    }
+
+    if(inPara < inMatrixX[0] ) {
+        value = (float)inMatrixY[0];
+    }
+
+    if(inPara >= inMatrixX[DPCC_MAX_ISO_LEVEL - 1] ) {
+        value = (float)inMatrixY[DPCC_MAX_ISO_LEVEL - 1];
+    }
+
+    returnValue = (int)(value + 0.5);
+
+    LOGI_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
+    return returnValue;
+}
+
 AdpccResult_t html_params_init(Adpcc_html_param_t *pParams)
 {
     AdpccResult_t ret = ADPCC_RET_SUCCESS;
@@ -835,7 +865,7 @@ AdpccResult_t Expert_mode_select_basic_params_by_ISO(
     for(int i = 0; i < DPCC_MAX_ISO_LEVEL - 1; i++) {
         LOGD_ADPCC("%s:(%d) iso:%d %d %d\n", __FUNCTION__, __LINE__,
                    iso, pParams->arBasic[i].iso, pParams->arBasic[i + 1].iso);
-        if(iso >= pParams->arBasic[i].iso && iso <= pParams->arBasic[i + 1].iso) {
+        if(iso >= pParams->arBasic[i].iso && iso < pParams->arBasic[i + 1].iso) {
             lowLevel = i;
             highLevel = i + 1;
             lowIso = pParams->arBasic[i].iso;
@@ -852,7 +882,7 @@ AdpccResult_t Expert_mode_select_basic_params_by_ISO(
         ratio = 0.0;
     }
 
-    if(iso > pParams->arBasic[DPCC_MAX_ISO_LEVEL - 1].iso ) {
+    if(iso >= pParams->arBasic[DPCC_MAX_ISO_LEVEL - 1].iso ) {
         lowLevel = DPCC_MAX_ISO_LEVEL - 1;
         highLevel = DPCC_MAX_ISO_LEVEL - 1;
         ratio = 1.0;
@@ -1415,32 +1445,18 @@ void Fast_mode_Triple_Setting(
 {
     LOGI_ADPCC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
 
-    int level = 1;
-    for(int i = 0; i < DPCC_MAX_ISO_LEVEL - 1; i++) {
-        if(iso >= pParams->stAuto.stFastMode.ISO[i] && iso <= pParams->stAuto.stFastMode.ISO[i + 1]) {
-            level = (pParams->stAuto.stFastMode.fast_mode_triple_level[i] - pParams->stAuto.stFastMode.fast_mode_triple_level[i + 1])
-                    / (pParams->stAuto.stFastMode.ISO[i] - pParams->stAuto.stFastMode.ISO[i + 1]);
-            level += pParams->stAuto.stFastMode.fast_mode_triple_level[i];
-            break;
-        }
-    }
-
-    if(iso < pParams->stAuto.stFastMode.ISO[0] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_triple_level[0];
-    }
-
-    if(iso > pParams->stAuto.stFastMode.ISO[DPCC_MAX_ISO_LEVEL - 1] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_triple_level[DPCC_MAX_ISO_LEVEL - 1];
-    }
+    int level = AdpccInterpolation(iso, pParams->stAuto.stFastMode.ISO, pParams->stAuto.stFastMode.fast_mode_triple_level);
 
     if(pParams->stAuto.stFastMode.fast_mode_triple_en != 0)
         pSelect->stage1_use_set_3 = 0x1;
     else
         pSelect->stage1_use_set_3 = 0x0;
 
+    level = LIMIT_VALUE(level, FASTMODELEVELMAX, FASTMODELEVELMIN);
     Fast_mode_Triple_level_Setting(pSelect, level);
 
-    LOGD_ADPCC("%s(%d): Dpcc fast mode triple level:%\n", __FUNCTION__, __LINE__, level);
+    LOGD_ADPCC("%s(%d): Dpcc fast mode triple en:%d level:%d\n", __FUNCTION__, __LINE__,
+               pParams->stAuto.stFastMode.fast_mode_triple_en, level);
 
     LOGI_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
@@ -1841,32 +1857,19 @@ void Fast_mode_Double_Setting(
 {
     LOGI_ADPCC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
 
-    int level = 1;
-    for(int i = 0; i < DPCC_MAX_ISO_LEVEL - 1; i++) {
-        if(iso >= pParams->stAuto.stFastMode.ISO[i] && iso <= pParams->stAuto.stFastMode.ISO[i + 1]) {
-            level = (pParams->stAuto.stFastMode.fast_mode_double_level[i] - pParams->stAuto.stFastMode.fast_mode_double_level[i + 1])
-                    / (pParams->stAuto.stFastMode.ISO[i] - pParams->stAuto.stFastMode.ISO[i + 1]);
-            level += pParams->stAuto.stFastMode.fast_mode_double_level[i];
-            break;
-        }
-    }
 
-    if(iso < pParams->stAuto.stFastMode.ISO[0] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_double_level[0];
-    }
-
-    if(iso > pParams->stAuto.stFastMode.ISO[DPCC_MAX_ISO_LEVEL - 1] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_double_level[DPCC_MAX_ISO_LEVEL - 1];
-    }
+    int level = AdpccInterpolation(iso, pParams->stAuto.stFastMode.ISO, pParams->stAuto.stFastMode.fast_mode_double_level);
 
     if(pParams->stAuto.stFastMode.fast_mode_double_en != 0)
         pSelect->stage1_use_set_2 = 0x1;
     else
         pSelect->stage1_use_set_2 = 0x0;
 
+    level = LIMIT_VALUE(level, FASTMODELEVELMAX, FASTMODELEVELMIN);
     Fast_mode_Double_level_Setting(pSelect, level);
 
-    LOGD_ADPCC("%s(%d): Dpcc fast mode double level:%\n", __FUNCTION__, __LINE__, level);
+    LOGD_ADPCC("%s(%d): Dpcc fast mode double en:%d level:%d\n", __FUNCTION__, __LINE__,
+               pParams->stAuto.stFastMode.fast_mode_double_en, level);
 
     LOGI_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
@@ -2255,9 +2258,6 @@ void Fast_mode_Single_level_Setting(
         break;
     }
 
-    LOGD_ADPCC("%s(%d): Dpcc fast mode level:%\n", __FUNCTION__, __LINE__, level);
-    LOGV_ADPCC("%s(%d): Dpcc fast mode level:%\n", __FUNCTION__, __LINE__, level);
-
     LOG1_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
 }
@@ -2269,34 +2269,18 @@ void Fast_mode_Single_Setting(
 {
     LOG1_ADPCC("%s(%d): enter!\n", __FUNCTION__, __LINE__);
 
-    int level = 1;
-    for(int i = 0; i < DPCC_MAX_ISO_LEVEL - 1; i++) {
-        if(iso >= pParams->stAuto.stFastMode.ISO[i] && iso <= pParams->stAuto.stFastMode.ISO[i + 1]) {
-            level = (pParams->stAuto.stFastMode.fast_mode_single_level[i] - pParams->stAuto.stFastMode.fast_mode_single_level[i + 1])
-                    / (pParams->stAuto.stFastMode.ISO[i] - pParams->stAuto.stFastMode.ISO[i + 1]);
-            level += pParams->stAuto.stFastMode.fast_mode_single_level[i];
-            break;
-        }
-    }
-
-    if(iso < pParams->stAuto.stFastMode.ISO[0] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_single_level[0];
-    }
-
-    if(iso > pParams->stAuto.stFastMode.ISO[DPCC_MAX_ISO_LEVEL - 1] ) {
-        level = pParams->stAuto.stFastMode.fast_mode_single_level[DPCC_MAX_ISO_LEVEL - 1];
-    }
+    int level = AdpccInterpolation(iso, pParams->stAuto.stFastMode.ISO, pParams->stAuto.stFastMode.fast_mode_single_level);
 
     if(pParams->stAuto.stFastMode.fast_mode_single_en != 0)
         pSelect->stage1_use_set_1 = 0x1;
     else
         pSelect->stage1_use_set_1 = 0x0;
 
-
+    level = LIMIT_VALUE(level, FASTMODELEVELMAX, FASTMODELEVELMIN);
     Fast_mode_Single_level_Setting(pSelect, level);
 
 
-    LOGD_ADPCC("%s(%d): Dpcc fast mode single level:%\n", __FUNCTION__, __LINE__, level);
+    LOGD_ADPCC("%s(%d): Dpcc fast mode single en:%d level:%d\n", __FUNCTION__, __LINE__, pParams->stAuto.stFastMode.fast_mode_single_en, level);
 
     LOG1_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
@@ -2688,6 +2672,23 @@ void Sensor_dpcc_process(AdpccContext_t *pAdpccCtx)
 
 }
 
+AdpccResult_t AdpccReloadPara(AdpccContext_t *pAdpccCtx, CamCalibDbContext_t *pCalibDb)
+{
+    LOGI_ADPCC(" %s(%d): enter!\n", __FUNCTION__, __LINE__);
+    LOGD_ADPCC(" %s(%d): Adpcc Reload Para, prepare type is %d!\n", __FUNCTION__, __LINE__, pAdpccCtx->prepare_type);
+
+    //init fix param for algo
+    pAdpccCtx->stDpccCalib = pCalibDb->dpcc;
+    pAdpccCtx->stTool = pCalibDb->dpcc;
+    dpcc_expert_mode_basic_params_init(&pAdpccCtx->stAuto.stBasicParams, &pAdpccCtx->stDpccCalib);
+    dpcc_fast_mode_basic_params_init(&pAdpccCtx->stAuto.stFastMode, &pAdpccCtx->stDpccCalib);
+    dpcc_pdaf_params_init(&pAdpccCtx->stAuto.stPdafParams, &pAdpccCtx->stDpccCalib.pdaf);
+    dpcc_sensor_params_init(&pAdpccCtx->stAuto.stSensorDpcc, &pAdpccCtx->stDpccCalib);
+    memset(&pAdpccCtx->stAuto.stPdafParams, 0x00, sizeof(pAdpccCtx->stAuto.stPdafParams));
+
+    LOGI_ADPCC("%s(%d): exit!\n", __FUNCTION__, __LINE__);
+    return ADPCC_RET_SUCCESS;
+}
 
 AdpccResult_t AdpccInit(AdpccContext_t **ppAdpccCtx, CamCalibDbContext_t *pCalibDb)
 {
@@ -2809,6 +2810,7 @@ AdpccResult_t AdpccProcess(AdpccContext_t *pAdpccCtx, AdpccExpInfo_t *pExpInfo)
     memcpy(&pAdpccCtx->stExpInfo, pExpInfo, sizeof(AdpccExpInfo_t));
 
     if(pAdpccCtx->eMode == ADPCC_OP_MODE_AUTO) {
+        LOGD_ADPCC("%s(%d): Adpcc Auto mode!!!\n", __FUNCTION__, __LINE__);
         bool fast_enable = pAdpccCtx->stAuto.stFastMode.fast_mode_en == 0 ? false : true;
 
         if(fast_enable == false)
@@ -2825,6 +2827,7 @@ AdpccResult_t AdpccProcess(AdpccContext_t *pAdpccCtx, AdpccExpInfo_t *pExpInfo)
 
     } else if(pAdpccCtx->eMode == ADPCC_OP_MODE_MANUAL) {
         //TODO
+        LOGD_ADPCC("%s(%d): Adpcc Manual mode!!!\n", __FUNCTION__, __LINE__);
         if(pAdpccCtx->stManual.stFastMode.fast_mode_en)
             ret = Api_Fast_mode_select(pAdpccCtx, &pAdpccCtx->stManual.stBasic, &pAdpccCtx->stManual.stFastMode);
         else
@@ -2838,6 +2841,7 @@ AdpccResult_t AdpccProcess(AdpccContext_t *pAdpccCtx, AdpccExpInfo_t *pExpInfo)
             Api_Sensor_dpcc_process(pAdpccCtx);
     }
     else if(pAdpccCtx->eMode == ADPCC_OP_MODE_TOOL) {
+        LOGD_ADPCC("%s(%d): Adpcc Tool mode!!!\n", __FUNCTION__, __LINE__);
         dpcc_expert_mode_basic_params_init(&pAdpccCtx->stAuto.stBasicParams, &pAdpccCtx->stTool);
         dpcc_fast_mode_basic_params_init(&pAdpccCtx->stAuto.stFastMode, &pAdpccCtx->stTool);
         dpcc_pdaf_params_init(&pAdpccCtx->stAuto.stPdafParams, &pAdpccCtx->stTool.pdaf);
@@ -2888,6 +2892,11 @@ AdpccResult_t AdpccGetProcResult(AdpccContext_t *pAdpccCtx, AdpccProcResult_t* p
         pAdpccResult->stBasic = pAdpccCtx->stManual.stBasic;
         pAdpccResult->stBpt = pAdpccCtx->stManual.stBpt;
         pAdpccResult->stPdaf = pAdpccCtx->stManual.stPdaf;
+    } else if(pAdpccCtx->eMode == ADPCC_OP_MODE_TOOL) {
+        //TODO
+        pAdpccResult->stBasic = pAdpccCtx->stAuto.stBasicSelect;
+        pAdpccResult->stBpt = pAdpccCtx->stAuto.stBptSelect;
+        pAdpccResult->stPdaf = pAdpccCtx->stAuto.stPdafSelect;
     }
 
 

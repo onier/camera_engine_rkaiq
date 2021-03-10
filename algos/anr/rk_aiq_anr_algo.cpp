@@ -172,6 +172,12 @@ ANRresult_t ANRPrepare(ANRContext_t *pANRCtx, ANRConfig_t* pANRConfig)
     //pANRCtx->eMode = pANRConfig->eMode;
     //pANRCtx->eState = pANRConfig->eState;
     //pANRCtx->refYuvBit = pANRConfig->refYuvBit;
+
+	//update iq calibdb to context
+	if(!!(pANRCtx->prepare_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB)){	
+		ANRIQParaUpdate(pANRCtx);
+	}
+	
     ANRStart(pANRCtx);
 
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
@@ -377,6 +383,19 @@ ANRresult_t ANRGetProcResult(ANRContext_t *pANRCtx, ANRProcResult_t* pANRResult)
              pANRResult->stGainFix.gain_table_en,
              pANRResult->stMfnrFix.gain_en,
              pANRResult->stMfnrFix.mode);
+
+	 //select motion params
+	int mode_idx = 0;
+	if(pANRCtx->eParamMode == ANR_PARAM_MODE_NORMAL){
+		mfnr_get_mode_cell_idx_by_name(&pANRCtx->stMfnrCalib, "normal", &mode_idx);
+	}else if(pANRCtx->eParamMode == ANR_PARAM_MODE_HDR){
+		mfnr_get_mode_cell_idx_by_name(&pANRCtx->stMfnrCalib, "hdr", &mode_idx);
+	}else if(pANRCtx->eParamMode == ANR_PARAM_MODE_GRAY){
+		mfnr_get_mode_cell_idx_by_name(&pANRCtx->stMfnrCalib, "gray", &mode_idx);
+	}else{
+		LOGE_ANR("%s(%d): not support param mode!\n", __FUNCTION__, __LINE__);
+	}
+	pANRResult->stMotion = pANRCtx->stMfnrCalib.mode_cell[mode_idx].motion;
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ANR_RET_SUCCESS;
 }

@@ -103,9 +103,10 @@ public:
     virtual XCamReturn capture_raw_ctl(capture_raw_t type, int count = 0,
                                        const char* capture_dir = nullptr,
                                        char* output_dir = nullptr) = 0;
-    virtual XCamReturn enqueueBuffer(struct rk_aiq_vbuf *vbuf) = 0;
-    virtual XCamReturn offlineRdJobPrepare() = 0;
-    virtual XCamReturn offlineRdJobDone() = 0;
+    virtual XCamReturn enqueueRawBuffer(void *vbuf, bool sync) = 0;
+    virtual XCamReturn enqueueRawFile(const char *path) = 0;
+    virtual XCamReturn registRawdataCb(void (*callback)(void *)) = 0;
+    virtual XCamReturn rawdataPrepare(rk_aiq_raw_prop_t prop) = 0;
     virtual XCamReturn setSensorFlip(bool mirror, bool flip, int skip_frm_cnt) = 0;
     virtual XCamReturn getSensorFlip(bool& mirror, bool& flip) = 0;
     virtual XCamReturn getSensorCrop(rk_aiq_rect_t& rect) = 0;
@@ -113,6 +114,8 @@ public:
     virtual XCamReturn getZoomPosition(int& position) = 0;
     virtual XCamReturn getLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg) = 0;
     virtual XCamReturn setLensVcmCfg(rk_aiq_lens_vcmcfg& lens_cfg) = 0;
+    virtual XCamReturn FocusCorrection() = 0;
+    virtual XCamReturn ZoomCorrection() = 0;
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops) = 0;
 private:
     XCAM_DEAD_COPY (ICamHw);

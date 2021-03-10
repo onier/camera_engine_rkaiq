@@ -52,7 +52,7 @@ public:
     explicit Isp20PollThread();
     virtual ~Isp20PollThread();
 
-    bool set_event_handle_dev(SmartPtr<SensorHw> &dev);
+    bool set_event_handle_dev(SmartPtr<BaseSensorHw> &dev);
     bool set_iris_handle_dev(SmartPtr<LensHw> &dev);
     bool set_focus_handle_dev(SmartPtr<LensHw> &dev);
     bool set_rx_handle_dev(CamHwIsp20* dev);
@@ -63,7 +63,6 @@ public:
     XCamReturn notify_capture_raw();
     // should be called befor start
     void set_working_mode(int mode, bool linked_to_isp);
-    void set_loop_status(bool stat);
     XCamReturn capture_raw_ctl(capture_raw_t type, int count = 0, const char* capture_dir = nullptr, char* output_dir = nullptr);
     void set_hdr_global_tmo_mode(int frame_id, bool mode);
     virtual XCamReturn start();
@@ -88,7 +87,7 @@ protected:
     SmartPtr<VideoBuffer> new_video_buffer(SmartPtr<V4l2Buffer> buf,
                                            SmartPtr<V4l2Device> dev,
                                            int type);
-    virtual XCamReturn notify_sof (int64_t time, int frameid);
+    virtual XCamReturn notify_sof (uint64_t time, int frameid);
 private:
     XCamReturn mipi_poll_buffer_loop (int type, int dev_index);
     XCamReturn create_stop_fds_mipi ();
@@ -115,16 +114,16 @@ private:
     Mutex _mipi_buf_mutex;
     Mutex _mipi_trigger_mutex;
     bool _first_trigger;
-    bool _loop_vain;
 private:
     XCAM_DEAD_COPY(Isp20PollThread);
-    SmartPtr<SensorHw> _event_handle_dev;
+    SmartPtr<BaseSensorHw> _event_handle_dev;
     SmartPtr<LensHw> _iris_handle_dev;
     SmartPtr<LensHw> _focus_handle_dev;
     CamHwIsp20* _rx_handle_dev;
     uint32_t sns_width;
     uint32_t sns_height;
     uint32_t pixelformat;
+    uint32_t _stride_perline;
     char raw_dir_path[64];
     char user_set_raw_dir[64];
     bool _is_raw_dir_exist;
@@ -136,6 +135,8 @@ private:
     Cond _capture_image_cond;
     capture_raw_t _capture_raw_type;
     std::map<uint32_t, bool> _hdr_global_tmo_state_map;
+    std::map<sint32_t, uint64_t> _sof_timestamp_map;
+    Mutex _sof_map_mutex;
     bool _is_multi_cam_conc;
     int _skip_num;
     int64_t _skip_to_seq;
@@ -151,7 +152,8 @@ private:
                            int len, int sequence);
     void write_metadata_to_file(const char* dir_path, int frame_id,
                                 SmartPtr<RkAiqIspParamsProxy>& ispParams,
-                                SmartPtr<RkAiqExpParamsProxy>& expParams);
+                                SmartPtr<RkAiqExpParamsProxy>& expParams,
+                                SmartPtr<RkAiqAfInfoProxy>& afParams);
     bool get_value_from_file(const char* path, int& value, uint32_t& frameId);
     bool set_value_to_file(const char* path, int value, uint32_t sequence = 0);
     int detect_capture_raw_status(const char* file_name, uint32_t sequence);
@@ -162,6 +164,7 @@ private:
     void match_lumadetect_map(uint32_t sequence, sint32_t &additional_times);
     void match_globaltmostate_map(uint32_t sequence, bool &isHdrGlobalTmo);
     bool check_skip_frame(int32_t skip_seq);
+    XCamReturn match_sof_timestamp_map(sint32_t sequence, uint64_t &timestamp);
 };
 
 }

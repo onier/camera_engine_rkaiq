@@ -205,6 +205,17 @@ void AdehazeApiToolProcess(AdehazeHandle_t* para, int iso, int mode)
 {
     LOG1_ADEHAZE("ENTER: %s \n", __func__);
 
+    //cfg setting
+    if(mode == 0)
+        para->adhaz_config.dehaze_user_config[0] = para->AdehazeAtrr.stTool.cfg_alpha_normal;
+    else if(mode == 1)
+        para->adhaz_config.dehaze_user_config[0] = para->AdehazeAtrr.stTool.cfg_alpha_hdr;
+    else if(mode == 2)
+        para->adhaz_config.dehaze_user_config[0] = para->AdehazeAtrr.stTool.cfg_alpha_night;
+    else
+        LOGE_ADEHAZE("%s Wrong mode in Dehaze!!!\n", __func__);
+    LOGD_ADEHAZE("%s Config Alpha:%f\n", __func__, para->adhaz_config.dehaze_user_config[0]);
+
     //fuction enable
     if(para->AdehazeAtrr.stTool.en == 0)
     {
@@ -270,6 +281,18 @@ void AdehazeEnhanceApiOnProcess(AdehazeHandle_t* para, int iso, int mode)
 
     if(para->AdehazeAtrr.mode == RK_AIQ_DEHAZE_MODE_OFF)
     {
+        //cfg setting
+        if(mode == 0)
+            para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_normal;
+        else if(mode == 1)
+            para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_hdr;
+        else if(mode == 2)
+            para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_night;
+        else
+            LOGE_ADEHAZE("%s Wrong mode in Dehaze!!!\n", __func__);
+        LOGD_ADEHAZE("%s Config Alpha:%f\n", __func__, para->adhaz_config.dehaze_user_config[0]);
+
+        //enable setting
         if(para->calib_dehaz.en == 0)
         {
             para->adhaz_config.dehaze_en[0] = FUNCTION_DISABLE;
@@ -316,6 +339,23 @@ void AdehazeEnhanceApiOnProcess(AdehazeHandle_t* para, int iso, int mode)
     {
 
         para->adhaz_config.dehaze_en[0] = FUNCTION_ENABLE;
+
+        //cfg setting
+        if(para->AdehazeAtrr.mode == RK_AIQ_DEHAZE_MODE_AUTO ) {
+            if(mode == 0)
+                para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_normal;
+            else if(mode == 1)
+                para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_hdr;
+            else if(mode == 2)
+                para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_night;
+            else
+                LOGE_ADEHAZE("%s Wrong mode in Dehaze!!!\n", __func__);
+        }
+        else if(para->AdehazeAtrr.mode == RK_AIQ_DEHAZE_MODE_MANUAL)
+            para->adhaz_config.dehaze_user_config[0] = FUNCTION_ENABLE;
+        LOGD_ADEHAZE("%s Config Alpha:%f\n", __func__, para->adhaz_config.dehaze_user_config[0]);
+
+
         //dc en
         para->adhaz_config.dehaze_en[1] = FUNCTION_ENABLE;
         para->adhaz_config.dehaze_enhance[0] = FUNCTION_DISABLE;
@@ -375,6 +415,17 @@ void AdehazeEnhanceApiOffProcess(AdehazeHandle_t* para, int iso, int mode)
     LOG1_ADEHAZE("ENTER: %s \n", __func__);
     LOGD_ADEHAZE(" %s: Adehaze Api off!!!\n", __func__);
 
+    //cfg setting
+    if(mode == 0)
+        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_normal;
+    else if(mode == 1)
+        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_hdr;
+    else if(mode == 2)
+        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_night;
+    else
+        LOGE_ADEHAZE("%s Wrong mode in Dehaze!!!\n", __func__);
+    LOGD_ADEHAZE("%s Config Alpha:%f\n", __func__, para->adhaz_config.dehaze_user_config[0]);
+
     //fuction enable
     if(para->calib_dehaz.en == 0)
     {
@@ -432,6 +483,23 @@ void AdehazeEnhanceApiOffProcess(AdehazeHandle_t* para, int iso, int mode)
 
 }
 
+XCamReturn AdehazeReloadPara(AdehazeHandle_t* para, CamCalibDbContext_t* calib)
+{
+    LOG1_ADEHAZE("ENTER: %s \n", __func__);
+    LOGD_ADEHAZE(" %s(%d): Adehaze Reload Para, prepare type is %d!\n", __FUNCTION__, __LINE__, para->prepare_type);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if (NULL == para)
+        return XCAM_RETURN_ERROR_MEM;
+
+    para->pCalibDb = calib;
+    para->calib_dehaz = calib->dehaze;
+    para->AdehazeAtrr.stTool = calib->dehaze;
+
+    LOG1_ADEHAZE("EXIT: %s \n", __func__);
+    return(ret);
+}
+
 XCamReturn AdehazeInit(AdehazeHandle_t** para, CamCalibDbContext_t* calib)
 {
     LOG1_ADEHAZE("ENTER: %s \n", __func__);
@@ -466,15 +534,7 @@ XCamReturn AdehazeProcess(AdehazeHandle_t* para, int iso, int mode)
     LOG1_ADEHAZE("ENTER: %s \n", __func__);
 
     para->adhaz_config.dehaze_en[4] = FUNCTION_ENABLE;
-    //cfg setting
-    if(mode == 0)
-        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_normal;
-    else if(mode == 1)
-        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_hdr;
-    else if(mode == 2)
-        para->adhaz_config.dehaze_user_config[0] = para->calib_dehaz.cfg_alpha_night;
-    else
-        LOGE_ADEHAZE("%s Wrong mode in Dehaze!!!\n", __func__);
+
     LOGD_ADEHAZE("%s ISO:%d mode:%d\n", __func__, iso, mode);
 
     if(!(para->AdehazeAtrr.byPass))

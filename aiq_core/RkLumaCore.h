@@ -66,6 +66,7 @@ public:
     };
 
     void triger_start() {
+        mStatsQueue.clear ();
         mStatsQueue.resume_pop ();
     };
 
