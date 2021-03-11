@@ -854,6 +854,7 @@ XCamReturn AccmInit(accm_handle_t *hAccm, const CamCalibDbContext_t* calib)
     }
     accm_context->accmSwInfo.prepare_type = RK_AIQ_ALGO_CONFTYPE_UPDATECALIB | RK_AIQ_ALGO_CONFTYPE_NEEDRESET |RK_AIQ_ALGO_CONFTYPE_CHANGEMODE;
     ret = UpdateCcmCalibPara(accm_context, currentHdrNormalMode);
+    LOGI_ACCM("%s: Initial Mode is %s (%d)\n", __FUNCTION__, accm_context->calibCcm->mode_cell[accm_context->accmRest.currentHdrNormalMode].name, accm_context->accmRest.currentHdrNormalMode);
     for(int i = 0; i < RK_AIQ_ACCM_COLOR_GAIN_NUM; i++) {
             accm_context->mCurAtt.stAuto.color_inhibition.sensorGain[i] = 1;
             accm_context->mCurAtt.stAuto.color_inhibition.level[i] = 0;
@@ -891,12 +892,16 @@ XCamReturn AccmPrepare(accm_handle_t hAccm)
         currentHdrNormalMode = CCM_FOR_MODE_NORMAL;
     }else if(hAccm->accmSwInfo.hdr_mode > RK_AIQ_WORKING_MODE_NORMAL && hAccm->accmSwInfo.hdr_mode <= RK_AIQ_WORKING_MODE_ISP_HDR3){
         currentHdrNormalMode = CCM_FOR_MODE_HDR;
+
     }else{
         LOGE_ACCM("%s: Current hdr mode (%d) is invalid!Defaults to normal mode.  \n", __FUNCTION__, hAccm->accmSwInfo.hdr_mode);
         currentHdrNormalMode = CCM_FOR_MODE_NORMAL;
     }
+    if (hAccm->accmRest.currentHdrNormalMode != currentHdrNormalMode)
+        hAccm->accmSwInfo.prepare_type = hAccm->accmSwInfo.prepare_type |RK_AIQ_ALGO_CONFTYPE_CHANGEMODE;
+    ret = UpdateCcmCalibPara(hAccm, currentHdrNormalMode);
 
-   ret = UpdateCcmCalibPara(hAccm, currentHdrNormalMode);
+    LOGI_ACCM("%s: Current Mode is %s (%d)\n", __FUNCTION__, hAccm->calibCcm->mode_cell[hAccm->accmRest.currentHdrNormalMode].name, hAccm->accmRest.currentHdrNormalMode);
 
     LOGI_ACCM("%s: (exit)\n", __FUNCTION__);
     return ret;

@@ -20,7 +20,26 @@
 
 #include "rk_aiq_types.h"
 
-#define RKAIQ_ISP_LDCH_ID           (1 << 0)
+#define RKAIQ_ISP_AEC_ID           (1 << 0)
+#define RKAIQ_ISP_HIST_ID          (1 << 1)
+#define RKAIQ_ISP_AWB_ID           (1 << 2)
+#define RKAIQ_ISP_AWB_GAIN_ID      (1 << 3)
+#define RKAIQ_ISP_AHDR_ID          (1 << 4)
+#define RKAIQ_ISP_AF_ID            (1 << 5)
+#define RKAIQ_ISP_BLC_ID           (1 << 6)
+#define RKAIQ_ISP_DPCC_ID          (1 << 7)
+#define RKAIQ_ISP_RAWNR_ID         (1 << 8)
+#define RKAIQ_ISP_GIC_ID           (1 << 9)
+#define RKAIQ_ISP_LUT3D_ID         (1 << 10)
+#define RKAIQ_ISP_DEHAZE_ID        (1 << 11)
+#define RKAIQ_ISP_CCM_ID           (1 << 12)
+#define RKAIQ_ISP_GAMMA_ID         (1 << 13)
+#define RKAIQ_ISP_LSC_ID           (1 << 14)
+#define RKAIQ_ISP_GAIN_ID          (1 << 15)
+#define RKAIQ_ISP_DEBAYER_ID       (1 << 16)
+#define RKAIQ_ISP_IE_ID            (1 << 17)
+#define RKAIQ_ISP_CP_ID            (1 << 18)
+#define RKAIQ_ISP_LDCH_ID          (1 << 19)
 
 typedef struct {
     uint32_t update_mask;

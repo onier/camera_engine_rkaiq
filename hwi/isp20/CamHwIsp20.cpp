@@ -662,7 +662,7 @@ CamHwIsp20::getStaticCamHwInfo(const char* sns_ent_name, uint16_t index)
         }
     } else {
         if (index >= 0 && index < mCamHwInfos.size()) {
-            int i = 0, idx = index;
+            int i = 0;
             for (it = mCamHwInfos.begin(); it != mCamHwInfos.end(); it++, i++) {
                 if (it->first == "FakeCamera")
                     index++;
@@ -2900,9 +2900,10 @@ CamHwIsp20::setIspParamsSync(int frameId)
     if (_pending_ispparams_queue.empty()) {
         LOGW_CAMHW_SUBM(ISP20HW_SUBM, "no new isp params for frame %d !", frameId);
         _mutex.unlock();
-
         return ret;
     }
+    _mutex.unlock();
+
     // merge all pending params
     struct isp2x_isp_params_cfg update_params;
     SmartPtr<RkAiqIspParamsProxy> aiq_results;
@@ -2924,32 +2925,31 @@ CamHwIsp20::setIspParamsSync(int frameId)
         /* _full_active_isp_params.module_ens = 0; */
         _full_active_isp_params.module_cfg_update = 0;
     }
-    LOGD_CAMHW_SUBM(ISP20HW_SUBM, "merge isp params num %d\n", _pending_ispparams_queue.size());
-    aiq_results = _pending_ispparams_queue.back();
-    if (aiq_results->data()->frame_id !=  frameId) {
-        if (_last_aiq_results->data()->frame_id > aiq_results->data()->frame_id)
-            aiq_results = _last_aiq_results;
-        LOGW_CAMHW_SUBM(ISP20HW_SUBM, "isp stream sequence(%d) != aiq params id(%d), last params is id(%d)\n",
-                        frameId, aiq_results->data()->frame_id, _last_aiq_results->data()->frame_id);
-    } else {
-        _pending_ispparams_queue.pop_back();
-    }
 
+    LOGD_CAMHW_SUBM(ISP20HW_SUBM, "merge isp params num %d\n", _pending_ispparams_queue.size());
+    _mutex.lock();
+    // merge all isp params
+    while (!_pending_ispparams_queue.empty()) {
+        aiq_results = _pending_ispparams_queue.front();
+        _pending_ispparams_queue.pop_front();
+
+        ret = overrideExpRatioToAiqResults(frameId, RK_ISP2X_HDRTMO_ID, aiq_results);
+        if (ret != XCAM_RETURN_NO_ERROR)
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "convertExpRatioToAiqResults error!\n");
+
+        if(aiq_results->data()->update_mask & RKAIQ_ISP_AHDR_ID) {
+            ret = convertAiqResultsToIsp20Params(update_params, aiq_results, _last_aiq_results);
+            if (ret != XCAM_RETURN_NO_ERROR)
+                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "rkisp1_convert_results error\n");
+        }
+    }
     _mutex.unlock();
 
-
-    ret = overrideExpRatioToAiqResults(frameId, RK_ISP2X_HDRTMO_ID, aiq_results);
-    if (ret != XCAM_RETURN_NO_ERROR) {
-        LOGE_CAMHW_SUBM(ISP20HW_SUBM, "convertExpRatioToAiqResults error!\n");
-    }
-
+    if (frameId != aiq_results->data()->frame_id)
+        LOGW_CAMHW_SUBM(ISP20HW_SUBM, "isp stream sequence(%d) != aiq result params id(%d)\n",
+                        frameId, aiq_results->data()->frame_id);
     if (mIspSpThread.ptr())
         mIspSpThread->update_motion_detection_params(&aiq_results->data()->motion);
-
-    ret = convertAiqResultsToIsp20Params(update_params, aiq_results, _last_aiq_results);
-    if (ret != XCAM_RETURN_NO_ERROR) {
-        LOGE_CAMHW_SUBM(ISP20HW_SUBM, "rkisp1_convert_results error\n");
-    }
     forceOverwriteAiqIspCfg(update_params, aiq_results);
     gen_full_isp_params(&update_params, &_full_active_isp_params);
 
@@ -3051,10 +3051,11 @@ CamHwIsp20::setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams)
     }
 
     _mutex.lock();
-    if (_pending_ispparams_queue.size() > 8) {
+    if (_pending_ispparams_queue.size() > 6) {
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "too many pending isp params:%d !", _pending_ispparams_queue.size());
         _pending_ispparams_queue.erase(_pending_ispparams_queue.begin());
     }
+
     _pending_ispparams_queue.push_back(ispParams);
     _mutex.unlock();
 

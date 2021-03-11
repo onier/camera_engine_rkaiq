@@ -1976,39 +1976,73 @@ Isp20Params::convertAiqResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    convertAiqHistToIsp20Params(isp_cfg, aiq_results->data()->hist_meas);
-    convertAiqAeToIsp20Params(isp_cfg, aiq_results->data()->aec_meas);
-    convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-    convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-    convertAiqAwbGainToIsp20Params(isp_cfg, aiq_results->data()->awb_gain, aiq_results->data()->blc,
-                                   aiq_results->data()->awb_gain_update);
-    convertAiqAwbToIsp20Params(isp_cfg, aiq_results->data()->awb_cfg_v200, aiq_results->data()->awb_cfg_update);
-    convertAiqLscToIsp20Params(isp_cfg, aiq_results->data()->lsc);
-    convertAiqCcmToIsp20Params(isp_cfg, aiq_results->data()->ccm);
-    convertAiqAgammaToIsp20Params(isp_cfg, aiq_results->data()->agamma);
-    convertAiqBlcToIsp20Params(isp_cfg, aiq_results);
-    convertAiqDpccToIsp20Params(isp_cfg, aiq_results);
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_HIST_ID)
+        convertAiqHistToIsp20Params(isp_cfg, aiq_results->data()->hist_meas);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AEC_ID)
+        convertAiqAeToIsp20Params(isp_cfg, aiq_results->data()->aec_meas);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AHDR_ID) {
+        convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
+        convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
+    }
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AWB_GAIN_ID)
+        convertAiqAwbGainToIsp20Params(isp_cfg, aiq_results->data()->awb_gain,
+                                       aiq_results->data()->blc,
+                                       aiq_results->data()->awb_gain_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AWB_ID)
+        convertAiqAwbToIsp20Params(isp_cfg, aiq_results->data()->awb_cfg_v200,
+                                   aiq_results->data()->awb_cfg_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_LSC_ID)
+        convertAiqLscToIsp20Params(isp_cfg, aiq_results->data()->lsc);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_CCM_ID)
+        convertAiqCcmToIsp20Params(isp_cfg, aiq_results->data()->ccm);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GAMMA_ID)
+        convertAiqAgammaToIsp20Params(isp_cfg, aiq_results->data()->agamma);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_BLC_ID)
+        convertAiqBlcToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DPCC_ID)
+        convertAiqDpccToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_RAWNR_ID)
     convertAiqRawnrToIsp20Params(isp_cfg, aiq_results->data()->rawnr);
-    convertAiqAfToIsp20Params(isp_cfg, aiq_results->data()->af_meas, aiq_results->data()->af_cfg_update);
-    convertAiqAdehazeToIsp20Params(isp_cfg, aiq_results->data()->adhaz_config);
-    convertAiqA3dlutToIsp20Params(isp_cfg, aiq_results->data()->lut3d);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AF_ID)
+        convertAiqAfToIsp20Params(isp_cfg, aiq_results->data()->af_meas,
+                                  aiq_results->data()->af_cfg_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DEHAZE_ID)
+        convertAiqAdehazeToIsp20Params(isp_cfg, aiq_results->data()->adhaz_config);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_LUT3D_ID)
+        convertAiqA3dlutToIsp20Params(isp_cfg, aiq_results->data()->lut3d);
+
     if(aiq_results->data()->update_mask & RKAIQ_ISP_LDCH_ID)
         convertAiqAldchToIsp20Params(isp_cfg, aiq_results->data()->ldch);
 
     //must be at the end of isp module
-    convertAiqGainToIsp20Params(isp_cfg, aiq_results->data()->gain_config);
-    /*
-     * enable the modules that has been verified to work properly on the board
-     * TODO: enable all modules after validation in isp
-     */
-#if 0
-    convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
-    convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
-#endif
-    convertAiqGicToIsp20Params(isp_cfg, aiq_results->data()->gic);
-    convertAiqAdemosaicToIsp20Params(isp_cfg, aiq_results);
-    convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
-    convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GAIN_ID)
+        convertAiqGainToIsp20Params(isp_cfg, aiq_results->data()->gain_config);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GIC_ID)
+        convertAiqGicToIsp20Params(isp_cfg, aiq_results->data()->gic);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DEBAYER_ID)
+        convertAiqAdemosaicToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_IE_ID)
+        convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_CP_ID)
+        convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
+
     last_aiq_results = aiq_results;
 
     return ret;

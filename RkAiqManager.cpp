@@ -194,6 +194,7 @@ RkAiqManager::init()
     ret = mRkLumaAnalyzer->init(&mCalibDb->lumaDetect);
     RKAIQMNG_CHECK_RET(ret, "luma analyzer init error %d !", ret);
 
+    mCamHw->setCalib(mCalibDb);
     mCamHw->setIspLumaListener(this);
     mCamHw->setIspStatsListener(this);
     mCamHw->setEvtsListener(NULL);
@@ -249,7 +250,6 @@ RkAiqManager::prepare(uint32_t width, uint32_t height, rk_aiq_working_mode_t mod
         else
             LOGE_ANALYZER("Not supported HDR mode !");
     }
-    mCamHw->setCalib(mCalibDb);
     if(mode != RK_AIQ_WORKING_MODE_NORMAL)
         ret = mCamHw->prepare(width, height, working_mode_hw, mCalibDb->sysContrl.exp_delay.Hdr.time_delay, mCalibDb->sysContrl.exp_delay.Hdr.gain_delay);
     else
@@ -335,16 +335,16 @@ RkAiqManager::stop(bool keep_ext_hw_st)
         return ret;
     }
 
-    mAiqRstAppTh->triger_stop();
-    bool bret = mAiqRstAppTh->stop();
-    ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
-    RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
-
     ret = mRkAiqAnalyzer->stop();
     RKAIQMNG_CHECK_RET(ret, "analyzer stop error %d", ret);
 
     ret = mRkLumaAnalyzer->stop();
     RKAIQMNG_CHECK_RET(ret, "luma analyzer stop error %d", ret);
+
+    mAiqRstAppTh->triger_stop();
+    bool bret = mAiqRstAppTh->stop();
+    ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
+    RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
 
     mCamHw->keepHwStAtStop(keep_ext_hw_st);
     ret = mCamHw->stop();
@@ -398,12 +398,6 @@ RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
     LOGW_ANALYZER("should be called at STARTED state");
     return ret;
   }
-
-  mAiqRstAppTh->triger_stop();
-  bool bret = mAiqRstAppTh->stop();
-  ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
-  RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
-
   ret = mRkAiqAnalyzer->stop();
   RKAIQMNG_CHECK_RET(ret, "analyzer stop error %d", ret);
 
@@ -412,6 +406,11 @@ RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
 
   // ret = mRkAiqAnalyzer->deInit();
   ret = mRkLumaAnalyzer->deInit();
+
+  mAiqRstAppTh->triger_stop();
+  bool bret = mAiqRstAppTh->stop();
+  ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
+  RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
 
   mCalibDb = newCalibDb;
 
@@ -900,16 +899,16 @@ XCamReturn RkAiqManager::swWorkingModeDyn(rk_aiq_working_mode_t mode)
     // 1. stop analyzer, re-preapre with the new mode
     // 2. stop luma analyzer, re-preapre with the new mode
     LOGI_ANALYZER("stop analyzer ...");
-    mAiqRstAppTh->triger_stop();
-    bool bret = mAiqRstAppTh->stop();
-    ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
-    RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
-
     ret = mRkAiqAnalyzer->stop();
     RKAIQMNG_CHECK_RET(ret, "analyzer stop error %d", ret);
 
     ret = mRkLumaAnalyzer->stop();
     RKAIQMNG_CHECK_RET(ret, "luma analyzer stop error %d", ret);
+
+    mAiqRstAppTh->triger_stop();
+    bool bret = mAiqRstAppTh->stop();
+    ret = bret ? XCAM_RETURN_NO_ERROR : XCAM_RETURN_ERROR_FAILED;
+    RKAIQMNG_CHECK_RET(ret, "apply result thread stop error");
 
     // 3. pause hwi
     LOGI_ANALYZER("pause hwi ...");

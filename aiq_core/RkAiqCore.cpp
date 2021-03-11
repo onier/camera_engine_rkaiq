@@ -423,6 +423,7 @@ RkAiqCore::analyzeInternal()
 
     if (mAiqIspParamsPool->has_free_items()) {
         aiqParams->mIspParams = mAiqIspParamsPool->get_item();
+        aiqParams->mIspParams->data()->update_mask = 0;
     } else {
         LOGE_ANALYZER("no free isp params buffer!");
         return NULL;
@@ -637,8 +638,15 @@ RkAiqCore::genIspAeResult(RkAiqFullParams* params)
     iris_param->PIris.step = ae_proc->new_ae_exp.Iris.PIris.step;
     iris_param->PIris.update = ae_proc->new_ae_exp.Iris.PIris.update;
 
-    isp_param->aec_meas = ae_proc->ae_meas;
-    isp_param->hist_meas = ae_proc->hist_meas;
+    if (ae_proc->ae_meas.ae_meas_update) {
+        isp_param->aec_meas = ae_proc->ae_meas;
+        isp_param->update_mask |= RKAIQ_ISP_AEC_ID;
+    }
+
+    if (ae_proc->hist_meas.hist_meas_update) {
+        isp_param->hist_meas = ae_proc->hist_meas;
+        isp_param->update_mask |= RKAIQ_ISP_HIST_ID;
+    }
 
     // gen rk ae result
     if (algo_id == 0) {
@@ -675,11 +683,18 @@ RkAiqCore::genIspAwbResult(RkAiqFullParams* params)
 
     // TODO: gen awb common result
     RkAiqAlgoProcResAwb* awb_rk = (RkAiqAlgoProcResAwb*)awb_com;
-    isp_param->awb_gain_update = awb_rk->awb_gain_update;
-    isp_param->awb_cfg_update = awb_rk->awb_cfg_update;
-    isp_param->awb_gain = awb_rk->awb_gain_algo;
-    isp_param->awb_cfg_v200 = awb_rk->awb_hw0_para;
-    isp_param->awb_cfg_v201 = awb_rk->awb_hw1_para;
+    if (awb_rk->awb_gain_update) {
+        isp_param->awb_gain_update = awb_rk->awb_gain_update;
+        isp_param->awb_gain = awb_rk->awb_gain_algo;
+        isp_param->update_mask |= RKAIQ_ISP_AWB_GAIN_ID;
+    }
+
+    if (awb_rk->awb_cfg_update) {
+        isp_param->awb_cfg_update = awb_rk->awb_cfg_update;
+        isp_param->awb_cfg_v200 = awb_rk->awb_hw0_para;
+        isp_param->awb_cfg_v201 = awb_rk->awb_hw1_para;
+        isp_param->update_mask |= RKAIQ_ISP_AWB_ID;
+    }
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AWB);
     int algo_id = (*handle)->getAlgoId();
@@ -724,8 +739,11 @@ RkAiqCore::genIspAfResult(RkAiqFullParams* params)
     if (algo_id == 0) {
         RkAiqAlgoProcResAfInt* af_rk = (RkAiqAlgoProcResAfInt*)af_com;
 
-        isp_param->af_meas = af_rk->af_proc_res_com.af_isp_param;
-        isp_param->af_cfg_update = af_rk->af_proc_res_com.af_cfg_update;
+        if (af_rk->af_proc_res_com.af_cfg_update) {
+            isp_param->af_meas = af_rk->af_proc_res_com.af_isp_param;
+            isp_param->af_cfg_update = af_rk->af_proc_res_com.af_cfg_update;
+            isp_param->update_mask |= RKAIQ_ISP_AF_ID;
+        }
 
         focus_param->next_lens_pos = af_rk->af_proc_res_com.af_focus_param.next_lens_pos;
         focus_param->next_zoom_pos = af_rk->af_proc_res_com.af_focus_param.next_zoom_pos;
@@ -877,6 +895,7 @@ RkAiqCore::genIspAhdrResult(RkAiqFullParams* params)
         isp_param->ahdr_proc_res.isLinearTmo =
             ahdr_rk->AhdrProcRes.isLinearTmo;
 
+        isp_param->update_mask |= RKAIQ_ISP_AHDR_ID;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -931,6 +950,8 @@ RkAiqCore::genIspAnrResult(RkAiqFullParams* params)
         LOGD_ANR("oyyf: %s:%d output isp param end \n", __FUNCTION__, __LINE__);
 #else
         LOGD_ANR("oyyf: %s:%d output isp param start\n", __FUNCTION__, __LINE__);
+
+        isp_param->update_mask |= RKAIQ_ISP_RAWNR_ID;
         memcpy(&isp_param->rawnr,
                &anr_rk->stAnrProcResult.stBayernrFix,
                sizeof(rk_aiq_isp_rawnr_t));
@@ -949,6 +970,7 @@ RkAiqCore::genIspAnrResult(RkAiqFullParams* params)
                &anr_rk->stAnrProcResult.stMfnrFix,
                sizeof(RKAnr_Mfnr_Fix_t));
 
+        isp_param->update_mask |= RKAIQ_ISP_GAIN_ID;
         memcpy(&isp_param->gain_config,
                &anr_rk->stAnrProcResult.stGainFix,
                sizeof(rk_aiq_isp_gain_t));
@@ -984,6 +1006,7 @@ RkAiqCore::genIspAdhazResult(RkAiqFullParams* params)
     RkAiqAlgoProcResAdhaz* adhaz_rk = (RkAiqAlgoProcResAdhaz*)adhaz_com;
 
     isp_param->adhaz_config = adhaz_rk->adhaz_config;
+    isp_param->update_mask |= RKAIQ_ISP_DEHAZE_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_ADHAZ);
     int algo_id = (*handle)->getAlgoId();
@@ -991,8 +1014,6 @@ RkAiqCore::genIspAdhazResult(RkAiqFullParams* params)
     // gen rk adhaz result
     if (algo_id == 0) {
         RkAiqAlgoProcResAdhazInt* adhaz_rk = (RkAiqAlgoProcResAdhazInt*)adhaz_com;
-
-
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -1064,6 +1085,7 @@ RkAiqCore::genIspAcpResult(RkAiqFullParams* params)
     rk_aiq_acp_params_t* isp_cp = &isp_param->cp;
 
     *isp_cp = acp_com->acp_res;
+    isp_param->update_mask |= RKAIQ_ISP_CP_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_ACP);
     int algo_id = (*handle)->getAlgoId();
@@ -1101,6 +1123,8 @@ RkAiqCore::genIspAieResult(RkAiqFullParams* params)
     // TODO: gen aie common result
     rk_aiq_isp_ie_t* isp_ie = &isp_param->ie;
     isp_ie->base = aie_com->params;
+    isp_param->update_mask |= RKAIQ_ISP_IE_ID;
+
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AIE);
     int algo_id = (*handle)->getAlgoId();
 
@@ -1205,6 +1229,7 @@ RkAiqCore::genIspA3dlutResult(RkAiqFullParams* params)
     // TODO: gen a3dlut common result
     RkAiqAlgoProcResA3dlut* a3dlut_rk = (RkAiqAlgoProcResA3dlut*)a3dlut_com;
     isp_param->lut3d = a3dlut_rk->lut3d_hw_conf;
+    isp_param->update_mask |= RKAIQ_ISP_LUT3D_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_A3DLUT);
     int algo_id = (*handle)->getAlgoId();
@@ -1250,6 +1275,7 @@ RkAiqCore::genIspAblcResult(RkAiqFullParams* params)
 
         memcpy(&isp_param->blc, &ablc_rk->ablc_proc_res,
                sizeof(rk_aiq_isp_blc_t));
+        isp_param->update_mask |= RKAIQ_ISP_BLC_ID;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -1276,6 +1302,7 @@ RkAiqCore::genIspAccmResult(RkAiqFullParams* params)
     // TODO: gen accm common result
     RkAiqAlgoProcResAccm* accm_rk = (RkAiqAlgoProcResAccm*)accm_com;
     isp_param->ccm = accm_rk->accm_hw_conf;
+    isp_param->update_mask |= RKAIQ_ISP_CCM_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_ACCM);
     int algo_id = (*handle)->getAlgoId();
@@ -1350,6 +1377,7 @@ RkAiqCore::genIspAdebayerResult(RkAiqFullParams* params)
     if (algo_id == 0) {
         RkAiqAlgoProcResAdebayerInt* adebayer_rk = (RkAiqAlgoProcResAdebayerInt*)adebayer_com;
         memcpy(&isp_param->demosaic, &adebayer_rk->debayerRes.config, sizeof(AdebayerConfig_t));
+        isp_param->update_mask |= RKAIQ_ISP_DEBAYER_ID;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -1393,6 +1421,7 @@ RkAiqCore::genIspAdpccResult(RkAiqFullParams* params)
         memcpy(&isp_param->dpcc,
                &adpcc_rk->stAdpccProcResult,
                sizeof(rk_aiq_isp_dpcc_t));
+        isp_param->update_mask |= RKAIQ_ISP_DPCC_ID;
         LOGD_ADPCC("oyyf: %s:%d output dpcc param end\n", __FUNCTION__, __LINE__);
     }
 
@@ -1469,6 +1498,7 @@ RkAiqCore::genIspAgammaResult(RkAiqFullParams* params)
     RkAiqAlgoProcResAgamma* agamma_rk = (RkAiqAlgoProcResAgamma*)agamma_com;
 
     isp_param->agamma = agamma_rk->agamma_proc_res;
+    isp_param->update_mask |= RKAIQ_ISP_GAMMA_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AGAMMA);
     int algo_id = (*handle)->getAlgoId();
@@ -1596,6 +1626,8 @@ RkAiqCore::genIspAlscResult(RkAiqFullParams* params)
             }
         }
     }
+    isp_param->update_mask |= RKAIQ_ISP_LSC_ID;
+
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_ALSC);
     int algo_id = (*handle)->getAlgoId();
 
