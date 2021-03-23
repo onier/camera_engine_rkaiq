@@ -149,7 +149,7 @@ rk_aiq_uapi_anr_GetLumaSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -170,7 +170,7 @@ rk_aiq_uapi_anr_GetLumaTFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -234,7 +234,7 @@ rk_aiq_uapi_anr_GetChromaSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 	
 
@@ -256,7 +256,7 @@ rk_aiq_uapi_anr_GetChromaTFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -299,7 +299,7 @@ rk_aiq_uapi_anr_GetRawnrSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 	
 

@@ -102,7 +102,7 @@ rk_aiq_uapi_asharp_GetStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent =  (fStrength - 1)/((fMax - 1) * 2 )+ 0.5;
 	}
     
     return XCAM_RETURN_NO_ERROR;
