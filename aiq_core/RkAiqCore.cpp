@@ -638,15 +638,12 @@ RkAiqCore::genIspAeResult(RkAiqFullParams* params)
     iris_param->PIris.step = ae_proc->new_ae_exp.Iris.PIris.step;
     iris_param->PIris.update = ae_proc->new_ae_exp.Iris.PIris.update;
 
-    if (ae_proc->ae_meas.ae_meas_update) {
-        isp_param->aec_meas = ae_proc->ae_meas;
-        isp_param->update_mask |= RKAIQ_ISP_AEC_ID;
-    }
+    isp_param->aec_meas = ae_proc->ae_meas;
+    isp_param->update_mask |= RKAIQ_ISP_AEC_ID;
 
-    if (ae_proc->hist_meas.hist_meas_update) {
-        isp_param->hist_meas = ae_proc->hist_meas;
-        isp_param->update_mask |= RKAIQ_ISP_HIST_ID;
-    }
+    isp_param->hist_meas = ae_proc->hist_meas;
+    isp_param->update_mask |= RKAIQ_ISP_HIST_ID;
+
 
     // gen rk ae result
     if (algo_id == 0) {
@@ -683,18 +680,14 @@ RkAiqCore::genIspAwbResult(RkAiqFullParams* params)
 
     // TODO: gen awb common result
     RkAiqAlgoProcResAwb* awb_rk = (RkAiqAlgoProcResAwb*)awb_com;
-    if (awb_rk->awb_gain_update) {
-        isp_param->awb_gain_update = awb_rk->awb_gain_update;
-        isp_param->awb_gain = awb_rk->awb_gain_algo;
-        isp_param->update_mask |= RKAIQ_ISP_AWB_GAIN_ID;
-    }
+    isp_param->awb_gain_update = awb_rk->awb_gain_update;
+    isp_param->awb_gain = awb_rk->awb_gain_algo;
+    isp_param->update_mask |= RKAIQ_ISP_AWB_GAIN_ID;
 
-    if (awb_rk->awb_cfg_update) {
-        isp_param->awb_cfg_update = awb_rk->awb_cfg_update;
-        isp_param->awb_cfg_v200 = awb_rk->awb_hw0_para;
-        isp_param->awb_cfg_v201 = awb_rk->awb_hw1_para;
-        isp_param->update_mask |= RKAIQ_ISP_AWB_ID;
-    }
+    isp_param->awb_cfg_update = awb_rk->awb_cfg_update;
+    isp_param->awb_cfg_v200 = awb_rk->awb_hw0_para;
+    isp_param->awb_cfg_v201 = awb_rk->awb_hw1_para;
+    isp_param->update_mask |= RKAIQ_ISP_AWB_ID;
 
     SmartPtr<RkAiqHandle>* handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AWB);
     int algo_id = (*handle)->getAlgoId();
@@ -739,11 +732,9 @@ RkAiqCore::genIspAfResult(RkAiqFullParams* params)
     if (algo_id == 0) {
         RkAiqAlgoProcResAfInt* af_rk = (RkAiqAlgoProcResAfInt*)af_com;
 
-        if (af_rk->af_proc_res_com.af_cfg_update) {
-            isp_param->af_meas = af_rk->af_proc_res_com.af_isp_param;
-            isp_param->af_cfg_update = af_rk->af_proc_res_com.af_cfg_update;
-            isp_param->update_mask |= RKAIQ_ISP_AF_ID;
-        }
+        isp_param->af_meas = af_rk->af_proc_res_com.af_isp_param;
+        isp_param->af_cfg_update = af_rk->af_proc_res_com.af_cfg_update;
+        isp_param->update_mask |= RKAIQ_ISP_AF_ID;
 
         focus_param->next_lens_pos = af_rk->af_proc_res_com.af_focus_param.next_lens_pos;
         focus_param->next_zoom_pos = af_rk->af_proc_res_com.af_focus_param.next_zoom_pos;
