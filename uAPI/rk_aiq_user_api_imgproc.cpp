@@ -2175,7 +2175,7 @@ XCamReturn rk_aiq_uapi_getBrightness(const rk_aiq_sys_ctx_t* ctx, unsigned int *
     }
     ret = rk_aiq_user_api_acp_GetAttrib(ctx, &attrib);
     RKAIQ_IMGPROC_CHECK_RET(ret, "get brightness failed!");
-    *level = attrib.contrast;
+    *level = attrib.brightness;
     IMGPROC_FUNC_EXIT
     return ret;
 }
