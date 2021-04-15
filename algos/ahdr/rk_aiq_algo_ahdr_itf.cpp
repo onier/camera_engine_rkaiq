@@ -198,6 +198,7 @@ static XCamReturn AhdrProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
     }
 
     pAhdrCtx->AhdrProcRes.LongFrameMode = pAhdrCtx->SensorInfo.LongFrmMode;
+    AhdrProcResParams->AhdrProcRes.LongFrameMode = pAhdrCtx->AhdrProcRes.LongFrameMode;
     AhdrProcResParams->AhdrProcRes.isHdrGlobalTmo = pAhdrCtx->AhdrProcRes.isHdrGlobalTmo;
     AhdrProcResParams->AhdrProcRes.bTmoEn = pAhdrCtx->AhdrProcRes.bTmoEn;
     AhdrProcResParams->AhdrProcRes.isLinearTmo = pAhdrCtx->AhdrProcRes.isLinearTmo;

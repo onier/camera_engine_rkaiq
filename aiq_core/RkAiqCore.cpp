@@ -984,6 +984,9 @@ RkAiqCore::genIspAhdrResult(RkAiqFullParams* params)
         isp_param->ahdr_proc_res.TmoProcRes.sw_hdrtmo_lgscl_ratio =
             ahdr_rk->AhdrProcRes.TmoProcRes.sw_hdrtmo_lgscl_ratio;
 
+        isp_param->ahdr_proc_res.LongFrameMode =
+            ahdr_rk->AhdrProcRes.LongFrameMode;
+
         isp_param->ahdr_proc_res.isHdrGlobalTmo =
             ahdr_rk->AhdrProcRes.isHdrGlobalTmo;
 
@@ -2933,8 +2936,8 @@ RkAiqCore::events_analyze(const SmartPtr<ispHwEvt_t> &evts)
     }
 
     LOGD("id(%d), linear mode exp(%d-%d)", frameId,
-            curExpParams->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global,
-            curExpParams->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time);
+         curExpParams->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global,
+         curExpParams->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time);
 
     alogsSharedParamsMutex.lock();
     mAlogsSharedParams.frameId = frameId;

@@ -494,8 +494,8 @@ get_isp_subdevs(struct media_device *device, const char *devpath, rk_aiq_isp_t* 
         isp_info[index].linked_dvp = false;
 
     if ((entity = media_get_entity_by_name(device, "rkcif_dvp", strlen("rkcif_dvp"))) ||
-        (entity = media_get_entity_by_name(device, "rkcif_lite_mipi_lvds", strlen("rkcif_lite_mipi_lvds"))) ||
-        (entity = media_get_entity_by_name(device, "rkcif_mipi_lvds", strlen("rkcif_mipi_lvds")))) {
+            (entity = media_get_entity_by_name(device, "rkcif_lite_mipi_lvds", strlen("rkcif_lite_mipi_lvds"))) ||
+            (entity = media_get_entity_by_name(device, "rkcif_mipi_lvds", strlen("rkcif_mipi_lvds")))) {
         strncpy(isp_info[index].linked_vicap, entity->info.name, sizeof(isp_info[index].linked_vicap));
     }
 
@@ -947,7 +947,7 @@ media_unref:
     /* Look for free isp&ispp link to fake camera */
     for (i = 0; i < 2; i++) {
         if (CamHwIsp20::mIspHwInfos.isp_info[i].valid &&
-            !CamHwIsp20::mIspHwInfos.isp_info[i].linked_sensor) {
+                !CamHwIsp20::mIspHwInfos.isp_info[i].linked_sensor) {
             rk_aiq_static_info_t *hwinfo = new rk_aiq_static_info_t();
             rk_sensor_full_info_t *fullinfo = new rk_sensor_full_info_t();
 
@@ -2610,19 +2610,22 @@ CamHwIsp20::overrideExpRatioToAiqResults(const sint32_t frameId,
         float nextRatioLS = 0;
         float nextRatioLM = 0;
         float curRatioLS = 0;
+
+        LOGD_CAMHW_SUBM(ISP20HW_SUBM, "LongFrameMode:%d \n", aiq_results->data()->ahdr_proc_res.LongFrameMode);
+
         if(aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_mode == 0 || aiq_results->data()->ahdr_proc_res.LongFrameMode)
         {
             nextRatioLS = 1;
             nextRatioLM = 1;
             curRatioLS = 1;
         }
-        else if(aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_mode == 1)
+        else if(aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_mode == 1 && !( aiq_results->data()->ahdr_proc_res.LongFrameMode))
         {
             nextRatioLS = nextLExpo / nextSExpo;
             nextRatioLM = 1;
             curRatioLS = curLExpo / curSExpo;
         }
-        else if(aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_mode == 2)
+        else if(aiq_results->data()->ahdr_proc_res.MgeProcRes.sw_hdrmge_mode == 2 && !( aiq_results->data()->ahdr_proc_res.LongFrameMode))
         {
             nextRatioLS = nextLExpo / nextSExpo;
             nextRatioLM = nextLExpo / nextMExpo;
@@ -3072,11 +3075,11 @@ CamHwIsp20::setIspParamsSync(int frameId)
     _mutex.lock();
     // merge all isp other params
     while (!_pending_isp_other_params_queue.empty()) {
-         aiqIspOtherResult = _pending_isp_other_params_queue.front();
+        aiqIspOtherResult = _pending_isp_other_params_queue.front();
         _pending_isp_other_params_queue.pop_front();
 
         ret = convertAiqOtherResultsToIsp20Params(update_params, aiqIspOtherResult,
-                                                  _lastAiqIspOtherResult);
+                _lastAiqIspOtherResult);
         if (ret != XCAM_RETURN_NO_ERROR) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "rkisp1_convert_results error\n");
         }
@@ -3091,7 +3094,7 @@ CamHwIsp20::setIspParamsSync(int frameId)
     // merge all isp meas params
     while (!_pending_isp_meas_params_queue.empty()) {
         aiqIspMeasResult = _pending_isp_meas_params_queue.front();
-         _pending_isp_meas_params_queue.pop_front();
+        _pending_isp_meas_params_queue.pop_front();
 
         if(aiqIspMeasResult->data()->update_mask & RKAIQ_ISP_AHDRTMO_ID) {
             ret = overrideExpRatioToAiqResults(frameId, RK_ISP2X_HDRTMO_ID,
@@ -3102,7 +3105,7 @@ CamHwIsp20::setIspParamsSync(int frameId)
         }
 
         ret = convertAiqMeasResultsToIsp20Params(update_params, aiqIspMeasResult,
-                                                 aiqIspOtherResult, _lastAiqIspMeasResult);
+                aiqIspOtherResult, _lastAiqIspMeasResult);
         if (ret != XCAM_RETURN_NO_ERROR) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "rkisp1_convert_results error\n");
         }
@@ -3116,7 +3119,7 @@ CamHwIsp20::setIspParamsSync(int frameId)
     }
 
     if (frameId > aiqIspMeasResult->data()->frame_id ||
-        frameId > aiqIspOtherResult->data()->frame_id)
+            frameId > aiqIspOtherResult->data()->frame_id)
         LOGW_CAMHW_SUBM(ISP20HW_SUBM, "isp stream sequence(%d) != aiq result params id(%d)\n",
                         frameId,  aiqIspMeasResult->data()->frame_id);
 
@@ -3403,7 +3406,7 @@ CamHwIsp20::setIsppParamsSync(int frameId)
     }
 
     if (_pending_ispp_meas_params_queue.empty() && \
-        _pending_ispp_other_params_queue.empty()) {
+            _pending_ispp_other_params_queue.empty()) {
         LOGW_CAMHW_SUBM(ISP20HW_SUBM,
                         "no new ispp %s params for frame %d !",
                         _pending_ispp_meas_params_queue.empty() ? "meas" : "other",
@@ -3459,7 +3462,7 @@ CamHwIsp20::setIsppParamsSync(int frameId)
 
             if (!isppMeasParams.ptr()) {
                 LOGW_CAMHW_SUBM(ISP20HW_SUBM, "frame(%d) aiq ispp meas result params is null\n",
-                        frameId);
+                                frameId);
                 isppMeasParams = _lastAiqIsppMeasResult;
             }
 
@@ -3472,8 +3475,8 @@ CamHwIsp20::setIsppParamsSync(int frameId)
 
             if (!isppOtherParams.ptr()) {
                 LOGW_CAMHW_SUBM(ISP20HW_SUBM, "frame(%d) aiq ispp other result params is null\n",
-                        frameId);
-                 isppOtherParams = _lastAiqIsppOtherResult;
+                                frameId);
+                isppOtherParams = _lastAiqIsppOtherResult;
             }
             _mutex.unlock();
 

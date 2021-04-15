@@ -182,8 +182,6 @@ void TmoGetCurrIOData
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_set_weightkey = (int)(pAhdrCtx->CurrHandleData.CurrTmoHandleData.LocalTmoStrength + 0.5);
 
     float lwscl = pAhdrCtx->CurrHandleData.CurrTmoHandleData.DetailsLowLight;
-    if(pAhdrCtx->SensorInfo.LongFrmMode)
-        lwscl = 16;
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_palpha_lwscl = (int)(lwscl + 0.5);
     pAhdrCtx->AhdrProcRes.TmoProcRes.sw_hdrtmo_maxgain = (int)(SHIFT12BIT(lwscl / 16) + 0.5);
 
