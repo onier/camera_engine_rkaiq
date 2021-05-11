@@ -102,7 +102,7 @@ static int reconstruct(int fd, int payload_size, char** payload_ptr) {
 
 static int persistBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
     int ret = 0;
-
+    LOGD("%s:%d", __func__, __LINE__);
     ret |= persist(fd,
             sizeof(bayernr->enable),
             (char*)(&bayernr->enable));
@@ -115,10 +115,12 @@ static int persistBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
     ret |= persist(fd,
             sizeof(CalibDb_BayerNr_ModeCell_t) * bayernr->mode_num,
             (char*)(bayernr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &bayernr->enable, sizeof(bayernr->enable)) <= 0)
         return -1;
@@ -130,10 +132,12 @@ static int reconstructBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_BayerNr_ModeCell_t) * bayernr->mode_num,
             (char**)(&bayernr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 static int persistUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(uvnr->enable),
@@ -147,10 +151,12 @@ static int persistUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
     ret |= persist(fd,
             sizeof(CalibDb_UVNR_ModeCell_t) * uvnr->mode_num,
             (char*)(uvnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &uvnr->enable, sizeof(uvnr->enable)) <= 0)
         return -1;
@@ -162,10 +168,12 @@ static int reconstructUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_UVNR_ModeCell_t) * uvnr->mode_num,
             (char**)(&uvnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 static int persistYnr(int fd, CalibDb_YNR_2_t* ynr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(ynr->enable),
@@ -179,10 +187,12 @@ static int persistYnr(int fd, CalibDb_YNR_2_t* ynr) {
     ret |= persist(fd,
             sizeof(CalibDb_YNR_ModeCell_t) * ynr->mode_num,
             (char*)(ynr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructYnr(int fd, CalibDb_YNR_2_t* ynr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &ynr->enable, sizeof(ynr->enable)) <= 0)
         return -1;
@@ -194,11 +204,13 @@ static int reconstructYnr(int fd, CalibDb_YNR_2_t* ynr) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_YNR_ModeCell_t) * ynr->mode_num,
             (char**)(&ynr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 
 static int persistMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(mfnr->enable),
@@ -207,19 +219,56 @@ static int persistMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
             sizeof(mfnr->version),
             (char*)(mfnr->version));
     ret |= persist(fd,
+            sizeof(mfnr->local_gain_en),
+            (char*)(&mfnr->local_gain_en));
+    ret |= persist(fd,
+            sizeof(mfnr->motion_detect_en),
+            (char*)(&mfnr->motion_detect_en));
+    ret |= persist(fd,
+            sizeof(mfnr->mode_3to1),
+            (char*)(&mfnr->mode_3to1));
+    ret |= persist(fd,
+            sizeof(mfnr->max_level),
+            (char*)(&mfnr->max_level));
+    ret |= persist(fd,
+            sizeof(mfnr->max_level_uv),
+            (char*)(&mfnr->max_level_uv));
+    ret |= persist(fd,
+            sizeof(mfnr->back_ref_num),
+            (char*)(&mfnr->back_ref_num));
+    ret |= persist(fd,
+            sizeof(mfnr->uv_ratio),
+            (char*)(mfnr->uv_ratio));
+    ret |= persist(fd,
             sizeof(mfnr->mode_num),
             (char*)(&mfnr->mode_num));
     ret |= persist(fd,
             sizeof(CalibDb_MFNR_ModeCell_t) * mfnr->mode_num,
             (char*)(mfnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &mfnr->enable, sizeof(mfnr->enable)) <= 0)
         return -1;
     if (read(fd, mfnr->version, sizeof(mfnr->version)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->local_gain_en, sizeof(mfnr->local_gain_en)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->motion_detect_en, sizeof(mfnr->motion_detect_en)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->mode_3to1, sizeof(mfnr->mode_3to1)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->max_level, sizeof(mfnr->max_level)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->max_level_uv, sizeof(mfnr->max_level_uv)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->back_ref_num, sizeof(mfnr->back_ref_num)) <= 0)
+        return -1;
+    if (read(fd, mfnr->uv_ratio, sizeof(mfnr->uv_ratio)) <= 0)
         return -1;
     if (read(fd, &mfnr->mode_num, sizeof(mfnr->mode_num)) <= 0)
         return -1;
@@ -227,10 +276,12 @@ static int reconstructMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_MFNR_ModeCell_t) * mfnr->mode_num,
             (char**)(&mfnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 static int persistSharp(int fd, CalibDb_Sharp_2_t* sharp) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(sharp->enable),
@@ -239,19 +290,26 @@ static int persistSharp(int fd, CalibDb_Sharp_2_t* sharp) {
             sizeof(sharp->version),
             (char*)(sharp->version));
     ret |= persist(fd,
+            sizeof(sharp->luma_point),
+            (char*)(sharp->luma_point));
+    ret |= persist(fd,
             sizeof(sharp->mode_num),
             (char*)(&sharp->mode_num));
     ret |= persist(fd,
             sizeof(CalibDb_Sharp_ModeCell_t) * sharp->mode_num,
             (char*)(sharp->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructSharp(int fd, CalibDb_Sharp_2_t* sharp) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &sharp->enable, sizeof(sharp->enable)) <= 0)
         return -1;
     if (read(fd, sharp->version, sizeof(sharp->version)) <= 0)
+        return -1;
+    if (read(fd, sharp->luma_point, sizeof(sharp->luma_point)) <= 0)
         return -1;
     if (read(fd, &sharp->mode_num, sizeof(sharp->mode_num)) <= 0)
         return -1;
@@ -259,10 +317,12 @@ static int reconstructSharp(int fd, CalibDb_Sharp_2_t* sharp) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_Sharp_ModeCell_t) * sharp->mode_num,
             (char**)(&sharp->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 static int persistEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(ef->enable),
@@ -271,19 +331,26 @@ static int persistEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
             sizeof(ef->version),
             (char*)(ef->version));
     ret |= persist(fd,
+            sizeof(ef->luma_point),
+            (char*)(ef->luma_point));
+    ret |= persist(fd,
             sizeof(ef->mode_num),
             (char*)(&ef->mode_num));
     ret |= persist(fd,
             sizeof(CalibDb_EdgeFilter_ModeCell_t) * ef->mode_num,
             (char*)(ef->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &ef->enable, sizeof(ef->enable)) <= 0)
         return -1;
     if (read(fd, ef->version, sizeof(ef->version)) <= 0)
+        return -1;
+    if (read(fd, ef->luma_point, sizeof(ef->luma_point)) <= 0)
         return -1;
     if (read(fd, &ef->mode_num, sizeof(ef->mode_num)) <= 0)
         return -1;
@@ -291,10 +358,12 @@ static int reconstructEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_EdgeFilter_ModeCell_t) * ef->mode_num,
             (char**)(&ef->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
     return ret;
 }
 
 static int persistLsc(int fd, CalibDb_Lsc_t* lsc) {
+    LOGD("%s:%d", __func__, __LINE__);
     int ret = 0;
     ret |= persist(fd,
             sizeof(lsc->enable),
@@ -311,10 +380,12 @@ static int persistLsc(int fd, CalibDb_Lsc_t* lsc) {
     ret |= persist(fd,
             sizeof(CalibDb_LscTableProfile_t) * lsc->tableAllNum,
             (char*)(lsc->tableAll));
+    LOGD("%s:%d", __func__, __LINE__);
    return ret;
 }
 
 static int reconstructLsc(int fd, CalibDb_Lsc_t* lsc) {
+    LOGE("%s:%d", __func__, __LINE__);
     int ret = 0;
     if (read(fd, &lsc->enable, sizeof(lsc->enable)) <= 0)
         return -1;
@@ -328,6 +399,7 @@ static int reconstructLsc(int fd, CalibDb_Lsc_t* lsc) {
     ret |= reconstruct(fd,
             sizeof(CalibDb_LscTableProfile_t) * lsc->tableAllNum,
             (char**)(&lsc->tableAll));
+    LOGE("%s:%d", __func__, __LINE__);
     return ret;
 }
 
