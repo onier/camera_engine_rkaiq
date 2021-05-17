@@ -2119,7 +2119,7 @@ bool RkAiqCalibParser::parseEntrySensorAwb
     XML_CHECK_END();
 
     DCT_ASSERT((mCalibDb->awb.stategy_cfg.lightNum == mCalibDb->awb.measure_para_v200.lightNum));
-    DCT_ASSERT((mCalibDb->awb.stategy_cfg.lightNum == mCalibDb->awb.measure_para_v201.lightNum));
+    //DCT_ASSERT((mCalibDb->awb.stategy_cfg.lightNum == mCalibDb->awb.measure_para_v201.lightNum));
     //v201 to do
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     autoTabBackward();
@@ -3515,7 +3515,7 @@ bool RkAiqCalibParser::parseEntrySensorAwbLightYUVRegion
 
     XML_CHECK_END();
 
-    DCT_ASSERT((index <= CALD_AWB_EXCRANGE_NUM_MAX));
+    DCT_ASSERT((index <= CALD_AWB_LS_NUM_MAX));
     LOGD("%s(%d): (exit)\n", __FUNCTION__, __LINE__);
     return (true);
 
