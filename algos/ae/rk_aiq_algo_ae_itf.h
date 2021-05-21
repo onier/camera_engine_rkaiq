@@ -58,7 +58,7 @@
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.7"
+#define RKISP_ALGO_AE_VERSION     "v0.1.7.2"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 
