@@ -1,6 +1,13 @@
 #ifndef _MOTION_DETECT_H
 #define _MOTION_DETECT_H
 
+#if defined(__linux__)
+#include <sys/stat.h>
+#include<unistd.h>
+#elif defined(_WIN32)
+#include "direct.h"
+#include "io.h"
+#endif
 #ifndef WIN32
 #include "arm_neon.h"
 #else
@@ -40,18 +47,23 @@
 #define		SIGMA_FILTER_RADIUS_X				4
 #define		SIGMA_FILTER_RADIUS_Y				4
 
+#define		SIGMA_SCALE_DIV_FIX_BITS			6
+#define 	SIGMA_FIX_BITS						5
+#define		SIGMA_DIV_FIX_BITS					13
 #define		ALPHA_FIX_BITS						7
 #define		UV_RATIO_FIX_BITS					7
 #define		ALPHA_DIV_FIX_BITS					(7 + 7)
-
+#define 	RATIO_DIV_FIX_BITS					12
+#define 	YUV_SCALE_FIX_BITS					8
+#define		GAIN_WR_DIV_FIX_BITS				5
 #define 	RATIO_BITS_NUM 						7
 #define 	RATIO_BITS_R_NUM 					5
-
+#define		GAIN_MIN_VAL						1
 
 
 #define		MT_VERSION 							1
 #define		ENABLE_NEON
-
+#define JMJ_TEST_OUT
 void motion_detect(
 	uint8_t *pCurIn,
 	uint8_t *pPreIn,
@@ -67,8 +79,9 @@ void motion_detect(
 	float	sigmaHScale,
 	float	sigmaLScale,
 	float	uv_ratio,
-	float	light_clip,
-	int 	static_ratio_r_bit);
+	int 	static_ratio_r_bit,
+	int		wr_flg = 0,
+	int		wr_flg_last = 0);
 
 
 #endif
