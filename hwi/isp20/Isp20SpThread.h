@@ -151,11 +151,11 @@ private:
     int sync_pipe_fd[2];
     SafeList<sp_msg_t>  _notifyYgCmdQ;
     const CamCalibDbContext_t *_calibDb;
-    int _isp_fd_array[16];
-    uint32_t _isp_idx_array[16];
+    int _isp_fd_array[ISP2X_FBCBUF_FD_NUM];
+    uint32_t _isp_idx_array[ISP2X_FBCBUF_FD_NUM];
     int _isp_buf_num;
-    int _ispp_fd_array[16];
-    uint32_t _ispp_idx_array[16];
+    int _ispp_fd_array[TNR_BUF_IDXFD_NUM];
+    uint32_t _ispp_idx_array[TNR_BUF_IDXFD_NUM];
     int _ispp_buf_num;
     bool _fd_init_flag;
 
