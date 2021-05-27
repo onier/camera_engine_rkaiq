@@ -3352,6 +3352,23 @@ CamHwIsp20::setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherPar
     _pending_ispp_other_params_queue.push_back(isppOtherParams);
     _mutex.unlock();
 
+    if (_state == CAM_HW_STATE_PREPARED || _state == CAM_HW_STATE_STOPPED ||
+        _state == CAM_HW_STATE_PAUSED) {
+        LOGD_CAMHW_SUBM(ISP20HW_SUBM, "hdr-debug: %s: first set isppParams id[%d]\n",
+            __func__, isppOtherParams->data()->frame_id);
+            if (!mIsppParamsDev->is_activated()) {
+                ret = mIsppParamsDev->start();
+                if (ret < 0) {
+                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare ispp params dev err: %d\n", ret);
+            }
+        }
+        setIsppParamsSync(isppOtherParams->data()->frame_id);
+    }
+
+    if (RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode) == RK_AIQ_WORKING_MODE_NORMAL &&
+        mNormalNoReadBack)
+        setIsppParamsSync(isppOtherParams->data()->frame_id);
+
     EXIT_CAMHW_FUNCTION();
     return ret;
 }
