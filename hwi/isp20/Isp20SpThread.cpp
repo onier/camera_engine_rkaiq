@@ -979,7 +979,7 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
    // if((num%30)==0)
    //     printf("test_fpscr %x\n",test_fpscr);
     num++;
-	int offsetX_last    = gain_blk_ispp_stride - 8;
+	int offsetX_last    = gain_blk_ispp_w - 8;
     int prefetch_num    = (ratio_stride  + 255) / 256;
   //  for(int k = 0;k<20;k++)
 
