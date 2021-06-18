@@ -246,9 +246,14 @@ public:
     XCamReturn Oneshot();
     XCamReturn ManualTriger();
     XCamReturn Tracking();
-    XCamReturn setZoomPos(int zoom_pos);
+    XCamReturn setZoomIndex(int index);
+    XCamReturn getZoomIndex(int *index);
+    XCamReturn endZoomChg();
+    XCamReturn startZoomCalib();
+    XCamReturn resetZoom();
     XCamReturn GetSearchPath(rk_aiq_af_sec_path_t* path);
     XCamReturn GetSearchResult(rk_aiq_af_result_t* result);
+    XCamReturn GetFocusRange(rk_aiq_af_focusrange* range);
 
 protected:
     virtual void init();
@@ -256,10 +261,13 @@ protected:
         RkAiqAfHandle::deInit();
     };
 private:
-    // TODO
+    bool getValueFromFile(const char* path, int *pos);
+
     rk_aiq_af_attrib_t mCurAtt;
     rk_aiq_af_attrib_t mNewAtt;
     bool isUpdateAttDone;
+    bool isUpdateZoomPosDone;
+    int mLastZoomIndex;
 };
 
 class RkAiqAdebayerHandleInt:

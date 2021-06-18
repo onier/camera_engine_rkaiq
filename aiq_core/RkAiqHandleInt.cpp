@@ -19,6 +19,7 @@
 
 #include "RkAiqHandleInt.h"
 #include "RkAiqCore.h"
+#include <fcntl.h>
 
 namespace RkCam {
 
@@ -615,7 +616,7 @@ RkAiqAeHandleInt::preProcess()
 
     comb->ae_pre_res = NULL;
 
-    ae_pre_int->ispAeStats = &ispStats->aec_stats;
+    ae_pre_int->ae_pre_com.ispAeStats = &ispStats->aec_stats;
 
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->pre_process(mPreInParam, mPreOutParam);
@@ -1013,6 +1014,7 @@ RkAiqAfHandleInt::init()
     mProcOutParam = (RkAiqAlgoResCom*)(new RkAiqAlgoProcResAfInt());
     mPostInParam  = (RkAiqAlgoCom*)(new RkAiqAlgoPostAfInt());
     mPostOutParam = (RkAiqAlgoResCom*)(new RkAiqAlgoPostResAfInt());
+    mLastZoomIndex = 0;
 
     EXIT_ANALYZER_FUNCTION();
 }
@@ -1144,13 +1146,79 @@ RkAiqAfHandleInt::Tracking()
 }
 
 XCamReturn
-RkAiqAfHandleInt::setZoomPos(int zoom_pos)
+RkAiqAfHandleInt::setZoomIndex(int index)
 {
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    rk_aiq_uapi_af_setZoomPos(mAlgoCtx, zoom_pos);
+    mCfgMutex.lock();
+    rk_aiq_uapi_af_setZoomIndex(mAlgoCtx, index);
+    isUpdateZoomPosDone = true;
+    waitSignal();
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::getZoomIndex(int *index)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_af_getZoomIndex(mAlgoCtx, index);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::endZoomChg()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    mCfgMutex.lock();
+    rk_aiq_uapi_af_endZoomChg(mAlgoCtx);
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::startZoomCalib()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    mCfgMutex.lock();
+    rk_aiq_uapi_af_startZoomCalib(mAlgoCtx);
+    isUpdateZoomPosDone = true;
+    waitSignal();
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::resetZoom()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    mCfgMutex.lock();
+    rk_aiq_uapi_af_resetZoom(mAlgoCtx);
+    isUpdateZoomPosDone = true;
+    waitSignal();
+    mCfgMutex.unlock();
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -1177,6 +1245,19 @@ RkAiqAfHandleInt::GetSearchResult(rk_aiq_af_result_t* result)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     rk_aiq_uapi_af_getSearchResult(mAlgoCtx, result);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::GetFocusRange(rk_aiq_af_focusrange* range)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_af_getFocusRange(mAlgoCtx, range);
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -1243,6 +1324,33 @@ RkAiqAfHandleInt::preProcess()
     return XCAM_RETURN_NO_ERROR;
 }
 
+bool RkAiqAfHandleInt::getValueFromFile(const char* path, int *pos)
+{
+    const char *delim = " ";
+    char buffer[16] = {0};
+    int fp;
+
+    fp = open(path, O_RDONLY | O_SYNC);
+    if (fp != -1) {
+        if (read(fp, buffer, sizeof(buffer)) <= 0) {
+            LOGE_AF("%s read %s failed!", __func__, path);
+            goto OUT;
+        } else {
+            char *p = nullptr;
+
+            p = strtok(buffer, delim);
+            if (p != nullptr) {
+                *pos = atoi(p);
+            }
+        }
+        close(fp);
+        return true;
+    }
+
+OUT:
+    return false;
+}
+
 XCamReturn
 RkAiqAfHandleInt::processing()
 {
@@ -1256,6 +1364,19 @@ RkAiqAfHandleInt::processing()
     RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
     RkAiqProcResComb* comb = &shared->procResComb;
     RkAiqIspStats* ispStats = &shared->ispStats;
+
+#define ZOOM_MOVE_DEBUG
+#ifdef ZOOM_MOVE_DEBUG
+    int zoom_index = 0;
+
+    if (getValueFromFile("/tmp/.zoom_pos", &zoom_index) == true) {
+        if (mLastZoomIndex != zoom_index) {
+            setZoomIndex(zoom_index);
+            endZoomChg();
+            mLastZoomIndex = zoom_index;
+        }
+    }
+#endif
 
     ret = RkAiqAfHandle::processing();
     if (ret) {
@@ -1308,6 +1429,11 @@ RkAiqAfHandleInt::postProcess()
         mCurAtt = mNewAtt;
         updateAtt = false;
         isUpdateAttDone = false;
+        sendSignal();
+    }
+
+    if (isUpdateZoomPosDone) {
+        isUpdateZoomPosDone = false;
         sendSignal();
     }
 
@@ -3404,32 +3530,60 @@ RkAiqAccmHandleInt::processing()
     } else {
         LOGE("fail to get awb gain form AWB module,use default value ");
     }
-    RkAiqAlgoPreResAeInt *ae_int = (RkAiqAlgoPreResAeInt*)shared->preResComb.ae_pre_res;
-    if( ae_int) {
-        if(shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.isp_dgain;
-        } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
-                  && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
-            LOGD("%sensor gain choose from second hdr frame for accm");
-            accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.isp_dgain;
-        } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
-                  && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
-            LOGD("sensor gain choose from third hdr frame for accm");
-            accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.isp_dgain;
+    // id != 0 means the thirdparty's algo
+    if (mDes->id != 0) {
+        RkAiqAlgoPreResAeInt *ae_int = (RkAiqAlgoPreResAeInt*)shared->preResComb.ae_pre_res;
+        if( ae_int) {
+            if(shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("%sensor gain choose from second hdr frame for accm");
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from third hdr frame for accm");
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.isp_dgain;
+            } else {
+                LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
+                     shared->working_mode);
+            }
         } else {
-            LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
-                 shared->working_mode);
+            LOGE("fail to get sensor gain form AE module,use default value ");
         }
     } else {
-        LOGE("fail to get sensor gain form AE module,use default value ");
+        RkAiqAlgoPreResAe *ae_int = (RkAiqAlgoPreResAe*)shared->preResComb.ae_pre_res;
+        if( ae_int) {
+            if(shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res.LinearExp.exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.LinearExp.exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.LinearExp.exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("%sensor gain choose from second hdr frame for accm");
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res.HdrExp[1].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.HdrExp[1].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.HdrExp[1].exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from third hdr frame for accm");
+                accm_proc_int->accm_sw_info.sensorGain = ae_int->ae_pre_res.HdrExp[2].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.HdrExp[2].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.HdrExp[2].exp_real_params.isp_dgain;
+            } else {
+                LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
+                     shared->working_mode);
+            }
+        } else {
+            LOGE("fail to get sensor gain form AE module,use default value ");
+        }
     }
-
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->processing(mProcInParam, mProcOutParam);
     RKAIQCORE_CHECK_RET(ret, "accm algo processing failed");
@@ -5367,32 +5521,60 @@ RkAiqAlscHandleInt::processing()
     } else {
         LOGE("fail to get awb gain form AWB module,use default value ");
     }
-    RkAiqAlgoPreResAeInt *ae_int = (RkAiqAlgoPreResAeInt*)shared->preResComb.ae_pre_res;
-    if( ae_int) {
-        if((rk_aiq_working_mode_t)shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.isp_dgain;
-        } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
-                  && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
-            LOGD("sensor gain choose from second hdr frame for alsc");
-            alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.isp_dgain;
-        } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
-                  && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
-            LOGD("sensor gain choose from third hdr frame for alsc");
-            alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.digital_gain
-                    * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.isp_dgain;
+    // id != 0 means the thirdparty's algo
+    if (mDes->id != 0) {
+        RkAiqAlgoPreResAe *ae_int = (RkAiqAlgoPreResAe*)shared->preResComb.ae_pre_res;
+        if( ae_int) {
+            if((rk_aiq_working_mode_t)shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res.LinearExp.exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.LinearExp.exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.LinearExp.exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from second hdr frame for alsc");
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res.HdrExp[1].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.HdrExp[1].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.HdrExp[1].exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from third hdr frame for alsc");
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res.HdrExp[2].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res.HdrExp[2].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res.HdrExp[2].exp_real_params.isp_dgain;
+            } else {
+                LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
+                     shared->working_mode);
+            }
         } else {
-            LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
-                 shared->working_mode);
+            LOGE("fail to get sensor gain form AE module,use default value ");
         }
     } else {
-        LOGE("fail to get sensor gain form AE module,use default value ");
+        RkAiqAlgoPreResAeInt *ae_int = (RkAiqAlgoPreResAeInt*)shared->preResComb.ae_pre_res;
+        if( ae_int) {
+            if((rk_aiq_working_mode_t)shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.LinearExp.exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from second hdr frame for alsc");
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[1].exp_real_params.isp_dgain;
+            } else if((rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2
+                      && (rk_aiq_working_mode_t)shared->working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)  {
+                LOGD("sensor gain choose from third hdr frame for alsc");
+                alsc_proc_int->alsc_sw_info.sensorGain = ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.digital_gain
+                        * ae_int->ae_pre_res_rk.HdrExp[2].exp_real_params.isp_dgain;
+            } else {
+                LOGE("working_mode (%d) is invaild ,fail to get sensor gain form AE module,use default value ",
+                     shared->working_mode);
+            }
+        } else {
+            LOGE("fail to get sensor gain form AE module,use default value ");
+        }
     }
-
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->processing(mProcInParam, mProcOutParam);
     RKAIQCORE_CHECK_RET(ret, "alsc algo processing failed");

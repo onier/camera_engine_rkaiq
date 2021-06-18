@@ -61,11 +61,123 @@ XCamReturn RkAiqHandle::configInparamsCom(RkAiqAlgoCom* com, int type)
         com->u.prepare.sns_op_height = shared->snsDes.isp_acq_height;
         com->u.prepare.conf_type = shared->conf_type;
     } else {
+        RkAiqHandle* handle =
+        const_cast<RkAiqHandle*>(mAiqCore->getAiqAlgoHandle(RK_AIQ_ALGO_TYPE_AE));
+        com->u.prepare.ae_algo_id = handle->getAlgoId();
         com->ctx = mAlgoCtx;
         com->frame_id = shared->frameId;
         com->u.proc.init = shared->init;
-    }
 
+        RkAiqAlgoComExt* ext_com = NULL;
+#define GET_EXT_PROC_COM(algo) \
+        { \
+            if (type == RKAIQ_CONFIG_COM_PROC) \
+                ext_com = &(((RkAiqAlgoProc##algo *)com)->com_ext); \
+        } \
+
+#define GET_EXT_PRE_COM(algo) \
+        { \
+            if (type == RKAIQ_CONFIG_COM_PRE) \
+                ext_com = &(((RkAiqAlgoPre##algo *)com)->com_ext); \
+        } \
+
+        switch (mDes->type) {
+        case RK_AIQ_ALGO_TYPE_AE:
+            GET_EXT_PROC_COM(Ae);
+            break;
+        case RK_AIQ_ALGO_TYPE_AWB:
+            //GET_EXT_PROC_COM(Awb);
+            break;
+        case RK_AIQ_ALGO_TYPE_AF:
+            //GET_EXT_PROC_COM(Af);
+            break;
+        case RK_AIQ_ALGO_TYPE_ABLC:
+            GET_EXT_PROC_COM(Ablc);
+            break;
+        case RK_AIQ_ALGO_TYPE_ADPCC:
+            GET_EXT_PROC_COM(Adpcc);
+            break;
+        case RK_AIQ_ALGO_TYPE_AHDR:
+            GET_EXT_PROC_COM(Ahdr);
+            break;
+        case RK_AIQ_ALGO_TYPE_ANR:
+            GET_EXT_PROC_COM(Anr);
+            break;
+        case RK_AIQ_ALGO_TYPE_ALSC:
+            //GET_EXT_PROC_COM(Alsc);
+            break;
+        case RK_AIQ_ALGO_TYPE_AGIC:
+            GET_EXT_PROC_COM(Agic);
+            break;
+        case RK_AIQ_ALGO_TYPE_ADEBAYER:
+            GET_EXT_PROC_COM(Adebayer);
+            break;
+        case RK_AIQ_ALGO_TYPE_ACCM:
+            //GET_EXT_PROC_COM(Accm);
+            break;
+        case RK_AIQ_ALGO_TYPE_AGAMMA:
+            //GET_EXT_PROC_COM(Agamma);
+            break;
+        case RK_AIQ_ALGO_TYPE_ADEGAMMA:
+            //GET_EXT_PROC_COM(Adegamma);
+            break;
+        case RK_AIQ_ALGO_TYPE_AWDR:
+            //GET_EXT_PROC_COM(Awdr);
+            break;
+        case RK_AIQ_ALGO_TYPE_ADHAZ:
+            GET_EXT_PROC_COM(Adhaz);
+            break;
+        case RK_AIQ_ALGO_TYPE_A3DLUT:
+            //GET_EXT_PROC_COM(A3dlut);
+            break;
+        case RK_AIQ_ALGO_TYPE_ALDCH:
+            //GET_EXT_PROC_COM(Aldch);
+            break;
+        case RK_AIQ_ALGO_TYPE_AR2Y:
+            //GET_EXT_PROC_COM(Ar2y);
+            break;
+        case RK_AIQ_ALGO_TYPE_ACP:
+            //GET_EXT_PROC_COM(Acp);
+            break;
+        case RK_AIQ_ALGO_TYPE_AIE:
+            //GET_EXT_PROC_COM(Aie);
+            break;
+        case RK_AIQ_ALGO_TYPE_ASHARP:
+            GET_EXT_PROC_COM(Asharp);
+            break;
+        case RK_AIQ_ALGO_TYPE_AORB:
+            //GET_EXT_PROC_COM(Aorb);
+            break;
+        case RK_AIQ_ALGO_TYPE_AFEC:
+            //GET_EXT_PROC_COM(Afec);
+            break;
+        case RK_AIQ_ALGO_TYPE_ACGC:
+            //GET_EXT_PROC_COM(Acgc);
+            break;
+        case RK_AIQ_ALGO_TYPE_ASD:
+            GET_EXT_PRE_COM(Asd);
+            break;
+
+        default:
+            LOGE_ANALYZER("wrong algo type 0x%x, des type: %d !", type, mDes->type);
+        }
+
+        if (!ext_com)
+            goto out;
+
+        xcam_mem_clear(*ext_com);
+
+        ext_com->u.proc.pre_res_comb = &shared->preResComb;
+        ext_com->u.proc.proc_res_comb = &shared->procResComb;
+        ext_com->u.proc.post_res_comb = &shared->postResComb;
+        ext_com->u.proc.fill_light_on = shared->fill_light_on;
+        ext_com->u.proc.gray_mode = shared->gray_mode;
+        ext_com->u.proc.is_bw_sensor = shared->is_bw_sensor;
+        ext_com->u.proc.iso = shared->iso;
+        ext_com->u.proc.preExp = &shared->preExp;
+        ext_com->u.proc.curExp = &shared->curExp;
+    }
+out:
     EXIT_ANALYZER_FUNCTION();
 
     return XCAM_RETURN_NO_ERROR;
@@ -209,8 +321,10 @@ RkAiqAeHandle::preProcess()
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     RkAiqAlgoPreAe* ae_pre = (RkAiqAlgoPreAe*)mPreInParam;
+    RkAiqAlgoPreResAe* ae_pre_res = (RkAiqAlgoPreResAe*)mPreOutParam;
     RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
     RkAiqIspStats* ispStats = &shared->ispStats;
+    RkAiqPreResComb* comb = &shared->preResComb;
 
     ret = RkAiqHandle::preProcess();
     RKAIQCORE_CHECK_RET(ret, "ae handle preProcess failed");
@@ -221,14 +335,15 @@ RkAiqAeHandle::preProcess()
     }
 
     // TODO config common ae preprocess params
-
+    ae_pre->ispAeStats = &ispStats->aec_stats;
     // id != 0 means the thirdparty's algo
     if (mDes->id != 0) {
         ret = des->pre_process(mPreInParam, mPreOutParam);
         RKAIQCORE_CHECK_RET(ret, "ae handle pre_process failed");
+        // set result to mAiqCore
+        comb->ae_pre_res = (RkAiqAlgoPreResAe*)ae_pre_res;
+        EXIT_ANALYZER_FUNCTION();
     }
-
-    EXIT_ANALYZER_FUNCTION();
     return ret;
 }
 
@@ -238,8 +353,10 @@ RkAiqAeHandle::processing()
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     RkAiqAlgoProcAe* ae_proc = (RkAiqAlgoProcAe*)mProcInParam;
+    RkAiqAlgoProcResAe* ae_proc_res = (RkAiqAlgoProcResAe*)mProcOutParam;
     RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
     RkAiqIspStats* ispStats = &shared->ispStats;
+    RkAiqProcResComb* comb = &shared->procResComb;
 
     ret = RkAiqHandle::processing();
     RKAIQCORE_CHECK_RET(ret, "ae handle processing failed");
@@ -251,14 +368,13 @@ RkAiqAeHandle::processing()
 
     // TODO config common ae processing params
     ae_proc->ispAeStats = &ispStats->aec_stats;
-
     // id != 0 means the thirdparty's algo
     if (mDes->id != 0) {
         ret = des->processing(mProcInParam, mProcOutParam);
         RKAIQCORE_CHECK_RET(ret, "ae algo processing failed");
+        comb->ae_proc_res = (RkAiqAlgoProcResAe*)ae_proc_res;
+        EXIT_ANALYZER_FUNCTION();
     }
-
-    EXIT_ANALYZER_FUNCTION();
     return ret;
 }
 
@@ -269,8 +385,10 @@ RkAiqAeHandle::postProcess()
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     RkAiqAlgoPostAe* ae_post = (RkAiqAlgoPostAe*)mPostInParam;
+    RkAiqAlgoPostResAe* ae_post_res = (RkAiqAlgoPostResAe*)mPostOutParam;
     RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
     RkAiqIspStats* ispStats = &shared->ispStats;
+    RkAiqPostResComb* comb = &shared->postResComb;
 
     ret = RkAiqHandle::postProcess();
     RKAIQCORE_CHECK_RET(ret, "ae handle postProcess failed");
@@ -286,6 +404,8 @@ RkAiqAeHandle::postProcess()
     if (mDes->id != 0) {
         ret = des->post_process(mPostInParam, mPostOutParam);
         RKAIQCORE_CHECK_RET(ret, "ae algo postProcess failed");
+        // set result to mAiqCore
+        comb->ae_post_res = (RkAiqAlgoPostResAe*)ae_post_res;
     }
 
     EXIT_ANALYZER_FUNCTION();

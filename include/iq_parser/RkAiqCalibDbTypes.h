@@ -10,9 +10,10 @@
 #define CALIBDB_NR_SHARP_SETTING_LEVEL 6
 #define CALIBDB_MAX_MODE_NUM 5
 #define CALIBDB_MAX_MODE_NAME_LENGTH (20)
-#define CALIBDB_ZOOM_FOCUS_TBL_SIZE 10240
 #define CALIBDB_DEGAMMA_CRUVE_KNOTS 17
-
+#define CALIBDB_ZOOM_FOCUS_POSITION_NUM 32
+#define CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE 32
+#define CALIBDB_AF_CORRECT_SEARCHTBL_MAX  100
 
 /*****************************************************************************/
 /**
@@ -1881,8 +1882,20 @@ typedef struct CalibDb_Af_Contrast_s {
     CalibDb_Af_SearchDir_t  AdaptiveDir;
     unsigned char           AdaptiveSteps;
     unsigned short          AdaptRangeTbl[65];                /**< adaptive range search table*/
-    float                   TrigThers;                    /**< AF trigger threshold */
+    unsigned short          QuickFoundThersZoomIdx[256];
+    float                   QuickFoundThers[256];
+    unsigned short          QuickFoundThersNum;
+    unsigned short          SearchStepZoomIdx[256];
+    unsigned short          SearchStep[256];
+    unsigned short          SearchStepNum;
+    unsigned short          StopStepZoomIdx[256];
+    unsigned short          StopStep[256];
+    unsigned short          StopStepNum;
+    float                   TrigThers[32];                    /**< AF trigger threshold */
+    float                   TrigThersFv[32];
+    unsigned char           TrigThersNums;
     float                   LumaTrigThers;
+    float                   ExpTrigThers;
 
     float                   StableThers;                  /**< AF stable threshold */
     unsigned short          StableFrames;                 /**< AF stable  status must hold frames */
@@ -1940,11 +1953,46 @@ typedef struct CalibDb_Af_DefCode_s {
 
 typedef struct CalibDb_Af_ZoomFocusTbl_s {
     int tbl_len;
-    float focal_length[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int zoom_pos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int focus_infpos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int focus_macropos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
+    int focuspos_len;
+    int widemod_deviate;
+    int telemod_deviate;
+    int zoom_move_tbl_len;
+    int zoom_move_dot[CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE];
+    int zoom_move_step[CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE];
+    float *focal_length;
+    signed short *zoomcode;
+    float focuspos[CALIBDB_ZOOM_FOCUS_POSITION_NUM];
+    signed short *focuscode[CALIBDB_ZOOM_FOCUS_POSITION_NUM];
+
+    int ZoomSearchTbl[CALIBDB_AF_CORRECT_SEARCHTBL_MAX];
+    int ZoomSearchTblNum;
+    int ZoomSearchRefCurveIdx;
+    int FocusSearchMargin;
+    int FocusSearchPlusRange[CALIBDB_AF_CORRECT_SEARCHTBL_MAX];
+    int FocusStage1Step;
+    int searchZoomRange;
+    int searchFocusRange;
+    float searchEmax;
+    float searchEavg;
+
+    unsigned char IsZoomFocusRec;
+    char ZoomFocusRecDir[256];
 } CalibDb_Af_ZoomFocusTbl_t;
+
+typedef struct CalibDb_Af_LdgParam_s {
+    unsigned char enable;
+    int ldg_xl;
+    int ldg_yl;
+    int ldg_kl;
+    int ldg_xh;
+    int ldg_yh;
+    int ldg_kh;
+} CalibDb_Af_LdgParam_t;
+
+typedef struct CalibDb_Af_HighLightParam_s {
+    int ther0;
+    int ther1;
+} CalibDb_Af_HighLightParam_t;
 
 typedef struct CalibDb_AF_s {
     signed char af_mode;
@@ -1955,6 +2003,8 @@ typedef struct CalibDb_AF_s {
     CalibDb_Af_DefCode_t fixed_mode;
     CalibDb_Af_DefCode_t macro_mode;
     CalibDb_Af_DefCode_t infinity_mode;
+    CalibDb_Af_LdgParam_t ldg_param;
+    CalibDb_Af_HighLightParam_t highlight;
     CalibDb_Af_Contrast_t contrast_af;
     CalibDb_Af_Laser_t laser_af;
     CalibDb_Af_Pdaf_t pdaf;

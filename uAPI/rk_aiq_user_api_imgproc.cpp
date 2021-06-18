@@ -212,8 +212,7 @@ XCamReturn rk_aiq_uapi_getAeMode(const rk_aiq_sys_ctx_t* ctx, aeMode_t *mode)
 * Desc: set exposure parameter
 * Argument:
 *    auto exposure mode:
-*      exposure gain will be adjust between [gain->min, gain->max]ï¼›
-*    manual exposure mode:
+*      exposure gain will be adjust between [gain->min, gain->max]ï¼?*    manual exposure mode:
 *      gain->min == gain->max
 *
 *****************************
@@ -286,8 +285,7 @@ XCamReturn rk_aiq_uapi_getExpGainRange(const rk_aiq_sys_ctx_t* ctx, paRange_t *g
 * Desc: set exposure parameter
 * Argument:
 *    auto exposure mode:
-*       exposure time will be adjust between [time->min, time->max]ï¼›
-*    manual exposure mode:
+*       exposure time will be adjust between [time->min, time->max]ï¼?*    manual exposure mode:
 *       exposure time will be set gain->min == gain->max;
 *
 *****************************
@@ -1208,7 +1206,7 @@ XCamReturn rk_aiq_uapi_getFocusMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode)
 *
 *****************************
 */
-XCamReturn rk_aiq_uapi_setFixedModeCode(const rk_aiq_sys_ctx_t* ctx, unsigned short code)
+XCamReturn rk_aiq_uapi_setFixedModeCode(const rk_aiq_sys_ctx_t* ctx, short code)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     rk_aiq_af_attrib_t attr;
@@ -1223,7 +1221,7 @@ XCamReturn rk_aiq_uapi_setFixedModeCode(const rk_aiq_sys_ctx_t* ctx, unsigned sh
     return ret;
 }
 
-XCamReturn rk_aiq_uapi_getFixedModeCode(const rk_aiq_sys_ctx_t* ctx, unsigned short *code)
+XCamReturn rk_aiq_uapi_getFixedModeCode(const rk_aiq_sys_ctx_t* ctx, short *code)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     rk_aiq_af_attrib_t attr;
@@ -1485,11 +1483,12 @@ XCamReturn rk_aiq_uapi_getOpZoomSpeed(const rk_aiq_sys_ctx_t* ctx, unsigned int 
 *
 *****************************
 */
+
 XCamReturn rk_aiq_uapi_setOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int pos)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     IMGPROC_FUNC_ENTER
-    ret = rk_aiq_user_api_af_SetZoomPos(ctx, pos);
+    ret = rk_aiq_user_api_af_SetZoomIndex(ctx, pos);
     IMGPROC_FUNC_EXIT
 
     return ret;
@@ -1499,7 +1498,18 @@ XCamReturn rk_aiq_uapi_getOpZoomPosition(const rk_aiq_sys_ctx_t* ctx, int *pos)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     IMGPROC_FUNC_ENTER
-    ret = rk_aiq_user_api_af_GetZoomPos(ctx, pos);
+    ret = rk_aiq_user_api_af_GetZoomIndex(ctx, pos);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_endOpZoomChange(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_EndZoomChg(ctx);
     IMGPROC_FUNC_EXIT
 
     return ret;
@@ -1515,6 +1525,16 @@ XCamReturn rk_aiq_uapi_getZoomRange(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_zoomr
     return ret;
 }
 
+XCamReturn rk_aiq_uapi_getFocusRange(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_focusrange* range)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_GetFocusRange(ctx, range);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
 XCamReturn rk_aiq_uapi_ZoomCorrestion(const rk_aiq_sys_ctx_t* ctx)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
@@ -1525,18 +1545,23 @@ XCamReturn rk_aiq_uapi_ZoomCorrestion(const rk_aiq_sys_ctx_t* ctx)
     return ret;
 }
 
-XCamReturn rk_aiq_uapi_setZoomZeroPos(const rk_aiq_sys_ctx_t* ctx, int zero_pos)
+XCamReturn rk_aiq_uapi_startZoomCalib(const rk_aiq_sys_ctx_t* ctx)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    rk_aiq_af_attrib_t attr;
     IMGPROC_FUNC_ENTER
-    ret = rk_aiq_user_api_af_GetAttrib(ctx, &attr);
-    RKAIQ_IMGPROC_CHECK_RET(ret, "setZoomZeroPos failed!");
-
-    attr.zoom_zero_pos = zero_pos;
-    ret = rk_aiq_user_api_af_SetAttrib(ctx, &attr);
-    RKAIQ_IMGPROC_CHECK_RET(ret, "setZoomZeroPos failed!");
+    ret = rk_aiq_user_api_af_StartZoomCalib(ctx);
     IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi_resetZoom(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api_af_resetZoom(ctx);
+    IMGPROC_FUNC_EXIT
+
     return ret;
 }
 

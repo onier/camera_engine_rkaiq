@@ -378,7 +378,7 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
     return ctx->_analyzer->getAxlibStatus(algo_type, lib_id);
 }
 
-const RkAiqAlgoContext*
+RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 {
     RKAIQ_API_SMART_LOCK(ctx);
@@ -800,3 +800,13 @@ rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
 
     return ret;
 }
+
+XCamReturn
+rk_aiq_uapi_sysctl_getSensorDiscrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_exposure_sensor_descriptor *sensorDes)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = sys_ctx->_rkAiqManager->getSensorDiscrib(sensorDes);
+
+    return ret;
+}
+

@@ -228,8 +228,8 @@ public:
     XCamReturn enableAlgo(int algoType, int id, bool enable);
     XCamReturn rmAlgo(int algoType, int id);
     bool getAxlibStatus(int algoType, int id);
-    const RkAiqAlgoContext* getEnabledAxlibCtx(const int algo_type);
-    const RkAiqHandle* getAiqAlgoHandle(const int algo_type);
+    RkAiqAlgoContext* getEnabledAxlibCtx(const int algo_type);
+    RkAiqHandle* getAiqAlgoHandle(const int algo_type);
     XCamReturn get3AStatsFromCachedList(rk_aiq_isp_stats_t &stats);
     XCamReturn get3AStatsFromCachedList(rk_aiq_isp_stats_t **stats, int timeout_ms);
     void release3AStatsRef(rk_aiq_isp_stats_t *stats);
@@ -442,6 +442,9 @@ private:
     float mStrthIr;
     rk_aiq_gray_mode_t mGrayMode;
     bool firstStatsReceived;
+    Mutex mApiMutex;
+    XCam::Cond mApiMutexCond;
+    bool mSafeEnableAlgo;
     typedef SharedItemPool<rk_aiq_isp_stats_t> RkAiqStatsPool;
     typedef SharedItemProxy<rk_aiq_isp_stats_t> RkAiqStatsProxy;
     SmartPtr<RkAiqStatsPool> mAiqStatsPool;

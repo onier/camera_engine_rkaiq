@@ -27,7 +27,8 @@
 #include <termios.h>
 #include "display.h"
 #include "rga.h"
-
+#include "ae_algo_demo/rk_aiq_algo_ae_demo_itf.h"
+#include "ae_algo_demo/third_party_ae_algo.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define FMT_NUM_PLANES 1
@@ -38,6 +39,7 @@
 #define ENABLE_UAPI_TEST
 #define IQFILE_PATH_MAX_LEN 256
 //#define OFFLINE_FRAME_TEST
+//#define CUSTOM_AE_DEMO_TEST
 
 struct buffer {
     void *start;
@@ -89,6 +91,7 @@ typedef struct _demo_context {
      int ctl_type;
      char iqpath[256];
 }demo_context_t;
+rk_aiq_ae_register_t ae_reg;
 
 static struct termios oldt;
 static int silent;
@@ -367,43 +370,57 @@ void test_imgproc(const demo_context_t* demo_ctx) {
     case 'D': {
         int code;
         rk_aiq_uapi_getOpZoomPosition(ctx, &code);
+        printf("getOpZoomPosition code %d\n", code);
 
-        code += 1000;
-        if (code > 7000)
+        code += 20;
+        if (code > 1520)
             code = 0;
         rk_aiq_uapi_setOpZoomPosition(ctx, code);
+		rk_aiq_uapi_endOpZoomChange(ctx);
         printf("setOpZoomPosition %d\n", code);
     }
         break;
     case 'E': {
         int code;
         rk_aiq_uapi_getOpZoomPosition(ctx, &code);
+        printf("getOpZoomPosition code %d\n", code);
 
-        code -= 1000;
+        code -= 20;
         if (code < 0)
-            code = 7000;
+            code = 1520;
         rk_aiq_uapi_setOpZoomPosition(ctx, code);
+		rk_aiq_uapi_endOpZoomChange(ctx);
         printf("setOpZoomPosition %d\n", code);
     }
         break;
     case 'F': {
-        unsigned short code;
+        rk_aiq_af_focusrange range;
+        short code;
+
+        rk_aiq_uapi_getFocusRange(ctx, &range);
+        printf("focus.min_pos %d, focus.max_pos %d\n", range.min_pos, range.max_pos);
+        
         rk_aiq_uapi_getFixedModeCode(ctx, &code);
 
         code++;
-        if (code > 64)
-            code = 0;
+        if (code > range.max_pos)
+            code = range.max_pos;
         rk_aiq_uapi_setFixedModeCode(ctx, code);
         printf("setFixedModeCode %d\n", code);
     }
         break;
     case 'G': {
-        unsigned short code;
+        rk_aiq_af_focusrange range;
+        short code;
+
+        rk_aiq_uapi_getFocusRange(ctx, &range);
+        printf("focus.min_pos %d, focus.max_pos %d\n", range.min_pos, range.max_pos);
+
         rk_aiq_uapi_getFixedModeCode(ctx, &code);
 
         code--;
-        if (code > 64)
-            code = 64;
+        if (code < range.min_pos)
+            code = range.min_pos;
         rk_aiq_uapi_setFixedModeCode(ctx, code);
         printf("setFixedModeCode %d\n", code);
     }
@@ -444,6 +461,19 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         attr.manual_meascfg.lum_var_shift[1] = 4;
         attr.manual_meascfg.afm_var_shift[1] = 4;
         rk_aiq_user_api_af_SetAttrib(ctx, &attr);
+    }
+        break;
+    case 'X':
+        rk_aiq_uapi_startZoomCalib(ctx);
+        break;
+    case 'Y':
+        rk_aiq_uapi_endOpZoomChange(ctx);
+        break;
+    case 'Z': {
+        rk_aiq_af_result_t result;
+
+        rk_aiq_uapi_getSearchResult(ctx, &result);
+        printf("result.stat %d, result.final_pos %d\n", result.stat, result.final_pos);
     }
         break;
     case 'I':
@@ -1003,13 +1033,42 @@ static int read_frame_pp_oneframe(demo_context_t *ctx)
         return 1;
 }
 
+#define XCAM_STATIC_FPS_CALCULATION(objname, count) \
+    do{                                             \
+        static uint32_t num_frame = 0;              \
+        static struct timeval last_sys_time;        \
+        static struct timeval first_sys_time;       \
+        static bool b_last_sys_time_init = false;   \
+        if (!b_last_sys_time_init) {                \
+            gettimeofday (&last_sys_time, NULL);    \
+            gettimeofday (&first_sys_time, NULL);   \
+            b_last_sys_time_init = true;            \
+        } else {                                    \
+            if ((num_frame%count)==0) {             \
+                double total, current;              \
+                struct timeval cur_sys_time;        \
+                gettimeofday (&cur_sys_time, NULL); \
+                total = (cur_sys_time.tv_sec - first_sys_time.tv_sec)*1.0f +     \
+                    (cur_sys_time.tv_usec - first_sys_time.tv_usec)/1000000.0f;  \
+                current = (cur_sys_time.tv_sec - last_sys_time.tv_sec)*1.0f +    \
+                    (cur_sys_time.tv_usec - last_sys_time.tv_usec)/1000000.0f;   \
+                printf("%s Current fps: %.2f, Total avg fps: %.2f\n",            \
+                    #objname, ((float)(count))/current, (float)num_frame/total); \
+                last_sys_time = cur_sys_time;       \
+            }                                       \
+        }                                           \
+        ++num_frame;                                \
+    }while(0)
+
 static void mainloop(demo_context_t *ctx)
 {
     while ((ctx->frame_count == -1) || (ctx->frame_count-- > 0)) {
         if (ctx->pponeframe)
             read_frame_pp_oneframe(ctx);
-        else
+        else{
             read_frame(ctx);
+            XCAM_STATIC_FPS_CALCULATION(rkisp_demo, 30);
+        }
     }
 }
 
@@ -1528,6 +1587,9 @@ static void deinit(demo_context_t *ctx)
     stop_capturing(ctx);
     if (ctx->aiq_ctx) {
         printf("%s:-------- deinit aiq -------------\n",get_sensor_name(ctx));
+#ifdef CUSTOM_AE_DEMO_TEST
+        rk_aiq_AELibunRegCallBack(ctx->aiq_ctx, 0);
+#endif
         rk_aiq_uapi_sysctl_deinit(ctx->aiq_ctx);
         printf("%s:-------- deinit aiq end -------------\n",get_sensor_name(ctx));
     }
@@ -1618,6 +1680,16 @@ static void set_af_manual_meascfg(const rk_aiq_sys_ctx_t* ctx)
     attr.manual_meascfg.afm_var_shift[0] = 0;
     attr.manual_meascfg.lum_var_shift[1] = 4;
     attr.manual_meascfg.afm_var_shift[1] = 4;
+
+    attr.manual_meascfg.sp_meas.enable = true;
+    attr.manual_meascfg.sp_meas.ldg_xl = 10;
+    attr.manual_meascfg.sp_meas.ldg_yl = 28;
+    attr.manual_meascfg.sp_meas.ldg_kl = (255-28)*256/45;
+    attr.manual_meascfg.sp_meas.ldg_xh = 118;
+    attr.manual_meascfg.sp_meas.ldg_yh = 8;
+    attr.manual_meascfg.sp_meas.ldg_kh = (255-8)*256/15;
+    attr.manual_meascfg.sp_meas.highlight_th = 245;
+    attr.manual_meascfg.sp_meas.highlight2_th = 200;
     rk_aiq_user_api_af_SetAttrib(ctx, &attr);
 }
 
@@ -1632,10 +1704,10 @@ static void print_af_stats(rk_aiq_isp_stats_t *stats_ref)
            stats_ref->af_stats.roia_luminance,
            stats_ref->af_stats.roib_sharpness,
            stats_ref->af_stats.roib_luminance);
-#if 0
+#if 1
     for (int i = 0; i < 15; i++) {
         for (int j = 0; j < 15; j++) {
-            printf("0x%08x, ", stats_ref->af_stats.global_sharpness[15 * i + j]);
+            printf("0x%08x, ", stats_ref->af_stats.lowpass_fv4_4[15 * i + j]);
         }
         printf("\n");
     }
@@ -1740,6 +1812,13 @@ static void rkisp_routine(demo_context_t *ctx)
             printf("%s:-------- init mipi tx/rx -------------\n",get_sensor_name(ctx));
             if (ctx->writeFileSync)
                 rk_aiq_uapi_debug_captureRawYuvSync(ctx->aiq_ctx, CAPTURE_RAW_AND_YUV_SYNC);
+#ifdef CUSTOM_AE_DEMO_TEST
+            ae_reg.stAeExpFunc.pfn_ae_init = ae_init;
+            ae_reg.stAeExpFunc.pfn_ae_run = ae_run;
+            ae_reg.stAeExpFunc.pfn_ae_ctrl = ae_ctrl;
+            ae_reg.stAeExpFunc.pfn_ae_exit = ae_exit;
+            rk_aiq_AELibRegCallBack(ctx->aiq_ctx, &ae_reg, 0);
+#endif
 
 #ifdef OFFLINE_FRAME_TEST
              rk_aiq_raw_prop_t prop;

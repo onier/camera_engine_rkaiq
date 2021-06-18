@@ -796,12 +796,31 @@ bool RkAiqCalibDb::generateCalibDb(char* iqFileRef, char* iqFileOutput, CamCalib
     return false;
 }
 
+void RkAiqCalibDb::freeAfPart(CalibDb_AF_t *af)
+{
+    if (af->zoomfocus_tbl.focal_length) {
+        free(af->zoomfocus_tbl.focal_length);
+        af->zoomfocus_tbl.focal_length = NULL;
+    }
+    if (af->zoomfocus_tbl.zoomcode) {
+        free(af->zoomfocus_tbl.zoomcode);
+        af->zoomfocus_tbl.zoomcode = NULL;
+    }
+    if (af->zoomfocus_tbl.focuscode) {
+        for (int i = 0; i < af->zoomfocus_tbl.focuspos_len; i++) {
+            free(af->zoomfocus_tbl.focuscode[i]);
+            af->zoomfocus_tbl.focuscode[i] = NULL;
+        }
+    }
+}
+
 void RkAiqCalibDb::releaseCalibDb()
 {
     std::map<string, CamCalibDbContext_t*>::iterator it;
     for (it = mCalibDbsMap.begin(); it != mCalibDbsMap.end(); it++) {
         CamCalibDbContext_t *pCalibDb = it->second;
         if(pCalibDb) {
+            freeAfPart(&pCalibDb->af);
             if(pCalibDb->lsc.tableAll != NULL){
                 free(pCalibDb->lsc.tableAll);
 

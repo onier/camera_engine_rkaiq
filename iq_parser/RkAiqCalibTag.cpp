@@ -697,7 +697,9 @@ uint32_t calib_sensor_af_sub_tags[] = {
     CALIB_SENSOR_AF_PDAF_TAG_ID,
     CALIB_SENSOR_AF_VCM_TAG_ID,
     CALIB_SENSOR_AF_MEAS_ISO_TAG_ID,
-    CALIB_SENSOR_AF_ZOOM_FOCUS_TBL_TAG_ID
+    CALIB_SENSOR_AF_ZOOM_FOCUS_TBL_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_TAG_ID,
+    CALIB_SENSOR_AF_HIGHLIGHT_PARAM_TAG_ID,
 };
 
 uint32_t calib_sensor_af_Window_sub_tags[] = {
@@ -726,8 +728,16 @@ uint32_t calib_sensor_af_contrast_af_sub_tags[] = {
     CALIB_SENSOR_AF_FULL_RANGE_TBL_TAG_ID,
     CALIB_SENSOR_AF_ADAPTIVE_DIR_TAG_ID,
     CALIB_SENSOR_AF_ADAPTIVE_RANGE_TBL_TAG_ID,
+    CALIB_SENSOR_AF_QUICKFOUND_THERS_ZOOMIDX_TAG_ID,
+    CALIB_SENSOR_AF_QUICKFOUND_THERS_TAG_ID,
+    CALIB_SENSOR_AF_SEARCH_STEP_ZOOMIDX_TAG_ID,
+    CALIB_SENSOR_AF_SEARCH_STEP_TAG_ID,
+    CALIB_SENSOR_AF_STOP_STEP_ZOOMIDX_TAG_ID,
+    CALIB_SENSOR_AF_STOP_STEP_TAG_ID,
     CALIB_SENSOR_AF_TRIG_THERS_TAG_ID,
+    CALIB_SENSOR_AF_TRIG_THERS_FV_TAG_ID,
     CALIB_SENSOR_AF_LUMA_TRIG_THERS_TAG_ID,
+    CALIB_SENSOR_AF_EXP_TRIG_THERS_TAG_ID,
     CALIB_SENSOR_AF_STABLE_THERS_TAG_ID,
     CALIB_SENSOR_AF_STABLE_FRAMES_TAG_ID,
     CALIB_SENSOR_AF_STABLE_TIME_TAG_ID,
@@ -766,10 +776,29 @@ uint32_t calib_sensor_af_meas_iso_sub_tags[] = {
 };
 
 uint32_t calib_sensor_af_zoomfocus_tbl_sub_tags[] = {
+    CALIB_SENSOR_AF_ZOOM_FOCUS_WIDE_MODULE_DEVIATION_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_TELE_MODULE_DEVIATION_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOM_MOVE_DOT_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOM_MOVE_STEP_TAG_ID,
     CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUS_LENGTH_TAG_ID,
     CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOMPOS_TAG_ID,
-    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSINFPOS_TAG_ID,
-    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSMACROPOS_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_SEARCH_TABLE_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_SEARCH_REFCURVE_INDEX_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_MARGIN_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_PLUS_RANGE_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_STAGE1_STEP_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_ZOOM_RANGE_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_FOCUS_RANGE_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_EAVG_TAG_ID,
+    CALIB_SENSOR_AF_FOCUS_SEARCH_EMAX_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_POSREC_VALID_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_POSREC_DIR_TAG_ID,
+};
+
+uint32_t calib_sensor_af_zoomfocus_focuspos_sub_tags[] = {
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_DISTANCE_TAG_ID,
+    CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_POSIYION_TAG_ID,
 };
 
 uint32_t calib_sensor_af_vcmcfg_sub_tags[] = {
@@ -777,6 +806,21 @@ uint32_t calib_sensor_af_vcmcfg_sub_tags[] = {
     CALIB_SENSOR_AF_VCM_RATED_CURRENT_TAG_ID,
     CALIB_SENSOR_AF_VCM_STEP_MODE_TAG_ID,
     CALIB_SENSOR_AF_EXTRA_DELAY_TAG_ID
+};
+
+uint32_t calib_sensor_af_ldgparam_sub_tags[] = {
+    CALIB_SENSOR_AF_LDG_PARAM_ENABLE_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_XL_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_YL_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_KL_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_XH_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_YH_TAG_ID,
+    CALIB_SENSOR_AF_LDG_PARAM_KH_TAG_ID,
+};
+
+uint32_t calib_sensor_af_highlightparam_sub_tags[] = {
+    CALIB_SENSOR_AF_HIGHLIGHT_PARAM_THERS0_TAG_ID,
+    CALIB_SENSOR_AF_HIGHLIGHT_PARAM_THERS1_TAG_ID,
 };
 
 uint32_t calib_sensor_ahdr_Merge_sub_tags[] = {
@@ -3446,12 +3490,44 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "AdaptRangeTbl", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_AF_QUICKFOUND_THERS_ZOOMIDX_TAG_ID]         =
+    {   "QuickFoundThersZoomIdx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_QUICKFOUND_THERS_TAG_ID]         =
+    {   "QuickFoundThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_SEARCH_STEP_ZOOMIDX_TAG_ID]         =
+    {   "SearchStepZoomIdx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_SEARCH_STEP_TAG_ID]         =
+    {   "SearchStep", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_STOP_STEP_ZOOMIDX_TAG_ID]         =
+    {   "StopStepZoomIdx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_STOP_STEP_TAG_ID]         =
+    {   "StopStep", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
     [CALIB_SENSOR_AF_TRIG_THERS_TAG_ID]         =
     {   "TrigThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_AF_TRIG_THERS_FV_TAG_ID]         =
+    {   "TrigThersFv", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
     [CALIB_SENSOR_AF_LUMA_TRIG_THERS_TAG_ID]         =
     {   "LumaTrigThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_EXP_TRIG_THERS_TAG_ID]         =
+    {   "ExpTrigThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_AF_STABLE_THERS_TAG_ID]         =
@@ -3538,6 +3614,14 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "zoomfocus_tbl", CALIB_TAG_TYPE_STRUCT, {-1, -1},
         check_tags_array_info(calib_sensor_af_zoomfocus_tbl_sub_tags), NULL
     },
+    [CALIB_SENSOR_AF_LDG_PARAM_TAG_ID]         =
+    {   "ldgParam", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_af_ldgparam_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AF_HIGHLIGHT_PARAM_TAG_ID]         =
+    {   "highlightParam", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_af_highlightparam_sub_tags), NULL
+    },
     [CALIB_SENSOR_AF_LASERAF_ENABLE_TAG_ID]         =
     {   "enable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
@@ -3586,6 +3670,22 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "gaussWeight", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_WIDE_MODULE_DEVIATION_TAG_ID]         =
+    {   "WideModuleDeviation", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_TELE_MODULE_DEVIATION_TAG_ID]         =
+    {   "TeleModuleDeviation", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOM_MOVE_DOT_TAG_ID]         =
+    {   "ZoomMoveDot", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_ZOOM_MOVE_STEP_TAG_ID]         =
+    {   "ZoomMoveStep", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
     [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUS_LENGTH_TAG_ID]         =
     {   "focusLength", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
@@ -3594,12 +3694,96 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "zoomPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSINFPOS_TAG_ID]         =
-    {   "focusInfPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_TAG_ID]         =
+    {   "focusPosition", CALIB_TAG_TYPE_CELL, {-1, -1},
+        check_tags_array_info(calib_sensor_af_zoomfocus_focuspos_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_DISTANCE_TAG_ID]         =
+    {   "distance", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
-    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSMACROPOS_TAG_ID]         =
-    {   "focusMacroPosition", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_FOCUSPOS_POSIYION_TAG_ID]         =
+    {   "Position", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_SEARCH_TABLE_TAG_ID]         =
+    {   "ZoomSearchTbl", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_SEARCH_REFCURVE_INDEX_TAG_ID]         =
+    {   "ZoomSearchRefCurveIdx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_MARGIN_TAG_ID]         =
+    {   "FocusSearchMargin", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_PLUS_RANGE_TAG_ID]         =
+    {   "FocusSearchPlusRange", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_STAGE1_STEP_TAG_ID]         =
+    {   "FocusSearchStage1Step", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_ZOOM_RANGE_TAG_ID]         =
+    {   "searchZoomRange", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_FOCUS_RANGE_TAG_ID]         =
+    {   "searchFocusRange", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_EAVG_TAG_ID]         =
+    {   "searchEavg", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_FOCUS_SEARCH_EMAX_TAG_ID]         =
+    {   "searchEmax", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_POSREC_VALID_TAG_ID]         =
+    {   "IsRecZoomFocusPos", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_ZOOM_FOCUS_POSREC_DIR_TAG_ID]         =
+    {   "RecZoomFocusDir", CALIB_TAG_TYPE_CHAR, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_ENABLE_TAG_ID]         =
+    {   "enable", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_XL_TAG_ID]         =
+    {   "xl", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_YL_TAG_ID]         =
+    {   "yl", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_KL_TAG_ID]         =
+    {   "kl", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_XH_TAG_ID]         =
+    {   "xh", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_YH_TAG_ID]         =
+    {   "yh", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_LDG_PARAM_KH_TAG_ID]         =
+    {   "kh", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_HIGHLIGHT_PARAM_THERS0_TAG_ID]         =
+    {   "thers0", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_HIGHLIGHT_PARAM_THERS1_TAG_ID]         =
+    {   "thers1", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
 

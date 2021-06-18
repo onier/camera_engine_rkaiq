@@ -96,13 +96,14 @@ class Isp20SpThread
 {
     friend class KgProcThread;
     friend class WrProcThread;
+    friend class WrProcThread2;
 public:
     Isp20SpThread               ();
     virtual ~Isp20SpThread      ();
-    void set_sp_dev				(SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev);
+    void set_sp_dev				(SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev, SmartPtr<V4l2SubDevice> lensdev);
     void set_sp_img_size		(int w, int h, int w_align, int h_align);
     void set_gain_isp			(void *buf, uint8_t* ratio);
-    void set_gain_wr			(void *buf, uint8_t* ratio);
+    void set_gain_wr			(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur, uint16_t h_st, uint16_t h_end);
 	void set_gainkg				(void *buf, uint8_t* ratio, uint8_t* ratio_next);
     void start                  ();
     void stop                   ();
@@ -111,19 +112,24 @@ public:
     void set_calibDb(const CamCalibDbContext_t* calib);
     void set_working_mode(int mode);
     void update_motion_detection_params(ANRMotionParam_t *motion);
+    void update_af_meas_params(rk_aiq_isp_af_meas_t *sp_meas);
+    int get_lowpass_fv(uint32_t sequence, SmartPtr<V4l2BufferProxy> buf_proxy);
 protected:
     void init                                  ();
     void deinit                                ();
     virtual bool loop                          ();
     XCamReturn kg_proc_loop                    ();
     bool       wr_proc_loop                    ();
+    bool       wr_proc_loop2                   ();
     int subscrible_ispgain_event               (bool on);
     int wait_ispgain_event                     (unsigned int event_type, struct v4l2_event *event);
     void destroy_stop_fds_ispsp                ();
     XCamReturn create_stop_fds_ispsp           ();
     void notify_stop_fds_exit                  ();
     void notify_wr_thread_exit                 ();
+    void notify_wr2_thread_exit                ();
     bool notify_yg_cmd                         (SmartPtr<sp_msg_t> msg);
+    bool notify_yg2_cmd                        (SmartPtr<sp_msg_t> msg);
     bool init_fbcbuf_fd                        ();
     bool init_tnrbuf_fd                        ();
     XCamReturn select_motion_params(RKAnr_Mt_Params_Select_t *stmtParamsSelected, uint32_t frameid);
@@ -132,8 +138,10 @@ private:
     SmartPtr<V4l2SubDevice>  _ispp_dev;
     SmartPtr<V4l2SubDevice>  _isp_dev;
     SmartPtr<V4l2SubDevice> _sensor_dev;
+    SmartPtr<V4l2SubDevice> _focus_dev;
     SmartPtr<Thread> mKgThread;
     SmartPtr<Thread> mWrThread;
+    SmartPtr<Thread> mWrThread2;
     int _img_width;
     int _img_height;
     int _img_width_align;
@@ -146,10 +154,12 @@ private:
 	std::list<SmartPtr<V4l2BufferProxy>> _isp_buf_list;
     XCam::Mutex _buf_list_mutex;
     XCam::Mutex _motion_param_mutex;
+    XCam::Mutex _afmeas_param_mutex;
     int ispsp_stop_fds[2];
     int ispp_stop_fds[2];
     int sync_pipe_fd[2];
     SafeList<sp_msg_t>  _notifyYgCmdQ;
+    SafeList<sp_msg_t>  _notifyYgCmdQ2;
     const CamCalibDbContext_t *_calibDb;
     int _isp_fd_array[ISP2X_FBCBUF_FD_NUM];
     uint32_t _isp_idx_array[ISP2X_FBCBUF_FD_NUM];
@@ -218,6 +228,14 @@ private:
 	uint8_t static_ratio_l_bit;
 	uint8_t static_ratio_r_bit;
 	int16_t *pTmpBuf;
+
+	uint8_t *pAfTmp;
+	uint32_t sub_shp4_4[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+	uint32_t sub_shp8_8[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+	uint32_t high_light[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+	uint32_t high_light2[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+	rk_aiq_af_algo_meas_t _af_meas_params;
+	rk_aiq_lens_descriptor _lens_des;
 };
 
 class KgProcThread
@@ -254,6 +272,24 @@ public:
 protected:
     virtual bool loop () {
         return _poll->wr_proc_loop ();
+    }
+
+private:
+    Isp20SpThread *_poll;
+};
+
+class WrProcThread2
+    : public Thread
+{
+public:
+    WrProcThread2 (Isp20SpThread *poll)
+        : Thread ("wrThread2")
+        , _poll (poll)
+    {}
+
+protected:
+    virtual bool loop () {
+        return _poll->wr_proc_loop2 ();
     }
 
 private:

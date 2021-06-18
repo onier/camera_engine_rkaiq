@@ -345,10 +345,23 @@
  *   - API updateIq may be stucked, fix it
  * - motion detection: v1.4.0
  * - uvnr: use last frame in default
+ * v1.0x67.0
+ * - AE
+ *   - fix bug in antiflicker limit
+ *   - Fix bug in longFrameMode,which luma is different between LongFrameMode
+ *     and linear
+ * - AWB:
+ *   - fix bug in awb when number of LS > 7
+ *   - fix bug in extralight mode
+ *   - lsc and ccm support at most 14 light sources
+ * - AF
+ *   - lots of optimizations
+ * - add custom AE algo demo
+ * - Tuning tool: v1.7.0
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x66.0"
-#define RK_AIQ_RELEASE_DATE "2020-03-30"
+#define RK_AIQ_VERSION_REAL_V "v1.0x67.0"
+#define RK_AIQ_RELEASE_DATE "2020-06-08"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

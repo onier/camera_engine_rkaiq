@@ -22,7 +22,10 @@
 #include "Isp20PollThread.h"
 #include "Isp20SpThread.h"
 #include "motion_detect.h"
+#include "rk_aiq_types_af_algo.h"
+
 namespace RkCam {
+#define DEBUG_TIMESTAMP                 1
 #define RATIO_PP_FLG                    0
 #define WRITE_FLG 						0
 #define WRITE_FLG_OTHER 				1
@@ -31,6 +34,32 @@ int frame_write_st      = -1;
 char name_wr_flg[100] = "/tmp/motion_detection_wr_flg";
 char name_wr_other_flg[100] = "/tmp/motion_detection_wr_other_flg";
 
+static int thread_bind_cpu(int target_cpu)
+{
+ cpu_set_t mask;
+ int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
+ int i;
+
+ if (target_cpu >= cpu_num)
+  return -1;
+
+ CPU_ZERO(&mask);
+ CPU_SET(target_cpu, &mask);
+
+ if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
+  LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "pthread_setaffinity_np");
+
+ if (pthread_getaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
+  LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM,"pthread_getaffinity_np");
+
+ LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"Thread bound to cpu:");
+ for (i = 0; i < CPU_SETSIZE; i++) {
+ if (CPU_ISSET(i, &mask))
+  LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM," %d", i);
+ }
+
+ return i >= cpu_num ? -1 : i;
+}
 
 XCamReturn
 Isp20SpThread::select_motion_params(RKAnr_Mt_Params_Select_t *stmtParamsSelected, uint32_t frameid)
@@ -209,6 +238,7 @@ Isp20SpThread::Isp20SpThread ()
 {
     mKgThread = new KgProcThread(this);
     mWrThread = new WrProcThread(this);
+    mWrThread2 = new WrProcThread2(this);
     _img_width = 0;
     _img_height = 0;
     _working_mode = RK_AIQ_WORKING_MODE_NORMAL;
@@ -226,6 +256,8 @@ Isp20SpThread::set_calibDb(const CamCalibDbContext_t* calib) {
 void
 Isp20SpThread::start()
 {
+    SmartPtr<LensHw> lensHw = _focus_dev.dynamic_cast_ptr<LensHw>();
+
 	LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s", RK_AIQ_MOTION_DETECTION_VERSION);
     init();
     subscrible_ispgain_event(true);
@@ -233,8 +265,20 @@ Isp20SpThread::start()
         LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM,  "create ispsp stop fds failed !");
         return;
     }
+
+    xcam_mem_clear(_lens_des);
+    if (lensHw.ptr())
+        lensHw->getLensModeData(_lens_des);
+
+	pthread_attr_t &attr = get_pthread_attr();
+	pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+	struct sched_param  param;
+	param.sched_priority = 99;
+	pthread_attr_setschedparam(&attr, &param);
+
     mKgThread->start();
     mWrThread->start();
+    mWrThread2->start();
     Thread::start();
     struct rkispp_trigger_mode tnr_trigger;
     tnr_trigger.module = ISPP_MODULE_TNR;
@@ -256,6 +300,8 @@ Isp20SpThread::stop()
     mKgThread->stop();
     notify_wr_thread_exit();
     mWrThread->stop();
+    notify_wr2_thread_exit();
+    mWrThread2->stop();
     destroy_stop_fds_ispsp();
     subscrible_ispgain_event(false);
     deinit();
@@ -384,7 +430,7 @@ Isp20SpThread::kg_proc_loop ()
     LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "kg_loop frame_num_pp %d flg %d\n", frame_num_pp, frame_detect_flg[static_ratio_idx_out]);
     int kg_fd = -1, wr_fd = -1;
 
-    if(frame_detect_flg[static_ratio_idx_out])
+    if(frame_detect_flg[static_ratio_idx_out] && _calibDb->mfnr.enable && _calibDb->mfnr.motion_detect_en)
     {
 
         for (int i=0; i<_ispp_buf_num; i++) {
@@ -396,6 +442,7 @@ Isp20SpThread::kg_proc_loop ()
             }
         }
         {
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "send MSG_CMD_WR_START,frameid=%u", tnr_inf->frame_id);
             SmartPtr<sp_msg_t> msg = new sp_msg_t();
             msg->cmd = MSG_CMD_WR_START;
             msg->sync = false;
@@ -403,11 +450,8 @@ Isp20SpThread::kg_proc_loop ()
             msg->arg2 = tnr_inf;
             msg->arg3 = wr_fd;
             notify_yg_cmd(msg);
-            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "send MSG_CMD_WR_START,frameid=%u", tnr_inf->frame_id);
         }
 
-	    char ch;
-	    read(sync_pipe_fd[0], &ch, 1);//blocked
     }else {
         _ispp_dev->io_control(RKISPP_CMD_TRIGGER_YNRRUN, tnr_inf);
     }
@@ -420,6 +464,7 @@ Isp20SpThread::kg_proc_loop ()
             if (!is_running())
                 break;
         } else {
+            _buf_list_mutex.unlock();
             if (frame_num_isp <= frame_num_pp) {
                 LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "frame_num_isp(%d) should be greater than frame_num_pp(%d)!", frame_num_isp, frame_num_pp);
                 LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
@@ -432,8 +477,10 @@ Isp20SpThread::kg_proc_loop ()
                 uint8_t* ratio                  = static_ratio[static_ratio_idx_out];
                 uint8_t* ratio_next             = static_ratio[static_ratio_idx_out_plus1];
 
+                #if DEBUG_TIMESTAMP
                 struct timeval tv0, tv1, tv2, tv3;
                 gettimeofday(&tv0, NULL);
+                #endif
                 void *gainkg_addr = mmap(NULL, tnr_inf->gainkg_size, PROT_READ | PROT_WRITE, MAP_SHARED, kg_fd, 0);
                 if (MAP_FAILED == gainkg_addr) {
                     LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "mmap gainkg_fd failed!!!(errno=%d),fd: %d, idx:%u, size: %d", errno, kg_fd, tnr_inf->gainkg_idx, tnr_inf->gainkg_size);
@@ -441,15 +488,22 @@ Isp20SpThread::kg_proc_loop ()
                     assert(0);
                 }
 
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv1, NULL);
+                #endif
                 set_gainkg(gainkg_addr,     ratio, ratio_next);
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv2, NULL);
+                #endif
                 munmap(gainkg_addr, tnr_inf->gainkg_size);
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv3, NULL);
-
+                #endif
+                #if DEBUG_TIMESTAMP
                 LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg idx %d %d fid %u %8ld %8ld %8ld %8ld  delta %8ld %8ld %8ld  \n", static_ratio_idx_out, static_ratio_idx_out_plus1, tnr_inf->frame_id,
                     tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec,  tv1.tv_usec - tv0.tv_usec,
                     tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec  );
+                #endif
             }
             set_wr_flg_func(frame_num_pp);
             static_ratio_idx_out++;
@@ -457,6 +511,7 @@ Isp20SpThread::kg_proc_loop ()
             frame_id_pp_upt         = tnr_inf->frame_id;
             frame_num_pp++;
 
+            _buf_list_mutex.lock();
             LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "v4l2buf index %d pop list\n", _isp_buf_list.front()->get_v4l2_buf_index());
             _isp_buf_list.pop_front();//feed new frame to tnr
             _buf_list_mutex.unlock();
@@ -490,8 +545,9 @@ Isp20SpThread::wr_proc_loop ()
                 ratio_idx = msg->arg1;
                 tnr_info = (struct rkispp_tnr_inf *)msg->arg2;
                 int wr_fd = msg->arg3;
-
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv0, NULL);
+                #endif
                 gainwr_addr = mmap(NULL, tnr_info->gainwr_size, PROT_READ | PROT_WRITE, MAP_SHARED, wr_fd, 0);
                 if (MAP_FAILED == gainwr_addr) {
                     LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "mmap gainwr_fd failed!!!(errno=%d),fd: %d, size: %d", errno, wr_fd, tnr_info->gainwr_size);
@@ -499,23 +555,100 @@ Isp20SpThread::wr_proc_loop ()
                     assert(0);
                 }
 
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv1, NULL);
+                #endif
                 if (static_ratio[ratio_idx] == NULL) {
                     LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "ratio_idx=%d",ratio_idx);
                     LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
                     assert(0);
                 }
-                set_gain_wr(gainwr_addr,    static_ratio[ratio_idx]);
+
+
+
+                int wr_flg                          = get_wr_flg_func(frame_num_pp, 1);
+                int wr_other_flg                    = get_wr_other_flg_func();
+                wr_flg &= wr_other_flg;
+
+                {
+                    static FILE *fd_gain_yuvnr_wr   = NULL;
+                    if(wr_flg)
+                    {
+                        if(fd_gain_yuvnr_wr == NULL)
+                            fd_gain_yuvnr_wr            = fopen("/tmp/gain_pp_out.yuv", "wb");
+                        if(fd_gain_yuvnr_wr)
+                        {
+                            fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_wr);
+                            fflush(fd_gain_yuvnr_wr);
+                        }
+
+                    }
+                    else
+                    {
+                        fd_gain_yuvnr_wr                = NULL;
+                    }
+                }
+
+
+
+                {
+                    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "send MSG_CMD_WR_START2");
+                    SmartPtr<sp_msg_t> msg = new sp_msg_t();
+                    msg->cmd = MSG_CMD_WR_START;
+                    msg->sync = false;
+                    msg->arg1 = ratio_idx;
+                    msg->arg2 = gainwr_addr;
+                    notify_yg2_cmd(msg);
+                }
+
+                uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
+                uint8_t* ratio                              = static_ratio[ratio_idx];
+
+
+                set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
+                //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
+
+                {
+                    static FILE *fd_gain_yuvnr_up_wr        = NULL;
+
+                    if(wr_flg)
+                    {
+
+                        if(fd_gain_yuvnr_up_wr==NULL)
+                            fd_gain_yuvnr_up_wr                 = fopen("/tmp/gain_pp_up_out.yuv", "wb");
+                        if(fd_gain_yuvnr_up_wr)
+                        {
+                            fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_up_wr);
+                            fflush(fd_gain_yuvnr_up_wr);
+                        }
+
+                    }
+                    else
+                    {
+                        fd_gain_yuvnr_up_wr        = NULL;
+                    }
+                }
+
+
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"set_gain_wr top done");
+                char ch;
+                read(sync_pipe_fd[0], &ch, 1);//blocked
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv2, NULL);
+                #endif
                 munmap(gainwr_addr, tnr_info->gainwr_size);
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv3, NULL);
+                #endif
                 _ispp_dev->io_control(RKISPP_CMD_TRIGGER_YNRRUN, tnr_info);
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv4, NULL);
-                char ch = 0x1;//whatever
-        	    write(sync_pipe_fd[1], &ch, 1);//nonblock
-        	    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr fid %u %8ld %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld \n", tnr_info->frame_id,
+                #endif
+                #if DEBUG_TIMESTAMP
+        	    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr fid %u %8ld %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld \n", tnr_info->frame_id,
         	        tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv4.tv_usec, tv1.tv_usec - tv0.tv_usec,
         	        tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec, tv4.tv_usec - tv3.tv_usec  );
+                #endif
                 break;
             }
             case MSG_CMD_WR_EXIT:
@@ -535,6 +668,84 @@ Isp20SpThread::wr_proc_loop ()
     return false;
 }
 
+int Isp20SpThread::get_lowpass_fv(uint32_t sequence, SmartPtr<V4l2BufferProxy> buf_proxy)
+{
+    SmartPtr<LensHw> lensHw = _focus_dev.dynamic_cast_ptr<LensHw>();
+    uint8_t *image_buf = (uint8_t *)buf_proxy->get_v4l2_planar_userptr(0);
+    rk_aiq_af_algo_meas_t meas_param;
+
+    _afmeas_param_mutex.lock();
+    meas_param = _af_meas_params;
+    _afmeas_param_mutex.unlock();
+
+    if (meas_param.sp_meas.enable) {
+        get_lpfv(sequence, image_buf, _img_width, _img_height,
+            _img_width_align, _img_height_align, pAfTmp, sub_shp4_4,
+            sub_shp8_8, high_light, high_light2, &meas_param);
+
+        lensHw->setLowPassFv(sub_shp4_4, sub_shp8_8, high_light, high_light2, sequence);
+    }
+
+    return 0;
+}
+
+
+bool
+Isp20SpThread::wr_proc_loop2 ()
+{
+    SmartPtr<sp_msg_t> msg;
+    void *gainwr_addr = NULL;
+    uint32_t ratio_idx;
+    struct timeval tv0, tv1;
+    bool loop_live = true;
+    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s enter", __FUNCTION__);
+    while (loop_live) {
+        msg = _notifyYgCmdQ2.pop(500);
+        if (!msg.ptr())
+            continue;
+        switch(msg->cmd)
+        {
+            case MSG_CMD_WR_START:
+            {
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "MSG_CMD_WR_START2 received");
+                ratio_idx = msg->arg1;
+                gainwr_addr = msg->arg2;
+                uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
+                uint8_t* ratio                              = static_ratio[ratio_idx];
+                #if DEBUG_TIMESTAMP
+                gettimeofday(&tv0, NULL);
+                #endif
+                //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
+                set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"set_gain_wr bottom done");
+                #if DEBUG_TIMESTAMP
+                gettimeofday(&tv1, NULL);
+                #endif
+                #if DEBUG_TIMESTAMP
+        	    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr2 %8ld \n", tv1.tv_usec - tv0.tv_usec);
+                #endif
+                char ch = 0x1;//whatever
+                write(sync_pipe_fd[1], &ch, 1);//nonblock
+                break;
+            }
+            case MSG_CMD_WR_EXIT:
+            {
+                if (msg->sync) {
+                    msg->mutex->lock();
+                    msg->cond->broadcast ();
+                    msg->mutex->unlock();
+                }
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s: wr_proc_loop2 exit", __FUNCTION__);
+                loop_live = false;
+                break;
+            }
+        }
+    }
+    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s exit", __FUNCTION__);
+    return false;
+}
+
+
 bool
 Isp20SpThread::loop () {
     SmartPtr<V4l2Buffer> buf;
@@ -550,6 +761,7 @@ Isp20SpThread::loop () {
             usleep(1000);
             return true;
         }
+        thread_bind_cpu(3);
         LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "isp&ispp buf fd init success!");
         _fd_init_flag = false;
     }
@@ -590,14 +802,17 @@ Isp20SpThread::loop () {
         usleep(1000);
     }
 
+    if (_calibDb->af.ldg_param.enable)
+        get_lowpass_fv(ispgain->frame_id, buf_proxy);
+
     uint8_t *static_ratio_cur                   = static_ratio[static_ratio_idx_in];
-    if(detect_flg)
+    if(detect_flg && _calibDb->mfnr.enable && _calibDb->mfnr.motion_detect_en)
     {
         int wr_flg = get_wr_flg_func(frame_num_isp, 0);
         int wr_other_flg    = get_wr_other_flg_func();
         if(1)
         {
-            struct timeval tv0, tv1, tv2, tv3, tv4, tv5, tv6;
+            struct timeval tv0, tv1, tv2, tv3, tv4, tv5, tv6,tva,tvb;
             gettimeofday(&tv0, NULL);
             int gain_fd = -1, mfbc_fd = -1;
 
@@ -619,11 +834,15 @@ Isp20SpThread::loop () {
 
             uint8_t *pCurIn                     = pImgbuf[static_ratio_idx_in];
             uint8_t *pPreIn                     = pImgbuf[(static_ratio_idx_in - 1 + static_ratio_num) % static_ratio_num];
-
+#if DEBUG_TIMESTAMP
+gettimeofday(&tva, NULL);
+#endif
             //memcpy(pCurIn, image_buf, img_buf_size + img_buf_size_uv);
 	        memcpy(pCurIn, image_buf, img_buf_size);
 	        memcpy(pCurIn+img_buf_size, image_buf+ALIGN_UP(img_buf_size, 64), img_buf_size_uv);
-
+#if DEBUG_TIMESTAMP
+gettimeofday(&tvb, NULL);
+#endif
             {
                 static    FILE *fd_ds_wr                = NULL;
                 static    FILE *fd_ratio_iir_out        = NULL;
@@ -700,23 +919,31 @@ Isp20SpThread::loop () {
 
 	        if(detect_flg_last == 1)
             {
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv1, NULL);
+                #endif
                 static int wr_flg_last = 0;
 
                 uint8_t *src = (uint8_t*)gain_addr;
                 uint8_t *gain_isp_buf_cur           = gain_isp_buf_bak[static_ratio_idx_in];
                 memcpy(gain_isp_buf_cur, src, gain_blk_isp_stride * gain_blk_isp_h);
                 #if 1
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv2, NULL);
+                #endif
                 motion_detect(pCurIn, pPreIn, pTmpBuf, static_ratio_cur, pPreAlpha, (uint8_t*)src, _img_height_align, _img_width_align, _img_height, _img_width,
                         gain_blk_isp_stride, mtParamsSelect.sigmaHScale, mtParamsSelect.sigmaLScale,
                         mtParamsSelect.uv_weight, static_ratio_r_bit, wr_flg && wr_other_flg, wr_flg_last);
+                #if DEBUG_TIMESTAMP
                 gettimeofday(&tv3, NULL);
+                #endif
 
                 wr_flg_last         = wr_flg && wr_other_flg;
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_isp frame_write_st %d time %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld %d %x\n",frame_write_st,
+                #if DEBUG_TIMESTAMP
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_isp fid %u frame_write_st %d time %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld %8ld %d %x\n",ispgain->frame_id,frame_write_st,
                           tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv1.tv_usec - tv0.tv_usec, tv2.tv_usec - tv1.tv_usec,
-                          tv3.tv_usec - tv2.tv_usec, tv3.tv_usec - tv0.tv_usec, static_ratio_cur[0], ratio_stride * gain_kg_tile_h_align);
+                          tv3.tv_usec - tv2.tv_usec, tv3.tv_usec - tv0.tv_usec, tvb.tv_usec - tva.tv_usec, static_ratio_cur[0], ratio_stride * gain_kg_tile_h_align);
+                #endif
                // memset(static_ratio_cur, 1<<7, gain_kg_tile_h_align * ratio_stride);
 
                 #else
@@ -823,12 +1050,13 @@ Isp20SpThread::loop () {
 }
 
 void
-Isp20SpThread::set_sp_dev(SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev)
+Isp20SpThread::set_sp_dev(SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev, SmartPtr<V4l2SubDevice> lensdev)
 {
     _isp_dev = ispdev;
     _isp_sp_dev = ispspdev;
     _ispp_dev = isppdev;
     _sensor_dev = snsdev;
+    _focus_dev = lensdev;
 }
 
 void
@@ -839,7 +1067,7 @@ Isp20SpThread::set_sp_img_size(int w, int h, int w_align, int h_align)
     _img_width_align    = w_align;
     _img_height_align   = h_align;
     LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "_img_height %d %d _img_width %d %d\n", h, h_align, w, w_align);
-    assert(((w == (w_align - 1)) || (w == w_align)) && ((h == (h_align - 1)) || (h == h_align )));
+    //assert(((w == (w_align - 1)) || (w == w_align)) && ((h == (h_align - 1)) || (h == h_align )));
 }
 
 void
@@ -848,58 +1076,28 @@ Isp20SpThread::set_gain_isp(void *buf, uint8_t* ratio)
 
 
 void
-Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
+Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur, uint16_t h_st, uint16_t h_end)
 {
-
-    uint8_t *src                        = (uint8_t*)buf;
-    int wr_flg                          = get_wr_flg_func(frame_num_pp, 1);
-    int wr_other_flg                    = get_wr_other_flg_func();
-    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr frame_num_pp %d frame_write_st %d  write_frame_num %d\n ",frame_num_pp, frame_write_st, write_frame_num);
-    wr_flg &= wr_other_flg;
-  //  wr_flg = 0;
-    uint8_t *test_buff[2];
-    uint8_t *test_buff_ori[2];
-    uint8_t *gain_isp_buf_ds            = NULL;
-    uint8_t ratio_shf_bit               = static_ratio_l_bit;
-
-    {
-        static FILE *fd_gain_yuvnr_wr   = NULL;
-        if(wr_flg)
-        {
-            for(int i = 0; i < 2; i++)
-            {
-                test_buff[i]                = (uint8_t*)malloc(gain_blk_ispp_stride * gain_blk_ispp_h * 2 * sizeof(test_buff[0][0]) );
-                test_buff_ori[i]            = (uint8_t*)malloc(gain_blk_ispp_stride * gain_blk_ispp_h * 2 * sizeof(test_buff[0][0]) );
-            }
-            gain_isp_buf_ds                 = (uint8_t*)malloc(gain_blk_ispp_stride * gain_blk_ispp_h * sizeof(gain_isp_buf_ds[0]));
-            if(fd_gain_yuvnr_wr == NULL)
-                fd_gain_yuvnr_wr            = fopen("/tmp/gain_pp_out.yuv", "wb");
-            if(fd_gain_yuvnr_wr)
-            {
-                fwrite(src, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_wr);
-                fflush(fd_gain_yuvnr_wr);
-            }
-
-        }
-        else
-        {
-            fd_gain_yuvnr_wr                = NULL;
-        }
-    }
-
-    uint8_t *gain_isp_buf_cur                       = gain_isp_buf_bak[static_ratio_idx_out];
     RKAnr_Mt_Params_Select_t mtParamsSelect_cur     = *(mtParamsSelect_list[static_ratio_idx_out]);
+	uint16_t yuvnr_gain_scale_fix[3];
+    float yuvnr_gain_scale[3];
+    uint8_t *src                            = (uint8_t*)buf;
 
-		uint16_t yuvnr_gain_scale_fix[3];
-		yuvnr_gain_scale_fix[0] = ROUND_F(mtParamsSelect_cur.yuvnr_gain_scale[0] * (1 << YUV_SCALE_FIX_BITS));
-		yuvnr_gain_scale_fix[1] = ROUND_F(mtParamsSelect_cur.yuvnr_gain_scale[1] * (1 << YUV_SCALE_FIX_BITS));
-		yuvnr_gain_scale_fix[2] = ROUND_F(2 * mtParamsSelect_cur.yuvnr_gain_scale[2] * (1 << YUV_SCALE_FIX_BITS));
-        float coeff                 = mtParamsSelect_cur.yuvnr_gain_scale[2] * 2.0f;
-        uint16_t ratio_static       = (1 << static_ratio_l_bit) - 20;
+	yuvnr_gain_scale[0]                     = mtParamsSelect_cur.yuvnr_gain_scale[0];
+	yuvnr_gain_scale[1]                     = mtParamsSelect_cur.yuvnr_gain_scale[1];
+	yuvnr_gain_scale[2]                     = mtParamsSelect_cur.yuvnr_gain_scale[2];
+
+
+	yuvnr_gain_scale_fix[0]                 = ROUND_F(yuvnr_gain_scale[0]       * (1 << YUV_SCALE_FIX_BITS));
+	yuvnr_gain_scale_fix[1]                 = ROUND_F(yuvnr_gain_scale[1]       * (1 << YUV_SCALE_FIX_BITS));
+	yuvnr_gain_scale_fix[2]                 = ROUND_F(2 * yuvnr_gain_scale[2]   * (1 << YUV_SCALE_FIX_BITS));
+    float coeff                             = yuvnr_gain_scale[2] * 2.0f;
+    uint16_t ratio_static                   = (1 << static_ratio_l_bit) - 20;
+
+    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr frame_num_pp %d frame_write_st %d  write_frame_num %d\n ",frame_num_pp, frame_write_st, write_frame_num);
  //   printf("ratio_shf_bit %d mtParamsSelect.yuvnr_gain_scale %f %f %f\n", ratio_shf_bit, mtParamsSelect.yuvnr_gain_scale[0], mtParamsSelect.yuvnr_gain_scale[1], mtParamsSelect.yuvnr_gain_scale[2]);
 #ifndef ENABLE_NEON
-    int flg = 0;
-    for(int i = 0; i < gain_blk_ispp_h; i++)
+    for(int i = h_st; i < h_end; i++)
         for(int j = 0; j < gain_blk_ispp_stride; j++)
         {
             int idx_isp                     = i * gain_blk_isp_stride + j * 2;
@@ -914,14 +1112,6 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
             int gain_isp_cur                = MAX(gain_isp_buf_cur[idx_isp], gain_isp_buf_cur[idx_isp + 1]);
 
 
-            if(wr_flg)
-            {
-                test_buff_ori[0][idx_ispp]  = src[idx_gain + 0];
-                test_buff_ori[1][idx_ispp]  = src[idx_gain + 1];
-                gain_isp_buf_ds[idx_ispp]   = gain_isp_cur;
-            }
-
-#if 1
                 uint16_t tmp0;
     			uint16_t tmp1;
                 float rr[2];
@@ -944,8 +1134,8 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
         	    }
         	    else
         	    {
-        	        rr[0] 							= mtParamsSelect_cur.yuvnr_gain_scale[0];
-        	        rr[1] 							= mtParamsSelect_cur.yuvnr_gain_scale[1];
+    	        rr[0] 							= yuvnr_gain_scale[0];
+    	        rr[1] 							= yuvnr_gain_scale[1];
 
 
 
@@ -959,15 +1149,8 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
 
 				src[idx_gain]     				= MIN(255, tmp0);
 				src[idx_gain + 1] 				= MIN(255, tmp1);
-                #else
-                src[idx_gain]                   = (src[idx_gain]        << static_ratio_l_bit) / ratio_cur;
-                src[idx_gain + 1]               = (src[idx_gain + 1]    << static_ratio_l_bit) / ratio_cur;
-                #endif
-                if(wr_flg)
-                {
-                    test_buff[0][idx_ispp]      = src[idx_gain + 0];
-                    test_buff[1][idx_ispp]      = src[idx_gain + 1];
-                }
+
+
             }
 #else
 
@@ -983,7 +1166,7 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
     int prefetch_num    = (ratio_stride  + 255) / 256;
   //  for(int k = 0;k<20;k++)
 
-		for(int i = 0; i < gain_blk_ispp_h; i++)
+	for(int i = h_st; i < h_end; i++)
 		{
 			int offsetX = 0;
 			int idx_isp             = 0;
@@ -1114,71 +1297,14 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio)
 
 
 
-    {
-        static FILE *fd_gain_yuvnr_up_wr        = NULL;
-        static FILE *fd_gain_yuvnr_sp_out       = NULL;
-        static FILE *fd_gain_yuvnr_up_sp_out    = NULL;
-        static FILE *fdtmp                      = NULL;
 
-        if(wr_flg)
-        {
-            if(fdtmp == NULL)
-                fdtmp = fopen("/tmp/gain_isp_ds_out.yuv", "wb");
-            if(fdtmp)
-            {
-                fwrite(gain_isp_buf_ds, gain_blk_ispp_stride * gain_blk_ispp_h, 1, fdtmp);
-                fflush(fdtmp);
-            }
-            if(gain_isp_buf_ds)
-                free(gain_isp_buf_ds);
-
-
-            if(fd_gain_yuvnr_up_wr==NULL)
-                fd_gain_yuvnr_up_wr                 = fopen("/tmp/gain_pp_up_out.yuv", "wb");
-            if(fd_gain_yuvnr_up_wr)
-            {
-                fwrite(src, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_up_wr);
-                fflush(fd_gain_yuvnr_up_wr);
-            }
-            if(1)
-            {
-                if(fd_gain_yuvnr_sp_out==NULL)
-                    fd_gain_yuvnr_sp_out                = fopen("/tmp/gain_pp_sp_out.yuv", "wb");
-                if(fd_gain_yuvnr_sp_out)
-                {
-                    fwrite(test_buff_ori[0], gain_blk_ispp_stride * gain_blk_ispp_h, 1, fd_gain_yuvnr_sp_out);
-                    fwrite(test_buff_ori[1], gain_blk_ispp_stride * gain_blk_ispp_h, 1, fd_gain_yuvnr_sp_out);
-                    fflush(fd_gain_yuvnr_sp_out);
-                }
-
-                if(fd_gain_yuvnr_up_sp_out==NULL)
-                    fd_gain_yuvnr_up_sp_out             = fopen("/tmp/gain_pp_up_sp_out.yuv", "wb");
-                if(fd_gain_yuvnr_up_sp_out)
-                {
-                    fwrite(test_buff[0], gain_blk_ispp_stride * gain_blk_ispp_h, 1, fd_gain_yuvnr_up_sp_out);
-                    fwrite(test_buff[1], gain_blk_ispp_stride * gain_blk_ispp_h, 1, fd_gain_yuvnr_up_sp_out);
-                    fflush(fd_gain_yuvnr_up_sp_out);
-                }
-            }
-
-            for(int i = 0; i < 2; i++)
-            {
-                free(test_buff[i]);
-                free(test_buff_ori[i]);
-            }
-        }
-        else
-        {
-            fd_gain_yuvnr_up_wr        = NULL;
-            fd_gain_yuvnr_sp_out       = NULL;
-            fd_gain_yuvnr_up_sp_out    = NULL;
-            fdtmp                      = NULL;
-
-        }
-    }
 
 
 }
+
+
+
+
 
 void
 Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
@@ -1301,14 +1427,26 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     for(int i = 0; i < gain_tile_gainkg_h; i++)
 
     {
+
+
+
+
 		uint8_t block_h_cur = MIN(gain_blk_ispp_h - i * gain_tile_ispp_y, gain_tile_ispp_y);
-            for(int j = 0; j < gain_tile_gainkg_w; j+=gainkg_tile_num)
+        for(int j = 0; j < gain_tile_gainkg_w; j+=gainkg_tile_num)
+        {
+         //   for(int tile_idx = 0; tile_idx < gainkg_tile_num; tile_idx++)
             {
-                 //   for(int tile_idx = 0; tile_idx < gainkg_tile_num; tile_idx++)
+                int tile_off        = i * gain_tile_gainkg_stride + j * gain_tile_gainkg_size;
+                int tile_i_ispp     = i * gain_tile_ispp_y;
+                int tile_j_ispp     = j * gain_tile_ispp_x;
+                if((j%2)==1)//i != 0)
+                {
+                    for(int len = 0; len < 2 ; len++)
                     {
-                        int tile_off        = i * gain_tile_gainkg_stride + j * gain_tile_gainkg_size;
-                        int tile_i_ispp     = i * gain_tile_ispp_y;
-                        int tile_j_ispp     = j * gain_tile_ispp_x;
+                    //    prefetch_4x(src      + tile_off + gain_tile_gainkg_size + len * 256);
+                    }
+
+                }
 #ifndef ENABLE_NEON
                 for(uint16_t y = 0; y < gain_tile_ispp_y; y++)
 				{
@@ -1792,7 +1930,7 @@ Isp20SpThread::init()
     gainkg_tile_num                     = 2;
 
 
-    gain_blk_isp_w                      = _img_width;
+    gain_blk_isp_w                      = _img_width * 2;
     gain_blk_isp_stride                 = ((gain_blk_isp_w + 15) / 16) * 16;
     gain_blk_isp_h                      = _img_height;
     gain_blk_isp_mem_size               = gain_blk_isp_stride * gain_blk_isp_h;
@@ -1832,7 +1970,7 @@ Isp20SpThread::init()
         pImgbuf[i]                      = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv)    *   sizeof(pImgbuf[i][0]));
 
     for(int i = 0; i < static_ratio_num; i++)
-        gain_isp_buf_bak[i]             = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv)    *   sizeof(gain_isp_buf_bak[i][0]));
+        gain_isp_buf_bak[i]             = (uint8_t*)malloc(gain_blk_isp_mem_size * sizeof(gain_isp_buf_bak[i][0]));
     for(int i = 0; i < static_ratio_num; i++)
     {
         mtParamsSelect_list[i]          = (RKAnr_Mt_Params_Select_t *)malloc(static_ratio_num   *   sizeof(mtParamsSelect_list[0][0]));
@@ -1850,6 +1988,17 @@ Isp20SpThread::init()
     {
         frame_detect_flg[i]             = -1;
     }
+
+    pAfTmp                              = (uint8_t*)malloc(img_buf_size * sizeof(pAfTmp[0]) * 3 / 2);
+    _af_meas_params.sp_meas.ldg_xl      = _calibDb->af.ldg_param.ldg_xl;
+    _af_meas_params.sp_meas.ldg_yl      = _calibDb->af.ldg_param.ldg_yl;
+    _af_meas_params.sp_meas.ldg_kl      = _calibDb->af.ldg_param.ldg_kl;
+    _af_meas_params.sp_meas.ldg_xh      = _calibDb->af.ldg_param.ldg_xh;
+    _af_meas_params.sp_meas.ldg_yh      = _calibDb->af.ldg_param.ldg_yh;
+    _af_meas_params.sp_meas.ldg_kh      = _calibDb->af.ldg_param.ldg_kh;
+    _af_meas_params.sp_meas.highlight_th  = _calibDb->af.highlight.ther0;
+    _af_meas_params.sp_meas.highlight2_th = _calibDb->af.highlight.ther1;
+
     LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "Isp20SpThread::%s exit w %d h %d\n", __FUNCTION__, gain_blk_isp_w, gain_blk_isp_h);
 }
 
@@ -1887,6 +2036,9 @@ Isp20SpThread::deinit()
 	if(pPreAlpha)
 		free(pPreAlpha);
 
+    if(pAfTmp)
+        free(pAfTmp);
+
     LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s exit", __FUNCTION__);
 }
 
@@ -1907,6 +2059,22 @@ bool Isp20SpThread::notify_yg_cmd(SmartPtr<sp_msg_t> msg)
         msg->cond->wait(*msg->mutex.ptr());
     } else {
         ret = _notifyYgCmdQ.push(msg);
+    }
+
+    return ret;
+}
+
+bool Isp20SpThread::notify_yg2_cmd(SmartPtr<sp_msg_t> msg)
+{
+    bool ret = true;
+    if (msg->sync) {
+        msg->mutex = new Mutex();
+        msg->cond = new XCam::Cond();
+        SmartLock lock (*msg->mutex.ptr());
+        ret = _notifyYgCmdQ2.push(msg);
+        msg->cond->wait(*msg->mutex.ptr());
+    } else {
+        ret = _notifyYgCmdQ2.push(msg);
     }
 
     return ret;
@@ -1935,6 +2103,14 @@ void Isp20SpThread::notify_wr_thread_exit()
     msg->cmd = MSG_CMD_WR_EXIT;
     msg->sync = true;
     notify_yg_cmd(msg);
+}
+
+void Isp20SpThread::notify_wr2_thread_exit()
+{
+    SmartPtr<sp_msg_t> msg = new sp_msg_t();
+    msg->cmd = MSG_CMD_WR_EXIT;
+    msg->sync = true;
+    notify_yg2_cmd(msg);
 }
 
 void Isp20SpThread::destroy_stop_fds_ispsp () {
@@ -2015,6 +2191,14 @@ void Isp20SpThread::update_motion_detection_params(ANRMotionParam_t *motion)
     SmartLock locker (_motion_param_mutex);
     if (motion && (0 != memcmp(motion, &_motion_params, sizeof(ANRMotionParam_t)))) {
         _motion_params = *motion;
+    }
+}
+
+void Isp20SpThread::update_af_meas_params(rk_aiq_af_algo_meas_t *af_meas)
+{
+    SmartLock locker (_afmeas_param_mutex);
+    if (af_meas && (0 != memcmp(af_meas, &_af_meas_params, sizeof(rk_aiq_af_algo_meas_t)))) {
+        _af_meas_params = *af_meas;
     }
 }
 

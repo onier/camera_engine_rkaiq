@@ -170,6 +170,7 @@ public:
     void setDefMirrorFlip();
     XCamReturn swWorkingModeDyn_msg(rk_aiq_working_mode_t mode);
     void setMulCamConc(bool cc);
+    XCamReturn getSensorDiscrib(rk_aiq_exposure_sensor_descriptor *sensorDes);
 protected:
     XCamReturn applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results);
     XCamReturn swWorkingModeDyn(rk_aiq_working_mode_t mode);

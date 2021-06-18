@@ -996,4 +996,16 @@ void RkAiqManager::setMulCamConc(bool cc)
 #endif
 }
 
+XCamReturn RkAiqManager::getSensorDiscrib(rk_aiq_exposure_sensor_descriptor *sensorDes)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    XCAM_ASSERT (sensorDes);
+    rk_aiq_exposure_sensor_descriptor sensor_des;
+    ret = mCamHw->getSensorModeData(mSnsEntName, sensor_des);
+    if (ret == XCAM_RETURN_NO_ERROR) {
+        *sensorDes = sensor_des;
+    }
+    return ret;
+}
+
 }; //namespace RkCam

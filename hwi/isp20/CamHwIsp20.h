@@ -322,6 +322,7 @@ protected:
     uint32_t _ds_width_align;
     uint32_t _ds_heigth_align;
     uint32_t _exp_delay;
+    rk_aiq_lens_descriptor _lens_des;
 };
 
 };

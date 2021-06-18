@@ -87,7 +87,12 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 
     LOGI_AGIC("%s: (enter)\n", __FUNCTION__ );
 
-    RKAiqAecExpInfo_t* pAERes = pAgicProcParams->rk_com.u.proc.curExp;
+    RKAiqAecExpInfo_t* pAERes = NULL;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        pAERes = pAgicProcParams->agic_proc_com.com_ext.u.proc.curExp;
+    } else {
+        pAERes = pAgicProcParams->rk_com.u.proc.curExp;
+    }
 
     if(pAERes != NULL) {
         if(pAgicProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {

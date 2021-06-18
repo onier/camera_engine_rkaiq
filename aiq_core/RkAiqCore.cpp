@@ -193,6 +193,7 @@ RkAiqCore::RkAiqCore()
     mStrthIr = 0.0f;
     mGrayMode = RK_AIQ_GRAY_MODE_CPSL;
     firstStatsReceived = false;
+    mSafeEnableAlgo = true;
 
     SmartPtr<RkAiqFullParams> fullParam = new RkAiqFullParams();
     mAiqCurParams = new RkAiqFullParamsProxy(fullParam );
@@ -761,6 +762,11 @@ RkAiqCore::genIspAeResult(RkAiqFullParams* params)
         RkAiqAlgoPostResAeInt* ae_post_rk = (RkAiqAlgoPostResAeInt*)ae_post;
         iris_param->DCIris.update = ae_post_rk->ae_post_res_rk.DCIris.update;
         iris_param->DCIris.pwmDuty = ae_post_rk->ae_post_res_rk.DCIris.pwmDuty;
+    } else {
+        RkAiqAlgoProcResAe* ae_customer = (RkAiqAlgoProcResAe*)ae_proc;
+        memcpy(exp_param->exp_tbl, ae_customer->ae_proc_res.exp_set_tbl, sizeof(exp_param->exp_tbl));
+        exp_param->exp_tbl_size = ae_customer->ae_proc_res.exp_set_cnt;
+        exp_param->algo_id = 0;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -842,10 +848,41 @@ RkAiqCore::genIspAfResult(RkAiqFullParams* params)
         isp_param->af_cfg_update = af_rk->af_proc_res_com.af_cfg_update;
         isp_param->update_mask |= RKAIQ_ISP_AF_ID;
 
-        focus_param->next_lens_pos = af_rk->af_proc_res_com.af_focus_param.next_lens_pos;
-        focus_param->next_zoom_pos = af_rk->af_proc_res_com.af_focus_param.next_zoom_pos;
+        focus_param->zoomfocus_modifypos = af_rk->af_proc_res_com.af_focus_param.zoomfocus_modifypos;
+        focus_param->focus_correction = af_rk->af_proc_res_com.af_focus_param.focus_correction;
+        focus_param->zoom_correction = af_rk->af_proc_res_com.af_focus_param.zoom_correction;
         focus_param->lens_pos_valid = af_rk->af_proc_res_com.af_focus_param.lens_pos_valid;
         focus_param->zoom_pos_valid = af_rk->af_proc_res_com.af_focus_param.zoom_pos_valid;
+        focus_param->send_reback = af_rk->af_proc_res_com.af_focus_param.send_reback;
+        focus_param->focus_noreback = af_rk->af_proc_res_com.af_focus_param.focus_noreback;
+        focus_param->use_manual = af_rk->af_proc_res_com.af_focus_param.use_manual;
+        focus_param->auto_focpos = af_rk->af_proc_res_com.af_focus_param.auto_focpos;
+        focus_param->auto_zoompos = af_rk->af_proc_res_com.af_focus_param.auto_zoompos;
+        focus_param->manual_focpos = af_rk->af_proc_res_com.af_focus_param.manual_focpos;
+        focus_param->manual_zoompos = af_rk->af_proc_res_com.af_focus_param.manual_zoompos;
+        focus_param->next_pos_num = af_rk->af_proc_res_com.af_focus_param.next_pos_num;
+        for (int i = 0; i < af_rk->af_proc_res_com.af_focus_param.next_pos_num; i++) {
+            focus_param->next_lens_pos[i] = af_rk->af_proc_res_com.af_focus_param.next_lens_pos[i];
+            focus_param->next_zoom_pos[i] = af_rk->af_proc_res_com.af_focus_param.next_zoom_pos[i];
+        }
+
+        {
+            SmartPtr<RkAiqHandle>* ae_handle = getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AE);
+            int algo_id = (*ae_handle)->getAlgoId();
+
+            if (ae_handle) {
+                if (algo_id == 0) {
+                    RkAiqAeHandleInt *ae_algo = dynamic_cast<RkAiqAeHandleInt*>(ae_handle->ptr());
+                    Uapi_ExpSwAttr_t expSwAttr;
+
+                    ae_algo->getExpSwAttr(&expSwAttr);
+                    if (expSwAttr.enable != !af_rk->af_proc_res_com.lockae) {
+                        expSwAttr.enable = !af_rk->af_proc_res_com.lockae;
+                        ae_algo->setExpSwAttr(expSwAttr);
+                    }
+                }
+            }
+        }
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -2034,7 +2071,7 @@ RkAiqCore::pushEvts(SmartPtr<ispHwEvt_t> &evts)
     return XCAM_RETURN_NO_ERROR;
 }
 
-const RkAiqHandle*
+RkAiqHandle*
 RkAiqCore::getAiqAlgoHandle(const int algo_type)
 {
     SmartPtr<RkAiqHandle>* handlePtr = getCurAlgoTypeHandle(algo_type);
@@ -2249,6 +2286,7 @@ RkAiqCore::enableAlgo(int algoType, int id, bool enable)
     SmartPtr<RkAiqHandle>* cur_algo_hdl = getCurAlgoTypeHandle(algoType);
     std::map<int, SmartPtr<RkAiqHandle>>* algo_map = getAlgoTypeHandleMap(algoType);
     std::map<int, SmartPtr<RkAiqHandle>>::iterator it = algo_map->find(id);
+    bool switch_algo = false;
 
     if (it == algo_map->end()) {
         LOGE_ANALYZER("can't find type id <%d, %d> algo", algoType, id);
@@ -2268,8 +2306,19 @@ RkAiqCore::enableAlgo(int algoType, int id, bool enable)
      * (RkAiqHandle ptr = RkAiqxxxHandle ptr + offset), but seams like
      * SmartPtr do not deal with this correctly.
      */
-    if (enable)
+    if (enable) {
+        SmartLock locker (mApiMutex);
+        while (mSafeEnableAlgo != true)
+            mApiMutexCond.wait(mApiMutex);
+        if ((*cur_algo_hdl).ptr() &&
+            (*cur_algo_hdl).ptr() != it->second.ptr()) {
+            (*cur_algo_hdl)->setEnable(false);
+            switch_algo = true;
+        }
         *cur_algo_hdl = it->second;
+        if (switch_algo && (mState >= RK_AIQ_CORE_STATE_PREPARED))
+            (*cur_algo_hdl)->prepare();
+    }
 
     EXIT_ANALYZER_FUNCTION();
 
@@ -2327,7 +2376,7 @@ RkAiqCore::getAxlibStatus(int algoType, int id)
     return it->second->getEnable();
 }
 
-const RkAiqAlgoContext*
+RkAiqAlgoContext*
 RkAiqCore::getEnabledAxlibCtx(const int algo_type)
 {
     if (algo_type <= RK_AIQ_ALGO_TYPE_NONE ||
@@ -2786,11 +2835,24 @@ RkAiqCore::convertIspstatsToAlgo(const SmartPtr<VideoBuffer> &buffer)
             mAlogsSharedParams.ispStats.af_stats.roia_sharpness += stats->params.rawaf.ramdata[i];
 
         if(afParams.ptr()) {
+            mAlogsSharedParams.ispStats.af_stats.focusCode = afParams->data()->focusCode;
+            mAlogsSharedParams.ispStats.af_stats.zoomCode = afParams->data()->zoomCode;
             mAlogsSharedParams.ispStats.af_stats.focus_endtim = afParams->data()->focusEndTim;
             mAlogsSharedParams.ispStats.af_stats.focus_starttim = afParams->data()->focusStartTim;
             mAlogsSharedParams.ispStats.af_stats.zoom_endtim = afParams->data()->zoomEndTim;
             mAlogsSharedParams.ispStats.af_stats.zoom_starttim = afParams->data()->zoomStartTim;
             mAlogsSharedParams.ispStats.af_stats.sof_tim = afParams->data()->sofTime;
+            mAlogsSharedParams.ispStats.af_stats.lowpass_id = afParams->data()->lowPassId;
+            mAlogsSharedParams.ispStats.af_stats.focusCorrection = afParams->data()->focusCorrection;
+            mAlogsSharedParams.ispStats.af_stats.zoomCorrection = afParams->data()->zoomCorrection;
+            memcpy(mAlogsSharedParams.ispStats.af_stats.lowpass_fv4_4,
+                afParams->data()->lowPassFv4_4, ISP2X_RAWAF_SUMDATA_NUM * sizeof(u32));
+            memcpy(mAlogsSharedParams.ispStats.af_stats.lowpass_fv8_8,
+                afParams->data()->lowPassFv8_8, ISP2X_RAWAF_SUMDATA_NUM * sizeof(u32));
+            memcpy(mAlogsSharedParams.ispStats.af_stats.lowpass_highlht,
+                afParams->data()->lowPassHighLht, ISP2X_RAWAF_SUMDATA_NUM * sizeof(u32));
+            memcpy(mAlogsSharedParams.ispStats.af_stats.lowpass_highlht2,
+                afParams->data()->lowPassHighLht2, ISP2X_RAWAF_SUMDATA_NUM * sizeof(u32));
         }
     }
 #endif
@@ -2805,6 +2867,11 @@ RkAiqCore::analyze(const SmartPtr<VideoBuffer> &buffer)
     SmartPtr<RkAiqFullParamsProxy> fullPparam;
     bool has_orb_stats = false;
     bool has_3a_stats = false;
+
+    {
+        SmartLock locker (mApiMutex);
+        mSafeEnableAlgo = false;
+    }
 
     if (!firstStatsReceived) {
         firstStatsReceived = true;
@@ -2890,6 +2957,11 @@ RkAiqCore::analyze(const SmartPtr<VideoBuffer> &buffer)
     }
     if (has_orb_stats)
         fullPparam = analyzeInternalPp();
+    {
+        SmartLock locker (mApiMutex);
+        mSafeEnableAlgo = true;
+        mApiMutexCond.broadcast ();
+    }
 
 #ifdef RK_SIMULATOR_HW
     // merge results for simulator

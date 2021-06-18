@@ -162,30 +162,52 @@ static XCamReturn AhdrProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
     // pAhdrCtx->frameCnt = inparams->frame_id;
     AhdrGetStats(pAhdrCtx, &AhdrParams->ispAhdrStats);
 
-    RkAiqAlgoProcResAeInt* ae_proc_res_int =
-        (RkAiqAlgoProcResAeInt*)(AhdrParams->rk_com.u.proc.proc_res_comb->ae_proc_res);
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        RkAiqAlgoProcAhdr* AhdrParams = (RkAiqAlgoProcAhdr*)inparams;
+        RkAiqAlgoProcResAe* ae_proc_res =
+            (RkAiqAlgoProcResAe*)(AhdrParams->com_ext.u.proc.proc_res_comb->ae_proc_res);
 
-    if (ae_proc_res_int)
-        AhdrGetSensorInfo(pAhdrCtx, ae_proc_res_int->ae_proc_res_rk);
-    else {
-        AecProcResult_t AeProcResult;
-        LOGW_AHDR("%s: Ae Proc result is null!!!\n", __FUNCTION__);
-        AhdrGetSensorInfo(pAhdrCtx, AeProcResult);
+        if (ae_proc_res)
+            AhdrGetSensorInfo(pAhdrCtx, ae_proc_res->ae_proc_res);
+        else {
+            LOGW_AHDR("%s: Ae Proc result is null!!!\n", __FUNCTION__);
+        }
+    } else {
+        RkAiqAlgoProcResAeInt* ae_proc_res_int =
+            (RkAiqAlgoProcResAeInt*)(AhdrParams->rk_com.u.proc.proc_res_comb->ae_proc_res);
+
+        if (ae_proc_res_int)
+            AhdrGetSensorInfo(pAhdrCtx, ae_proc_res_int->ae_proc_res_rk);
+        else {
+            AecProcResult_t AeProcResult;
+            LOGW_AHDR("%s: Ae Proc result is null!!!\n", __FUNCTION__);
+            AhdrGetSensorInfo(pAhdrCtx, AeProcResult);
+        }
     }
-
-    RkAiqAlgoPreResAeInt* ae_pre_res_int =
-        (RkAiqAlgoPreResAeInt*)(AhdrParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
+    AecPreResult_t  *aecPreRes = NULL;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        RkAiqAlgoProcAhdr* AhdrParams = (RkAiqAlgoProcAhdr*)inparams;
+        RkAiqAlgoPreResAe* ae_pre_res =
+            (RkAiqAlgoPreResAe*)(AhdrParams->com_ext.u.proc.pre_res_comb->ae_pre_res);
+        if (ae_pre_res)
+        aecPreRes = &ae_pre_res->ae_pre_res;
+    } else {
+        RkAiqAlgoPreResAeInt* ae_pre_res_int =
+            (RkAiqAlgoPreResAeInt*)(AhdrParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
+        if (ae_pre_res_int)
+            aecPreRes = &ae_pre_res_int->ae_pre_res_rk;
+    }
     RkAiqAlgoPreResAfInt* af_pre_res_int =
         (RkAiqAlgoPreResAfInt*)(AhdrParams->rk_com.u.proc.pre_res_comb->af_pre_res);
-    if (ae_pre_res_int && af_pre_res_int)
+    if (aecPreRes && af_pre_res_int)
         AhdrProcessing(pAhdrCtx,
-                       ae_pre_res_int->ae_pre_res_rk,
+                       *aecPreRes,
                        af_pre_res_int->af_pre_result);
-    else if (ae_pre_res_int) {
+    else if (aecPreRes) {
         af_preprocess_result_t AfPreResult;
         LOGW_AHDR("%s: af Pre result is null!!!\n", __FUNCTION__);
         AhdrProcessing(pAhdrCtx,
-                       ae_pre_res_int->ae_pre_res_rk,
+                       *aecPreRes,
                        AfPreResult);
     }
     else {

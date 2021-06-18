@@ -270,7 +270,10 @@ private:
     bool parseEntrySensorAfLaserAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfPdaf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfVcmCfg(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfLdgParam(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfHighlight(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfMeasISO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfZoomFocusDist(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfZoomFocusTbl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLdch(const XMLElement* pelement, void* param = NULL);

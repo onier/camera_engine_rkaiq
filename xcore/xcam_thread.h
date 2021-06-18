@@ -38,6 +38,7 @@ public:
     const char *get_name () const {
         return _name;
     }
+    pthread_attr_t& get_pthread_attr();
 
 protected:
     // return true to start loop, else the thread stopped
@@ -59,6 +60,7 @@ private:
     XCam::Cond      _exit_cond;
     bool            _started;
     bool            _stopped;
+    pthread_attr_t  _pthread_attr;
 };
 
 };

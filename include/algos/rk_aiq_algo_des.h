@@ -119,6 +119,7 @@ typedef struct _RkAiqAlgoCom {
             int sns_op_width;
             int sns_op_height;
             int conf_type;
+            int ae_algo_id;
         } prepare; //for prepare function
 
         struct {

@@ -220,7 +220,7 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
  * \param[in] algo_type       algo type defined by RkAiqAlgoDesComm.type
  * \return return 0 if success
  */
-const RkAiqAlgoContext*
+RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type);
 
 /*!
@@ -406,6 +406,14 @@ rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t *rect)
 
 XCamReturn
 rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile);
+
+/*!
+ * \brief get describtion of sensor
+ *
+ * \param[out] sensorDes
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_getSensorDiscrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_exposure_sensor_descriptor *sensorDes);
 
 RKAIQ_END_DECLARE
 
