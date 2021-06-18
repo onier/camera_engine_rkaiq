@@ -580,7 +580,7 @@ typedef struct CalibDb_Module_Info_s {
     float IRCutT;
 } CalibDb_Module_Info_t;
 
-#define CALD_AWB_LS_NUM_MAX 7
+#define CALD_AWB_LS_NUM_MAX 14
 #define CALD_AWB_WINDOW_NUM_MAX 8
 #define CALD_AWB_EXCRANGE_NUM_MAX 7
 #define CALD_AWB_RRES_NUM_MAX 5
@@ -1182,7 +1182,7 @@ typedef struct CalibDb_BayerNr_2_s {
 #define CIFISP_LSC_GRAD_TBL_SIZE           8
 #define CIFISP_LSC_SIZE_TBL_SIZE           8
 #define LSC_GRAD_TBL_SIZE                  8
-#define LSC_ILLUMINATION_MAX               10
+#define LSC_ILLUMINATION_MAX               14
 typedef enum  CalibDb_Used_For_Case_e {
     USED_FOR_CASE_NORMAL = 0,
     USED_FOR_CASE_FLASH,
@@ -1283,7 +1283,7 @@ typedef struct CalibDb_RKDM_s {
     unsigned char debayer_shift_num;
 } CalibDb_RKDM_t;
 
-#define CCM_ILLUMINATION_MAX               7
+#define CCM_ILLUMINATION_MAX               14
 #define CCM_PROFILE_NAME            ( 25U )
 typedef char                        CalibDb_Ccm_ProfileName_t[CCM_PROFILE_NAME];
 #define CCM_ILLUMINATION_NAME       ( 20U )
