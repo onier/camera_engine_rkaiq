@@ -197,10 +197,10 @@ int SocketServer::Recvieve() {
     }
     
     if (length <= 0) {
-      //close(client_socket);
-      //client_socket = accept(sockfd, (struct sockaddr *)&clientAddress, &sosize);
-      //setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval,
-      //             sizeof(struct timeval));
+      close(client_socket);
+      client_socket = accept(sockfd, (struct sockaddr *)&clientAddress, &sosize);
+      setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval,
+                   sizeof(struct timeval));
       size = 6;
       offset = 0;
       //break;
