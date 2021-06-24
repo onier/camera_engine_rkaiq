@@ -993,6 +993,18 @@ V4l2Device::fini_buffer_pool()
         release_buffer(_buf_pool [i]);
     }
 
+    if (_memory_type == V4L2_MEMORY_MMAP) {
+        struct v4l2_requestbuffers request_buf;
+        xcam_mem_clear (request_buf);
+        request_buf.type = _buf_type;
+        request_buf.count = 0;
+        request_buf.memory = _memory_type;
+        if (io_control (VIDIOC_REQBUFS, &request_buf) < 0) {
+            XCAM_LOG_ERROR ("device(%s) starts failed on VIDIOC_REQBUFS", XCAM_STR (_name));
+            //return XCAM_RETURN_ERROR_IOCTL;
+        }
+    }
+
     _buf_pool.clear ();
     if (_planes) {
         xcam_free (_planes);

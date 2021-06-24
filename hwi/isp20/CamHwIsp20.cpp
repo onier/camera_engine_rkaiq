@@ -962,7 +962,10 @@ media_unref:
 
             hwinfo->sensor_info.binded_strm_media_idx =
                 atoi(fullinfo->ispp_info->media_dev_path + strlen("/dev/media"));
-
+            hwinfo->sensor_info.support_fmt[0].hdr_mode = NO_HDR;
+            hwinfo->sensor_info.support_fmt[1].hdr_mode = HDR_X2;
+            hwinfo->sensor_info.support_fmt[2].hdr_mode = HDR_X3;
+            hwinfo->sensor_info.num = 3;
             CamHwIsp20::mIspHwInfos.isp_info[i].linked_sensor = true;
 
             SensorInfoCopy(fullinfo, hwinfo);
@@ -1171,13 +1174,14 @@ CamHwIsp20::init(const char* sns_ent_name)
     mIspSpThread = new Isp20SpThread();
 
     isp20Pollthread = new Isp20PollThread();
+    isp20Pollthread->set_mipi_devs(_mipi_tx_devs, _mipi_rx_devs, mIspCoreDev);
     isp20Pollthread->set_event_handle_dev(sensorHw);
     if(lensHw.ptr()) {
         isp20Pollthread->set_focus_handle_dev(lensHw);
         //isp20Pollthread->set_iris_handle_dev(lensHw);
     }
     isp20Pollthread->setCamHw(this);
-    isp20Pollthread->set_mipi_devs(_mipi_tx_devs, _mipi_rx_devs, mIspCoreDev);
+    //isp20Pollthread->set_mipi_devs(_mipi_tx_devs, _mipi_rx_devs, mIspCoreDev);
 
     mPollthread = isp20Pollthread;
     if (_linked_to_isp)
@@ -1626,6 +1630,23 @@ CamHwIsp20::setupPipelineFmt()
     if (ret) {
         LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set _ispp_sd crop failed !\n");
         return ret;
+    }
+
+    // set sp format to NV12 as default
+
+    if (mIspSpDev.ptr()) {
+        struct v4l2_format fmt;
+        ret = mIspSpDev->get_format (fmt);
+        if (ret) {
+            LOGW_CAMHW_SUBM(ISP20HW_SUBM, "get mIspSpDev fmt failed !\n");
+            //return;
+        }
+        if (V4L2_PIX_FMT_FBCG == fmt.fmt.pix.pixelformat) {
+            mIspSpDev->set_format(isp_src_fmt.format.width,
+                                  isp_src_fmt.format.height,
+                                  V4L2_PIX_FMT_NV12,
+                                  V4L2_FIELD_NONE, 0);
+        }
     }
 
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "ispp sd fmt info: %dx%d",
@@ -2205,14 +2226,18 @@ CamHwIsp20::hdr_mipi_stop(int idx)
     for (int i = 0; i < 3; i++) {
         if (!(idx & (1 << i)))
             continue;
-        if (_mipi_tx_devs[i].ptr())
-            ret = _mipi_tx_devs[i]->stop();
-        if (ret < 0)
-            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "mipi tx:%d stop err: %d\n", ret);
         if (_mipi_rx_devs[i].ptr())
             ret = _mipi_rx_devs[i]->stop();
         if (ret < 0)
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "mipi rx:%d stop err: %d\n", ret);
+    }
+    for (int i = 0; i < 3; i++) {
+        if (!(idx & (1 << i)))
+            continue;
+        if (_mipi_tx_devs[i].ptr())
+            ret = _mipi_tx_devs[i]->stop();
+        if (ret < 0)
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "mipi tx:%d stop err: %d\n", ret);
     }
 
     return ret;
@@ -2909,6 +2934,9 @@ CamHwIsp20::gen_full_isp_params(const struct isp2x_isp_params_cfg* update_params
             case RK_ISP2X_SDG_ID:
                 full_params->others.sdg_cfg = update_params->others.sdg_cfg;
                 break;
+            case RK_ISP2X_WDR_ID:
+                full_params->others.wdr_cfg = update_params->others.wdr_cfg;
+                break;
             default:
                 break;
             }
@@ -3252,7 +3280,7 @@ CamHwIsp20::setIspMeasParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispMeasParams)
 
         setIspParamsSync(ispMeasParams->data()->frame_id);
 
-       if ((mCalibDb->mfnr.enable && mCalibDb->mfnr.motion_detect_en) || mCalibDb->af.ldg_param.enable) {
+        if ((mCalibDb->mfnr.enable && mCalibDb->mfnr.motion_detect_en) || mCalibDb->af.ldg_param.enable) {
             if (!mIspSpDev->is_activated()) {
                 ret = mIspSpDev->prepare();
                 if (ret < 0) {
@@ -3360,20 +3388,20 @@ CamHwIsp20::setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherPar
     _mutex.unlock();
 
     if (_state == CAM_HW_STATE_PREPARED || _state == CAM_HW_STATE_STOPPED ||
-        _state == CAM_HW_STATE_PAUSED) {
+            _state == CAM_HW_STATE_PAUSED) {
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "hdr-debug: %s: first set isppParams id[%d]\n",
-            __func__, isppOtherParams->data()->frame_id);
-            if (!mIsppParamsDev->is_activated()) {
-                ret = mIsppParamsDev->start();
-                if (ret < 0) {
-                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare ispp params dev err: %d\n", ret);
+                        __func__, isppOtherParams->data()->frame_id);
+        if (!mIsppParamsDev->is_activated()) {
+            ret = mIsppParamsDev->start();
+            if (ret < 0) {
+                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "prepare ispp params dev err: %d\n", ret);
             }
         }
         setIsppParamsSync(isppOtherParams->data()->frame_id);
     }
 
     if (RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode) == RK_AIQ_WORKING_MODE_NORMAL &&
-        mNormalNoReadBack)
+            mNormalNoReadBack)
         setIsppParamsSync(isppOtherParams->data()->frame_id);
 
     EXIT_CAMHW_FUNCTION();
@@ -3698,10 +3726,10 @@ CamHwIsp20::setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params)
     SmartPtr<LensHw> mLensSubdev = mLensDev.dynamic_cast_ptr<LensHw>();
     bool focus_valid = focus_params->data()->lens_pos_valid;
     bool zoom_valid = focus_params->data()->zoom_pos_valid;
-    bool send_reback = focus_params->data()->send_reback;
     bool focus_correction = focus_params->data()->focus_correction;
     bool zoom_correction = focus_params->data()->zoom_correction;
     bool zoomfocus_modifypos = focus_params->data()->zoomfocus_modifypos;
+    bool end_zoom_chg = focus_params->data()->end_zoom_chg;
 
     if (!mLensSubdev.ptr())
         goto OUT;
@@ -3718,7 +3746,7 @@ CamHwIsp20::setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params)
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set focus result failed to device");
             return XCAM_RETURN_ERROR_IOCTL;
         }
-    } else if ((focus_valid && zoom_valid) || send_reback) {
+    } else if ((focus_valid && zoom_valid) || end_zoom_chg) {
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "|||setZoomFocusParams");
         if (mLensSubdev->setZoomFocusParams(focus_params) < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set setZoomFocusParams failed to device");
@@ -4964,6 +4992,14 @@ XCamReturn
 CamHwIsp20::poll_event_failed (int64_t timestamp, const char *msg)
 {
     return XCAM_RETURN_ERROR_FAILED;
+}
+
+XCamReturn
+CamHwIsp20::getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& expParams)
+{
+    XCAM_ASSERT (mSensorDev.ptr ());
+    SmartPtr<SensorHw> mSensor = mSensorDev.dynamic_cast_ptr<SensorHw>();
+    return mSensor->getEffectiveExpParams(expParams, id);
 }
 
 }; //namspace RkCam

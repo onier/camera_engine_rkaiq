@@ -93,6 +93,7 @@ protected:
 
 // define
 RKAIQHANDLE(Ae);
+RKAIQHANDLE(Afd);
 RKAIQHANDLE(Awb);
 RKAIQHANDLE(Af);
 RKAIQHANDLE(Ahdr);

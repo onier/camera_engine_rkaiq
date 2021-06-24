@@ -26,6 +26,7 @@
 #include "awb/rk_aiq_uapi_awb_int.h"
 #include "adebayer/rk_aiq_uapi_adebayer_int.h"
 #include "ahdr/rk_aiq_uapi_ahdr_int.h"
+#include "awdr/rk_aiq_uapi_awdr_int.h"
 #include "alsc/rk_aiq_uapi_alsc_int.h"
 #include "accm/rk_aiq_uapi_accm_int.h"
 #include "a3dlut/rk_aiq_uapi_a3dlut_int.h"
@@ -108,7 +109,7 @@ RKAIQHANDLEINT(Acgc);
 //RKAIQHANDLEINT(Aie);
 // RKAIQHANDLEINT(Aldch);
 RKAIQHANDLEINT(Ar2y);
-RKAIQHANDLEINT(Awdr);
+//RKAIQHANDLEINT(Awdr);
 RKAIQHANDLEINT(Aorb);
 // ae
 class RkAiqAeHandleInt:
@@ -178,6 +179,34 @@ private:
     bool updateHdrAeNightRouteAttr = false;
     bool updateExpWinAttr = false;
 };
+// afd
+class RkAiqAfdHandleInt:
+    virtual public RkAiqAfdHandle,
+    virtual public RkAiqHandleIntCom {
+public:
+    explicit RkAiqAfdHandleInt(RkAiqAlgoDesComm* des, RkAiqCore* aiqCore)
+        : RkAiqHandle(des, aiqCore)
+        , RkAiqAfdHandle(des, aiqCore)
+        , RkAiqHandleIntCom(des, aiqCore) {
+    };
+    virtual ~RkAiqAfdHandleInt() {
+        RkAiqAfdHandle::deInit();
+    };
+    virtual XCamReturn prepare();
+    virtual XCamReturn preProcess();
+    virtual XCamReturn processing();
+    virtual XCamReturn postProcess();
+    // TODO add algo specific methords, this is a sample
+
+protected:
+    virtual void init();
+    virtual void deInit() {
+        RkAiqAfdHandle::deInit();
+    };
+private:
+    // TODO
+};
+
 
 // awb
 class RkAiqAwbHandleInt:
@@ -326,6 +355,35 @@ protected:
 private:
     ahdr_attrib_t mCurAtt;
     ahdr_attrib_t mNewAtt;
+};
+
+// awdr
+class RkAiqAwdrHandleInt:
+    virtual public RkAiqAwdrHandle,
+    virtual public RkAiqHandleIntCom {
+public:
+    explicit RkAiqAwdrHandleInt(RkAiqAlgoDesComm* des, RkAiqCore* aiqCore)
+        : RkAiqHandle(des, aiqCore)
+        , RkAiqAwdrHandle(des, aiqCore)
+        , RkAiqHandleIntCom(des, aiqCore) {}
+    virtual ~RkAiqAwdrHandleInt() {
+        RkAiqAwdrHandle::deInit();
+    };
+    virtual XCamReturn updateConfig(bool needSync);
+    virtual XCamReturn prepare();
+    virtual XCamReturn preProcess();
+    virtual XCamReturn processing();
+    virtual XCamReturn postProcess();
+    XCamReturn setAttrib(awdr_attrib_t att);
+    XCamReturn getAttrib(awdr_attrib_t* att);
+protected:
+    virtual void init();
+    virtual void deInit() {
+        RkAiqAwdrHandle::deInit();
+    };
+private:
+    awdr_attrib_t mCurAtt;
+    awdr_attrib_t mNewAtt;
 };
 
 class RkAiqAgicHandleInt:

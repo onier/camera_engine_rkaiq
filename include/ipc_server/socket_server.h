@@ -60,6 +60,8 @@ public:
       callback_ = nullptr;
       _stop_fds[0] = -1;
       _stop_fds[1] = -1;
+      client_socket = -1;
+      sockfd = -1;
   };
   virtual ~SocketServer();
 

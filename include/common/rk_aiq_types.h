@@ -30,6 +30,7 @@
 #include "a3dlut/rk_aiq_types_a3dlut_algo.h"
 #include "ahdr/rk_aiq_types_ahdr_algo_int.h"
 #include "ahdr/rk_aiq_types_ahdr_algo.h"
+#include "awdr/rk_aiq_types_awdr_algo_int.h"
 #include "agamma/rk_aiq_types_agamma_algo_int.h"
 #include "adegamma/rk_aiq_types_adegamma_algo_int.h"
 #include "adehaze/rk_aiq_types_adehaze_algo.h"
@@ -381,7 +382,9 @@ typedef struct
     bool zoom_correction;
     bool lens_pos_valid;
     bool zoom_pos_valid;
-    bool send_reback;
+    bool send_zoom_reback;
+    bool send_focus_reback;
+    bool end_zoom_chg;
     bool focus_noreback;
     int next_pos_num;
     int next_lens_pos[RKAIQ_RAWAF_NEXT_ZOOMFOCUS_NUM];
@@ -449,9 +452,7 @@ typedef struct {
     unsigned short gamma_y[45];
 } rk_aiq_isp_goc_t;
 
-typedef struct {
-    int UNKNOWN;
-} rk_aiq_isp_wdr_t;
+typedef RkAiqAwdrProcResult_t rk_aiq_isp_wdr_t;
 
 typedef struct {
     int UNKNOWN;

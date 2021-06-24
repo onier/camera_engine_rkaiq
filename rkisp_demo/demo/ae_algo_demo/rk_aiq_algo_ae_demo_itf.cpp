@@ -496,6 +496,7 @@ static XCamReturn AeDemoPreProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom
         for(int i = 0; i < 3; i++) {
             AePreResult->HdrExp[i] = pConfig->stAeInfo.aec_stats.ae_exp.HdrExp[i];
         }
+        pConfig->stAeResult.LinearExp.exp_real_params.digital_gain = 1.0f;
         AePreResult->LinearExp = pConfig->stAeInfo.aec_stats.ae_exp.LinearExp;
 
         //memset(&AePreResult->CISFeature, 0, sizeof(AePreResult->CISFeature));

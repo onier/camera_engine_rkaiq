@@ -61,6 +61,7 @@
  * predefined flicker period values for ECM module
  */
 /*****************************************************************************/
+#define ECM_TFLICKER_NONE (0.0)                                  //!< predefined flicker period value for ECM module
 #define ECM_TFLICKER_50HZ (1.0/100.0)                                  //!< predefined flicker period value for ECM module
 #define ECM_TFLICKER_60HZ (1.0/120.0)                                  //!< predefined flicker period value for ECM module
 #define ECM_DOT_NO         (6)
@@ -345,6 +346,18 @@ typedef struct Aec_uapi_advanced_attr_s {
     uint8_t NightGridWeights[RAWAEBIG_WIN_NUM];
 } Aec_uapi_advanced_attr_t;
 
+typedef struct AfdPeakRes_s {
+    int                     spatPeakNum;
+    float                   spatPeakIntv;
+    int                     spatValleyNum;
+    float                   spatValleyIntv;
+    int                     specPeakNum;
+    int                     specMaxPeakIdx;
+    float                   specMainFreq;
+    bool                    IsFlickExist;
+    RKAiqAecExpInfo_t       expinfo[2];
+} AfdPeakRes_t;
+
 typedef struct AecConfig_s {
 
     /*Aec Ctrl Configuration from calibdb, support User Api input Ctrl configuration*/
@@ -367,7 +380,7 @@ typedef struct AecConfig_s {
 
     /*continue to use some old params to keep the same with AecConfig_t*/
     AecDampingMode_t              DampingMode;              /**< damping mode */
-    AecEcmFlickerPeriod_t         EcmFlickerSelect;        /**< flicker period selection */
+    float                         EcmTflicker;
 
     int                           RawWidth;
     int                           RawHeight;
@@ -442,15 +455,15 @@ typedef struct AecProcResult_s {
     unsigned int                  actives;
     bool                          auto_adjust_fps;
 
+    float                         CurFps;
+    bool                          envChange;
+
     CalibDb_AecDayNightMode_t     DNMode;
     float                         DON_Fac;
     uint8_t                       DNTrigger;
     uint8_t                       FillLightMode;
 
-    /*AE interpolation results to make ae more smooth*/
-    //RkAiqExpParamComb_t           InterpLinAe[MAX_AEC_EFFECT_FNUM];
-    //RkAiqExpParamComb_t           InterpHdrAe[MAX_AEC_EFFECT_FNUM][MAX_HDR_FRAMENUM];
-
+    float                         SetEcmTflicker;
     RKAiqAecExpInfo_t             InterpExp[MAX_AEC_EFFECT_FNUM];
 
     RKAiqAecExpInfo_t             exp_set_tbl[MAX_AEC_EFFECT_FNUM + 1];

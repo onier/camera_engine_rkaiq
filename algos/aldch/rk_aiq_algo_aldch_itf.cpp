@@ -22,6 +22,8 @@
 #include "aldch/rk_aiq_types_aldch_algo_prvt.h"
 #include "xcam_log.h"
 
+#define LDCH_CUSTOM_MESH "ldch_custom_mesh.bin"
+
 RKAIQ_BEGIN_DECLARE
 
 static XCamReturn release_ldch_buf(LDCHContext_t* ldchCtx);
@@ -63,6 +65,48 @@ static XCamReturn get_ldch_buf(LDCHContext_t* ldchCtx)
 
     return XCAM_RETURN_NO_ERROR;
 }
+
+static bool
+read_mesh_from_file(LDCHContext_t* ldchCtx, const char* fileName)
+{
+    FILE* ofp;
+    ofp = fopen(fileName, "rb");
+    if (ofp != NULL) {
+        unsigned short hpic, vpic, hsize, vsize, hstep, vstep = 0;
+
+        fread(&hpic, sizeof(unsigned short), 1, ofp);
+        fread(&vpic, sizeof(unsigned short), 1, ofp);
+        fread(&hsize, sizeof(unsigned short), 1, ofp);
+        fread(&vsize, sizeof(unsigned short), 1, ofp);
+        fread(&hstep, sizeof(unsigned short), 1, ofp);
+        fread(&vstep, sizeof(unsigned short), 1, ofp);
+        //fseek(ofp, 0, SEEK_SET);
+        LOGW_ALDCH("lut info: [%d-%d-%d-%d-%d-%d]", hpic, vpic, hsize, vsize, hstep, vstep);
+
+        ldchCtx->lut_h_size = hsize;
+        ldchCtx->lut_v_size = vsize;
+        ldchCtx->lut_mapxy_size = ldchCtx->lut_h_size * ldchCtx->lut_v_size * sizeof(unsigned short);
+        alloc_ldch_buf(ldchCtx);
+        get_ldch_buf(ldchCtx);
+        ldchCtx->lut_h_size = hsize / 2; //word unit
+
+        unsigned int num = fread(ldchCtx->lut_mapxy, 1, ldchCtx->lut_mapxy_size, ofp);
+        fclose(ofp);
+
+        if (num != ldchCtx->lut_mapxy_size) {
+            ldchCtx->ldch_en = 0;
+            LOGE_ALDCH("mismatched lut calib file");
+            return false;
+        }
+        LOGW_ALDCH("check calib file, size: %d, num: %d", ldchCtx->lut_mapxy_size, num);
+    } else {
+        LOGE_ALDCH("lut calib file %s not exist", fileName);
+        return false;
+    }
+
+    return true;
+}
+
 #if GENMESH_ONLINE
 static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
 {
@@ -71,6 +115,10 @@ static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
         return get_ldch_buf(ldchCtx);
     }
 
+    ldchCtx->ldchParams.isLdchOld = 1;
+    ldchCtx->ldchParams.saveMeshX = false;
+    if (ldchCtx->ldchParams.saveMeshX)
+        sprintf(ldchCtx->ldchParams.meshPath, "/tmp/");
 	genLdchMeshInit(ldchCtx->src_width, ldchCtx->src_height,
                     ldchCtx->dst_width, ldchCtx->dst_height,
                     ldchCtx->ldchParams, ldchCtx->camCoeff);
@@ -90,7 +138,29 @@ static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
 
     return XCAM_RETURN_NO_ERROR;
 }
+
+static bool aiqGenMesh(LDCHContext_t* ldchCtx)
+{
+    bool success = false;
+
+    if (ldchCtx->correct_level == 0) {
+        char filename[512];
+        sprintf(filename, "%s/%s",
+                ldchCtx->resource_path,
+                LDCH_CUSTOM_MESH);
+        success = read_mesh_from_file(ldchCtx, filename);
+        if (success)
+            LOGW_ALDCH("read mesh from %s", filename);
+    }
+
+    if (!success)
+        success = genLDCMeshNLevel(ldchCtx->ldchParams, ldchCtx->camCoeff,
+                                   ldchCtx->correct_level, ldchCtx->lut_mapxy);
+
+    return success;
+}
 #endif
+
 static XCamReturn
 create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
 {
@@ -185,26 +255,6 @@ prepare(RkAiqAlgoCom* params)
     LDCHContext_t* ldchCtx = (LDCHContext_t*)hLDCH;
     RkAiqAlgoConfigAldchInt* rkaiqAldchConfig = (RkAiqAlgoConfigAldchInt*)params;
 
-#if 0 //moved to create_ctx
-    ldchCtx->ldch_en = rkaiqAldchConfig->aldch_calib_cfg.ldch_en;
-    memcpy(ldchCtx->meshfile, rkaiqAldchConfig->aldch_calib_cfg.meshfile, sizeof(ldchCtx->meshfile));
-#if GENMESH_ONLINE
-    ldchCtx->camCoeff.cx = rkaiqAldchConfig->aldch_calib_cfg.light_center[0];
-    ldchCtx->camCoeff.cy = rkaiqAldchConfig->aldch_calib_cfg.light_center[1];
-    ldchCtx->camCoeff.a0 = rkaiqAldchConfig->aldch_calib_cfg.coefficient[0];
-    ldchCtx->camCoeff.a2 = rkaiqAldchConfig->aldch_calib_cfg.coefficient[1];
-    ldchCtx->camCoeff.a3 = rkaiqAldchConfig->aldch_calib_cfg.coefficient[2];
-    ldchCtx->camCoeff.a4 = rkaiqAldchConfig->aldch_calib_cfg.coefficient[3];
-    LOGI_ALDCH("(%s) len light center(%.16f, %.16f)\n",
-            __FUNCTION__,
-            ldchCtx->camCoeff.cx, ldchCtx->camCoeff.cy);
-    LOGI_ALDCH("(%s) len coefficient(%.16f, %.16f, %.16f, %.16f)\n",
-            __FUNCTION__,
-            ldchCtx->camCoeff.a0, ldchCtx->camCoeff.a2,
-            ldchCtx->camCoeff.a3, ldchCtx->camCoeff.a4);
-#endif
-#endif
-
     ldchCtx->src_width = params->u.prepare.sns_op_width;
     ldchCtx->src_height = params->u.prepare.sns_op_height;
     ldchCtx->dst_width = params->u.prepare.sns_op_width;
@@ -229,37 +279,13 @@ prepare(RkAiqAlgoCom* params)
         ldchCtx->user_config.correct_level = ldchCtx->correct_level;
     }
 
-#if 0
-	genLdchMeshInit(ldchCtx->src_width, ldchCtx->src_height,
-                    ldchCtx->dst_width, ldchCtx->dst_height,
-                    ldchCtx->ldchParams, ldchCtx->camCoeff);
-
-    ldchCtx->lut_h_size = (ldchCtx->ldchParams.meshSizeW + 1) / 2; //word unit
-    ldchCtx->lut_v_size = ldchCtx->ldchParams.meshSizeH;
-    ldchCtx->lut_mapxy_size = ldchCtx->ldchParams.meshSize * sizeof(unsigned short);
-    LOGI_ALDCH("ldch en %d, h/v size(%dx%d), mapxy size(%d), correct_level: %d",
-               ldchCtx->ldch_en,
-               ldchCtx->lut_h_size,
-               ldchCtx->lut_v_size,
-               ldchCtx->lut_mapxy_size ,
-               ldchCtx->correct_level);
-
-    // need re-alloc ?
-    if (ldchCtx->lut_mapxy) {
-        free(ldchCtx->lut_mapxy);
-        ldchCtx->lut_mapxy = NULL;
-    }
-    ldchCtx->lut_mapxy = (unsigned short*)malloc(ldchCtx->lut_mapxy_size);
-#endif
-
     hLDCH->aldchReadMeshThread->triger_start();
     hLDCH->aldchReadMeshThread->start();
     if (!ldchCtx->ldch_en)
         return XCAM_RETURN_NO_ERROR;
 
     if (aiqGenLdchMeshInit(ldchCtx) == XCAM_RETURN_NO_ERROR) {
-        bool success = genLDCMeshNLevel(ldchCtx->ldchParams, ldchCtx->camCoeff,
-                                        ldchCtx->correct_level, ldchCtx->lut_mapxy);
+        bool success = aiqGenMesh(ldchCtx);
         if (!success) {
             LOGW_ALDCH("lut is not exist");
             ldchCtx->ldch_en = 0;
@@ -269,44 +295,14 @@ prepare(RkAiqAlgoCom* params)
     if (!ldchCtx->ldch_en)
         return XCAM_RETURN_NO_ERROR;
 
-    FILE* ofp;
     char filename[512];
     sprintf(filename, "%s/%s/mesh_level%d.bin",
             ldchCtx->resource_path,
             ldchCtx->meshfile,
             ldchCtx->correct_level);
-    ofp = fopen(filename, "rb");
-    if (ofp != NULL) {
-        unsigned short hpic, vpic, hsize, vsize, hstep, vstep = 0;
-
-        fread(&hpic, sizeof(unsigned short), 1, ofp);
-        fread(&vpic, sizeof(unsigned short), 1, ofp);
-        fread(&hsize, sizeof(unsigned short), 1, ofp);
-        fread(&vsize, sizeof(unsigned short), 1, ofp);
-        fread(&hstep, sizeof(unsigned short), 1, ofp);
-        fread(&vstep, sizeof(unsigned short), 1, ofp);
-        //fseek(ofp, 0, SEEK_SET);
-        LOGE_ALDCH("lut info: [%d-%d-%d-%d-%d-%d]", hpic, vpic, hsize, vsize, hstep, vstep);
-
-        ldchCtx->lut_h_size = hsize;
-        ldchCtx->lut_v_size = vsize;
-        ldchCtx->lut_mapxy_size = ldchCtx->lut_h_size * ldchCtx->lut_v_size * sizeof(unsigned short);
-        alloc_ldch_buf(ldchCtx);
-        get_ldch_buf(ldchCtx);
-        ldchCtx->lut_h_size = hsize / 2; //word unit
-
-        unsigned int num = fread(ldchCtx->lut_mapxy, 1, ldchCtx->lut_mapxy_size, ofp);
-        fclose(ofp);
-
-        if (num != ldchCtx->lut_mapxy_size) {
-            ldchCtx->ldch_en = 0;
-            LOGE_ALDCH("mismatched lut calib file");
-        }
-        LOGE_ALDCH("check calib file, size: %d, num: %d", ldchCtx->lut_mapxy_size, num);
-    } else {
-        LOGW_ALDCH("lut calib file not exist");
+    bool ret = read_mesh_from_file(ldchCtx, filename);
+    if (!ret)
         ldchCtx->ldch_en = 0;
-    }
 #endif
 
     return XCAM_RETURN_NO_ERROR;
@@ -403,8 +399,7 @@ bool RKAiqAldchThread::loop()
     if (attrib->en && (hLDCH->ldch_en != attrib->en || \
 	    attrib->correct_level != hLDCH->correct_level)) {
         if (aiqGenLdchMeshInit(hLDCH) == XCAM_RETURN_NO_ERROR) {
-            bool success = genLDCMeshNLevel(hLDCH->ldchParams, hLDCH->camCoeff,
-                    attrib->correct_level, hLDCH->lut_mapxy);
+            bool success = aiqGenMesh(hLDCH);
             if (!success) {
                 LOGW_ALDCH("lut is not exist");
                 ret = XCAM_RETURN_ERROR_PARAM;

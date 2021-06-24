@@ -56,6 +56,7 @@ uint32_t calib_sensor_sub_tags[] = {
     CALIB_SENSOR_AF_TAG_ID,
     CALIB_SENSOR_AHDR_MERGE_TAG_ID,
     CALIB_SENSOR_AHDR_TMO_TAG_ID,
+    CALIB_SENSOR_AWDR_TAG_ID,
     CALIB_SENSOR_BLC_TAG_ID,
     CALIB_SENSOR_DPCC_TAG_ID,
     CALIB_SENSOR_BAYERNR_TAG_ID,
@@ -734,6 +735,8 @@ uint32_t calib_sensor_af_contrast_af_sub_tags[] = {
     CALIB_SENSOR_AF_SEARCH_STEP_TAG_ID,
     CALIB_SENSOR_AF_STOP_STEP_ZOOMIDX_TAG_ID,
     CALIB_SENSOR_AF_STOP_STEP_TAG_ID,
+    CALIB_SENSOR_AF_SKIP_HIGHPASS_ZOOMIDX_TAG_ID,
+    CALIB_SENSOR_AF_SKIP_HIGHPASS_GAIN_TAG_ID,
     CALIB_SENSOR_AF_TRIG_THERS_TAG_ID,
     CALIB_SENSOR_AF_TRIG_THERS_FV_TAG_ID,
     CALIB_SENSOR_AF_LUMA_TRIG_THERS_TAG_ID,
@@ -899,6 +902,47 @@ uint32_t calib_sensor_ahdr_GlobalTMO_sub_tags[] = {
     CALIB_SENSOR_AHDR_TMO_GLOBALTMO_ENVLV_TAG_ID,
     CALIB_SENSOR_AHDR_TMO_GLOBALTMO_TOLERANCE_TAG_ID,
     CALIB_SENSOR_AHDR_TMO_GLOBALTMO_STRENGTH_TAG_ID,
+};
+
+uint32_t calib_sensor_awdr_sub_tags[] = {
+    CALIB_SENSOR_AWDR_ENABLE_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_TAG_ID,
+};
+
+uint32_t calib_sensor_awdr_mode_sub_tags[] = {
+    CALIB_SENSOR_AWDR_MODE_NAME_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_ENABLE_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_MODE_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_TAG_ID,
+};
+
+uint32_t calib_sensor_awdr_mode_strength_sub_tags[] = {
+    CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_ENVLV_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_LEVEL_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_DAMP_TAG_ID,
+    CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_TOLERENCE_TAG_ID,
+};
+
+uint32_t calib_sensor_awdr_mode_config_sub_tags[] = {
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_LOCAL_CURVE_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GLOBAL_CURVE_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NOISE_RATIO_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_BEST_LIGHT_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GAIN_OFF1_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_PYM_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_EPSILON_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_LVL_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_FLT_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GAIN_MAX_CLIP_ENABLE_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_BAVG_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_SEGM_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_OPEN_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_MODE1_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE0_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE1_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE2_TAG,
+    CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE_OFF_TAG,
 };
 
 uint32_t calib_sensor_blc_sub_tags[] = {
@@ -3514,6 +3558,14 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     {   "StopStep", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
+    [CALIB_SENSOR_AF_SKIP_HIGHPASS_ZOOMIDX_TAG_ID]         =
+    {   "SkipHighPassZoomIdx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AF_SKIP_HIGHPASS_GAIN_TAG_ID]         =
+    {   "SkipHighPassGain", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
     [CALIB_SENSOR_AF_TRIG_THERS_TAG_ID]         =
     {   "TrigThers", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
@@ -3963,6 +4015,127 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
     },
     [CALIB_SENSOR_AHDR_TMO_DAMP_TAG_ID]         =
     {   "Damp", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+
+    [CALIB_SENSOR_AWDR_TAG_ID]         =
+    {   "WDR", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_awdr_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AWDR_ENABLE_TAG_ID]         =
+    {   "Enable", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_TAG_ID]         =
+    {   "Mode", CALIB_TAG_TYPE_CELL, {-1, -1},
+        check_tags_array_info(calib_sensor_awdr_mode_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_NAME_TAG_ID]         =
+    {   "Name", CALIB_TAG_TYPE_CHAR, {-1, -1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_ENABLE_TAG_ID]         =
+    {   "SceneEnable", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_MODE_TAG_ID]         =
+    {   "mode", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_TAG_ID]         =
+    {   "WdrStrength", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_awdr_mode_strength_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_ENVLV_TAG_ID]         =
+    {   "EnvLv", CALIB_TAG_TYPE_DOUBLE, {1, 13},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_LEVEL_TAG_ID]         =
+    {   "Level", CALIB_TAG_TYPE_DOUBLE, {1, 13},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_DAMP_TAG_ID]         =
+    {   "damp", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_STRENGTH_TOLERENCE_TAG_ID]         =
+    {   "Tolerance", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_TAG_ID]         =
+    {   "WdrConfig", CALIB_TAG_TYPE_STRUCT, {-1, -1},
+        check_tags_array_info(calib_sensor_awdr_mode_config_sub_tags), NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_LOCAL_CURVE_TAG]         =
+    {   "local_curve", CALIB_TAG_TYPE_DOUBLE, {1, 33},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GLOBAL_CURVE_TAG]         =
+    {   "global_curve", CALIB_TAG_TYPE_DOUBLE, {1, 33},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NOISE_RATIO_TAG]         =
+    {   "wdr_noiseratio", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_BEST_LIGHT_TAG]         =
+    {   "wdr_bestlight", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GAIN_OFF1_TAG]         =
+    {   "wdr_gain_off1", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_PYM_TAG]         =
+    {   "wdr_pym_cc", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_EPSILON_TAG]         =
+    {   "wdr_epsilon", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_LVL_TAG]         =
+    {   "wdr_lvl_en", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_FLT_TAG]         =
+    {   "wdr_flt_sel", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_GAIN_MAX_CLIP_ENABLE_TAG]         =
+    {   "wdr_gain_max_clip_enable", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_BAVG_TAG]         =
+    {   "wdr_bavg_clip", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_SEGM_TAG]         =
+    {   "wdr_nonl_segm", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_OPEN_TAG]         =
+    {   "wdr_nonl_open", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_NONL_MODE1_TAG]         =
+    {   "wdr_nonl_mode1", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE0_TAG]         =
+    {   "wdr_coe0", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE1_TAG]         =
+    {   "wdr_coe1", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE2_TAG]         =
+    {   "wdr_coe2", CALIB_TAG_TYPE_DOUBLE, {1, 1},
+        check_tags_array_ignore, NULL
+    },
+    [CALIB_SENSOR_AWDR_MODE_SCENE_CONFIG_COE_OFF_TAG]         =
+    {   "wdr_coe_off", CALIB_TAG_TYPE_DOUBLE, {1, 1},
         check_tags_array_ignore, NULL
     },
 

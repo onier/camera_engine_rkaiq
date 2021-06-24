@@ -1141,13 +1141,13 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 
         	    }
 
-				tmp0 							= src[idx_gain]		* rr[0];
-				tmp1 							= src[idx_gain+1]	* rr[1];
+				tmp0 							= (src[idx_gain]		* rr[0] * 256);
+				tmp1 							= (src[idx_gain+1]	    * rr[1]* 256);
 
-				tmp0 							= (tmp0 << static_ratio_l_bit)/ratio_cur;
-				tmp1 							= (tmp1 << static_ratio_l_bit)/ratio_cur;
+				tmp0 							= ROUND_INT(ROUND_F((tmp0 << static_ratio_l_bit)/ratio_cur), 8);
+				tmp1 							= ROUND_INT(ROUND_F((tmp1 << static_ratio_l_bit)/ratio_cur), 8);
 
-				src[idx_gain]     				= MIN(255, tmp0);
+			src[idx_gain]     				= MIN(255, tmp0);
 				src[idx_gain + 1] 				= MIN(255, tmp1);
 
 
@@ -1306,6 +1306,7 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 
 
 
+
 void
 Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 {
@@ -1419,11 +1420,15 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
         src_ori                 = (uint8_t*)malloc(gain_tile_gainkg_stride * gain_tile_gainkg_h * sizeof(test_buff[0][0]) );
         memcpy(src_ori, src, gain_tile_gainkg_stride * gain_tile_gainkg_h * sizeof(test_buff[0][0]));
     }
-
+    float gain_scale_l_y            = mtParamsSelect_cur.gain_scale_l_y;
     int frame_limit_div_y           = 256 / sqrt(mtParamsSelect_cur.frame_limit_y);
     int frame_limit_div_uv          = 256 / sqrt(mtParamsSelect_cur.frame_limit_uv);
 	uint8_t gain_min_val 			= 1;
-
+    uint16_t ratio_r[4];
+    ratio_r[0] =  (1 << 8) * gain_scale_l_y;
+    ratio_r[1] =  (1 << 8) * gain_scale_l_y;
+    ratio_r[2] =  (1 << 8) * gain_scale_l_y;
+    ratio_r[3] =  (1 << 8) * gain_scale_l_y;
     for(int i = 0; i < gain_tile_gainkg_h; i++)
 
     {
@@ -1489,10 +1494,10 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                         }
 						if(idx_ispp==0x1c200)
 							idx_gain=idx_gain;
-                        src[idx_gain + 0]               = MIN(255,(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 2]               = MIN(255,(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 4]               = MIN(255,(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 6]               = MIN(255,(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur);
+                            src[idx_gain + 0]               = MIN(255,ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 2]               = MIN(255,ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 4]               = MIN(255,ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 6]               = MIN(255,ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
 #if 1
 
                         src[idx_gain + 0]               = MAX(gain_isp_cur_y,   src[idx_gain + 0]);
@@ -1512,10 +1517,20 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                         }
 
 
-                        src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+
+                            for(int idx = 0; idx < 4; idx++)
+                            {
+                                if(ratio_nxt > 120)
+                                    ratio_nxt_scale[idx]    = ratio_nxt;
+                                else
+                                    ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
+
+                            }
+
+                            src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
 
                         src[idx_gain + 0]               = MAX(gain_min_val,    src[idx_gain + 0]);
                         src[idx_gain + 2]               = MAX(gain_min_val,    src[idx_gain + 2]);
@@ -1553,12 +1568,12 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                             test_buff_ori[0][idx_ispp]  = src[idx_gain + 0];
                             test_buff_ori[1][idx_ispp]  = src[idx_gain + 2];
                             test_buff_ori[2][idx_ispp]  = src[idx_gain + 4];
-                            test_buff_ori[3][idx_ispp]  = src[idx_gain + 6];
-                        }
-                        src[idx_gain + 0]               = MIN(255,(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 2]               = MIN(255,(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 4]               = MIN(255,(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur);
-                        src[idx_gain + 6]               = MIN(255,(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur);
+                                test_buff_ori[3][idx_ispp]  = src[idx_gain + 6];
+                            }
+                            src[idx_gain + 0]               = MIN(255,ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 2]               = MIN(255,ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 4]               = MIN(255,ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
+                            src[idx_gain + 6]               = MIN(255,ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
 #if 1
                         src[idx_gain + 0]               = MAX(gain_isp_cur_y,   src[idx_gain + 0]);
                         src[idx_gain + 2]               = MAX(gain_isp_cur_uv,  src[idx_gain + 2]);
@@ -1578,14 +1593,24 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                             test_buff_mid[1][idx_ispp]  = src[idx_gain + 2];
                             test_buff_mid[2][idx_ispp]  = src[idx_gain + 4];
                             test_buff_mid[3][idx_ispp]  = src[idx_gain + 6];
-                        }
+                            }
 
-						if(idx_gain==0xa9400)
-							idx_gain=idx_gain;
-                        src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                        src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+
+                            for(int idx = 0; idx < 4; idx++)
+                            {
+                                if(ratio_nxt > 120)
+                                    ratio_nxt_scale[idx]    = ratio_nxt;
+                                else
+                                    ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
+
+                            }
+
+                            src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                            src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+
+
                         src[idx_gain + 0]               = MAX(gain_min_val,    src[idx_gain + 0]);
                         src[idx_gain + 2]               = MAX(gain_min_val,    src[idx_gain + 2]);
                         src[idx_gain + 4]               = MAX(gain_min_val,    src[idx_gain + 4]);
@@ -1616,15 +1641,24 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 				uint16_t 					ratio_nxt0, ratio_nxt1, ratio_nxt2, ratio_nxt3;
 
                 uint8x8x2_t                 ratio_u8, ratio_nxt_u8;
-                uint16x4_t                  ratio_u16;
-                uint8x8x2_t                 vSrc0, vSrc;
-                uint8x8x2_t                 vGainIsp00;
-                uint16x8_t                  frame_limit_reg = vcombine_u16(vdup_n_u16(frame_limit_div_y), vdup_n_u16(frame_limit_div_uv));
-				//	int16x8_t frame_limit_reg1=frame_limit_reg;
+                    uint16x4_t                  ratio_u16;
+                    uint16x4_t                  ratio_r_u16;
+                    uint16x4_t                  ratio_nxt_u16;
+                    uint16x4_t                  ratio_nxt1_u16;
+                    uint16x8_t                  ratio_nxt_u16x8;
+                    uint32x4_t                  ratio_nxt_mul0_u32;
+                    uint16x4_t                  ratio_nxt0_u16;
+                    uint16x4_t                  ratio_nxt_flg_u16;
+                    uint8x8x2_t                 vSrc0, vSrc;
+                    uint8x8x2_t                 vGainIsp00;
+                    uint16x8_t                  frame_limit_reg = vcombine_u16(vdup_n_u16(frame_limit_div_y), vdup_n_u16(frame_limit_div_uv));
+					//	int16x8_t frame_limit_reg1=frame_limit_reg;
 
-                ratio_u8				        = vld2_u8(ratio_addr);
-                ratio_nxt_u8        	        = vld2_u8(ratio_next_addr);
-                vSrc0                           = vld2_u8(pSrc00);
+//frame_limit_reg=                    vqrdmulhq_s16(frame_limit_reg, frame_limit_reg1);
+	                ratio_u8				        = vld2_u8(ratio_addr);
+	                ratio_nxt_u8        	        = vld2_u8(ratio_next_addr);
+                    vSrc0                           = vld2_u8(pSrc00);
+	                ratio_r_u16         	        = vld1_u16(ratio_r);
 
                 for(uint16_t y = 0; y < gain_tile_ispp_y; y++)
 				{
@@ -1644,6 +1678,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                     ratio_u16                   = vget_low_u16(vmovl_u8(ratio_u8.val[0]));
 
 		            ratio_nxt_u8.val[0]		    = vmax_u8(ratio_nxt_u8.val[0],  ratio_nxt_u8.val[1]);
+                        ratio_nxt_u16               = vget_low_u16(vmovl_u8(ratio_nxt_u8.val[0]));
 
                     float32x4_t				    ratio_f32;
     				float32x4_t				    reciprocal_ratio;
@@ -1720,9 +1755,14 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                     vSrc.val[0]                 = vmax_u8(vSrc.val[0],							tmpVacc00_u8.val[0]);
                     vSrc.val[1]                 = vmax_u8(vSrc.val[1],							tmpVacc00_u8.val[1]);
 
+                        ratio_nxt1_u16              = vshl_n_u16(ratio_nxt_u16, 4);
 
-					tmpVacc00_u16               = vmulq_u16(vmovl_u8(vSrc.val[0]), vcombine_u16(vdup_n_u16(vget_lane_u8(ratio_nxt_u8.val[0], 0)), vdup_n_u16(vget_lane_u8(ratio_nxt_u8.val[0], 2))));
-                    tmpVacc01_u16               = vmulq_u16(vmovl_u8(vSrc.val[1]), vcombine_u16(vdup_n_u16(vget_lane_u8(ratio_nxt_u8.val[0], 1)), vdup_n_u16(vget_lane_u8(ratio_nxt_u8.val[0], 3))));
+                        ratio_nxt_flg_u16           = vcge_u16(ratio_nxt_u16, vdup_n_u16(121));
+                        ratio_nxt_mul0_u32          = vmull_lane_u16(ratio_nxt_u16, ratio_r_u16, 0);
+                        ratio_nxt1_u16              = vrshrn_n_u32(ratio_nxt_mul0_u32, 8);
+                        ratio_nxt_u16               = vbsl_u16(ratio_nxt_flg_u16, ratio_nxt_u16, ratio_nxt1_u16);
+						tmpVacc00_u16               = vmulq_u16(vmovl_u8(vSrc.val[0]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 0)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 2))));
+                        tmpVacc01_u16               = vmulq_u16(vmovl_u8(vSrc.val[1]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 1)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 3))));
 
 
 	                ratio_u8				    = vld2_u8(ratio_addr);
@@ -1886,6 +1926,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 }
 
 
+
 void
 Isp20SpThread::init()
 {
@@ -1930,7 +1971,7 @@ Isp20SpThread::init()
     gainkg_tile_num                     = 2;
 
 
-    gain_blk_isp_w                      = _img_width * 2;
+    gain_blk_isp_w                      = _img_width;
     gain_blk_isp_stride                 = ((gain_blk_isp_w + 15) / 16) * 16;
     gain_blk_isp_h                      = _img_height;
     gain_blk_isp_mem_size               = gain_blk_isp_stride * gain_blk_isp_h;

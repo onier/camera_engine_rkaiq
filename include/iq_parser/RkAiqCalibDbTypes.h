@@ -107,6 +107,7 @@ typedef enum _CalibDb_FlickerFreq_e {
     AEC_FLICKER_FREQUENCY_OFF   = 0,
     AEC_FLICKER_FREQUENCY_50HZ = 1,
     AEC_FLICKER_FREQUENCY_60HZ = 2,
+    AEC_FLICKER_FREQUENCY_AUTO = 3,
 } CalibDb_FlickerFreq_t;
 
 typedef enum _CalibDb_AntiFlickerMode_e {
@@ -1003,6 +1004,47 @@ typedef struct CalibDb_Ahdr_Para_s {
     CalibDb_HdrTmo_t tmo;
 } CalibDb_Ahdr_Para_t;
 
+typedef struct CalibDb_Awdr_Strength_Para_s {
+    float  Envlv[13];
+    float  Level[13];
+    float damp;
+    float Tolerance;
+} CalibDb_Awdr_Strength_Para_t;
+
+typedef struct CalibDb_Awdr_Config_Para_s {
+    float                   LocalCurve[33];
+    float                   GlobalCurve[33];
+    float                   wdr_noiseratio;
+    float                   wdr_bestlight;
+    float                   wdr_gain_off1;
+    float                   wdr_pym_cc;
+    float                    wdr_epsilon;
+    float                    wdr_lvl_en;
+    float                    wdr_flt_sel;
+    float                    wdr_gain_max_clip_enable;
+    float                    wdr_bavg_clip;
+    float                    wdr_nonl_segm;
+    float                    wdr_nonl_open;
+    float                    wdr_nonl_mode1;
+    float                   wdr_coe0;
+    float                   wdr_coe1;
+    float                   wdr_coe2;
+    float                   wdr_coe_off;
+} CalibDb_Awdr_Config_Para_t;
+
+typedef struct CalibDbAwdrParas {
+    char name[CALIBDB_MAX_MODE_NAME_LENGTH];
+    float SceneEnbale;
+    float mode;
+    CalibDb_Awdr_Strength_Para_t  WdrStrength;
+    CalibDb_Awdr_Config_Para_t WdrConfig;
+} CalibDbAwdrPara_t;
+
+typedef struct CalibDb_Awdr_Para_s {
+    float Enbale;
+    CalibDbAwdrPara_t Mode[CALIBDB_MAX_MODE_NUM];
+} CalibDb_Awdr_Para_t;
+
 typedef struct CalibDb_Blc_ModeCell_s {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float iso[CALIBDB_BLC_MAX_ISO_LEVEL];
@@ -1891,6 +1933,8 @@ typedef struct CalibDb_Af_Contrast_s {
     unsigned short          StopStepZoomIdx[256];
     unsigned short          StopStep[256];
     unsigned short          StopStepNum;
+    unsigned short          SkipHighPassZoomIdx;
+    float                   SkipHighPassGain;
     float                   TrigThers[32];                    /**< AF trigger threshold */
     float                   TrigThersFv[32];
     unsigned char           TrigThersNums;
@@ -2151,6 +2195,7 @@ typedef struct CamCalibDbContext_s {
     CalibDb_Aec_Para_t aec;
     CalibDb_AF_t af;
     CalibDb_Ahdr_Para_t ahdr;
+    CalibDb_Awdr_Para_t awdr;
     CalibDb_Blc_t blc;
     CalibDb_Dpcc_t dpcc;
     CalibDb_BayerNr_2_t bayerNr;

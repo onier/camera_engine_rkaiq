@@ -28,7 +28,9 @@
 #include "anr/rk_aiq_types_anr_algo_int.h"
 #include "asharp/rk_aiq_types_asharp_algo_int.h"
 #include "ahdr/rk_aiq_types_ahdr_algo_int.h"
+#include "awdr/rk_aiq_types_awdr_algo_int.h"
 #include "ae/rk_aiq_types_ae_algo_int.h"
+#include "afd/rk_aiq_types_afd_algo_int.h"
 #include "af/rk_aiq_types_af_algo_int.h"
 #include "aorb/rk_aiq_types_orb_algo.h"
 #include "awb/rk_aiq_types_awb_algo_int.h"
@@ -112,6 +114,44 @@ typedef struct _RkAiqAlgoPostResAeInt {
     RkAiqAlgoPostResAe ae_post_res_com;
     AecPostResult_t    ae_post_res_rk;
 } RkAiqAlgoPostResAeInt;
+
+// Afd
+typedef struct _RkAiqAlgoConfigAfdInt {
+    RkAiqAlgoConfigAfd       afd_cfg_com;
+    RkAiqAlgoComInt          rk_com;
+    int                      RawWidth;
+    int                      RawHeight;
+} RkAiqAlgoConfigAfdInt;
+
+typedef struct _RkAiqAlgoPreAfdInt {
+    RkAiqAlgoPreAfd     afd_pre_com;
+    RkAiqAlgoComInt     rk_com;
+    rk_aiq_tx_info_t    *tx_buf;
+} RkAiqAlgoPreAfdInt;
+
+typedef struct _RkAiqAlgoPreResAfdInt {
+    RkAiqAlgoPreResAfd afd_pre_res_com;
+} RkAiqAlgoPreResAfdInt;
+
+typedef struct _RkAiqAlgoProcAfdInt {
+    RkAiqAlgoProcAfd afd_proc_com;
+    RkAiqAlgoComInt rk_com;
+} RkAiqAlgoProcAfdInt;
+
+typedef struct _RkAiqAlgoProcResAfdInt {
+    RkAiqAlgoProcResAfd   afd_proc_res_com;
+    AfdProcResult_t       afd_proc_res_rk;
+} RkAiqAlgoProcResAfdInt;
+
+typedef struct _RkAiqAlgoPostAfdInt {
+    RkAiqAlgoPostAfd afd_post_com;
+    RkAiqAlgoComInt rk_com;
+} RkAiqAlgoPostAfdInt;
+
+typedef struct _RkAiqAlgoPostResAfdInt {
+    RkAiqAlgoPostResAfd afd_post_res_com;
+} RkAiqAlgoPostResAfdInt;
+
 
 //Awb
 typedef struct _RkAiqAlgoConfigAwbInt {
@@ -983,6 +1023,7 @@ typedef struct _RkAiqAlgoPostResAr2yInt {
 typedef struct _RkAiqAlgoConfigAwdrInt {
     RkAiqAlgoConfigAwdr awdr_config_com;
     RkAiqAlgoComInt rk_com;
+    int working_mode;
 } RkAiqAlgoConfigAwdrInt;
 
 typedef struct _RkAiqAlgoPreAwdrInt {
@@ -1001,6 +1042,7 @@ typedef struct _RkAiqAlgoProcAwdrInt {
 
 typedef struct _RkAiqAlgoProcResAwdrInt {
     RkAiqAlgoProcResAwdr awdr_proc_res_com;
+    RkAiqAwdrProcResult_t AwdrProcRes;
 } RkAiqAlgoProcResAwdrInt;
 
 typedef struct _RkAiqAlgoPostAwdrInt {

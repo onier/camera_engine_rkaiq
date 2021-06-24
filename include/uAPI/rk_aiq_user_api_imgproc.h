@@ -594,7 +594,7 @@ XCamReturn rk_aiq_uapi_getMTNRStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
 
 /*
 **********************************************************
-* Dehazer
+* Dehaze
 **********************************************************
 */
 /*
@@ -603,8 +603,8 @@ XCamReturn rk_aiq_uapi_getMTNRStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
 * Desc: set/get dehaze mode
 * Argument:
 *   mode:
-*     auto: auto dehaze
-*     manual：manual dehaze
+*     auto: auto dehaze, when use auto, equal use rk_aiq_uapi_enableDhz
+*     manual: Manual dehaze, when needs to use manual, please use rk_aiq_uapi_setMDhzStrth
 *
 *****************************
 */
@@ -618,11 +618,25 @@ XCamReturn rk_aiq_uapi_getDhzMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode);
 *     this function is active for dehaze is manual mode
 * Argument:
 *   level: [0, 10]
+*   Do not need to use rk_aiq_uapi_enableDhz and rk_aiq_uapi_setDhzMode before use this
 *
 *****************************
 */
 XCamReturn rk_aiq_uapi_setMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool on, unsigned int level);
 XCamReturn rk_aiq_uapi_getMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool* on, unsigned int* level);
+
+/*
+*****************************
+*
+* Desc: enable dehaze
+* Argument:
+*   When dehaze enable, dehaze on and para use use IQ xml
+*   When dehaze disable, dehaze off and enhance para use use IQ xml
+*
+*****************************
+*/
+XCamReturn rk_aiq_uapi_enableDhz(const rk_aiq_sys_ctx_t* ctx);
+XCamReturn rk_aiq_uapi_disableDhz(const rk_aiq_sys_ctx_t* ctx);
 
 /*
 *****************************
@@ -636,16 +650,6 @@ XCamReturn rk_aiq_uapi_getMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool* on, unsig
 */
 XCamReturn rk_aiq_uapi_setDarkAreaBoostStrth(const rk_aiq_sys_ctx_t* ctx, unsigned int level);
 XCamReturn rk_aiq_uapi_getDarkAreaBoostStrth(const rk_aiq_sys_ctx_t* ctx, unsigned int *level);
-
-/*
-*****************************
-*
-* Desc: enable/disable dehaze
-*
-*****************************
-*/
-XCamReturn rk_aiq_uapi_enableDhz(const rk_aiq_sys_ctx_t* ctx);
-XCamReturn rk_aiq_uapi_disableDhz(const rk_aiq_sys_ctx_t* ctx);
 
 /*
 **********************************************************
@@ -779,7 +783,7 @@ XCamReturn rk_aiq_uapi_setFecEn(const rk_aiq_sys_ctx_t* ctx, bool en);
 *****************************
 */
 XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
-                                              const fec_correct_direction_t direction);
+        const fec_correct_direction_t direction);
 /*
 *****************************
 *
@@ -806,7 +810,7 @@ XCamReturn rk_aiq_uapi_setFecCorrectLevel(const rk_aiq_sys_ctx_t* ctx, int corre
 *****************************
 */
 XCamReturn rk_aiq_uapi_setFecCorrectMode(const rk_aiq_sys_ctx_t* ctx,
-                                         const fec_correct_mode_t mode);
+        const fec_correct_mode_t mode);
 
 /*
 *****************************

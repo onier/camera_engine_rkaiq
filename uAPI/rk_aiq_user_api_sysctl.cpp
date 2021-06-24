@@ -798,6 +798,8 @@ rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
         ret = XCAM_RETURN_ERROR_FAILED;
     }
 
+    const_cast<rk_aiq_sys_ctx_t*>(sys_ctx)->_calibDb = newCalibDb;
+
     return ret;
 }
 
@@ -806,6 +808,35 @@ rk_aiq_uapi_sysctl_getSensorDiscrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_expo
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ret = sys_ctx->_rkAiqManager->getSensorDiscrib(sensorDes);
+
+    return ret;
+}
+
+CamCalibDbContext_t*
+rk_aiq_uapi_sysctl_getCurCalib(const rk_aiq_sys_ctx_t* ctx)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    return  ctx->_calibDb;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_upateCalib(const rk_aiq_sys_ctx_t* ctx, CamCalibDbContext_t* calib)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if (calib != ctx->_calibDb)
+        LOGW("new calibdb is not equal with the current one\n");
+
+    ret = ctx->_rkAiqManager->updateCalibDb(calib);
+
+    if (ret) {
+        LOGE("failed to update iqfile\n");
+        ret = XCAM_RETURN_ERROR_FAILED;
+    }
+    LOGD("update calibdb success\n");
 
     return ret;
 }

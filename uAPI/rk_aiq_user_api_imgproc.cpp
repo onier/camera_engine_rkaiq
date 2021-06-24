@@ -1585,6 +1585,7 @@ XCamReturn rk_aiq_uapi_setHDRMode(const rk_aiq_sys_ctx_t* ctx, opMode_t mode)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1612,6 +1613,7 @@ XCamReturn rk_aiq_uapi_getHDRMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1646,6 +1648,7 @@ XCamReturn rk_aiq_uapi_setMHDRStrth(const rk_aiq_sys_ctx_t* ctx, bool on, unsign
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1674,6 +1677,7 @@ XCamReturn rk_aiq_uapi_getMHDRStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1705,6 +1709,7 @@ XCamReturn rk_aiq_uapi_getDarkAreaBoostStrth(const rk_aiq_sys_ctx_t* ctx, unsign
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1738,6 +1743,7 @@ XCamReturn rk_aiq_uapi_setDarkAreaBoostStrth(const rk_aiq_sys_ctx_t* ctx, unsign
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     ahdr_attrib_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -1959,17 +1965,17 @@ XCamReturn rk_aiq_uapi_getMTNRStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
 
 /*
 **********************************************************
-* Dehazer
+* Dehaze
 **********************************************************
 */
 /*
 *****************************
 *
-* Desc: set dehaze mode
+* Desc: set/get dehaze mode
 * Argument:
 *   mode:
-*     auto: auto dehaze
-*     manual：manual dehaze
+*     auto: auto dehaze, when use auto, equal use rk_aiq_uapi_enableDhz
+*     manual: Manual dehaze, when needs to use manual, please use rk_aiq_uapi_setMDhzStrth
 *
 *****************************
 */
@@ -1977,12 +1983,13 @@ XCamReturn rk_aiq_uapi_setDhzMode(const rk_aiq_sys_ctx_t* ctx, opMode_t mode)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
         RKAIQ_IMGPROC_CHECK_RET(ret, "param error, ctx is NULL!");
     }
-
+    attr.byPass = false;
     if (mode == OP_AUTO) {
         attr.mode = RK_AIQ_DEHAZE_MODE_AUTO;
         ret = rk_aiq_user_api_adehaze_setSwAttrib(ctx, attr);
@@ -2003,6 +2010,7 @@ XCamReturn rk_aiq_uapi_getDhzMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -2028,6 +2036,7 @@ XCamReturn rk_aiq_uapi_getDhzMode(const rk_aiq_sys_ctx_t* ctx, opMode_t *mode)
 *     this function is active for dehaze is manual mode
 * Argument:
 *   level: [0, 10]
+*   Do not need to use rk_aiq_uapi_enableDhz and rk_aiq_uapi_setDhzMode before use this
 *
 *****************************
 */
@@ -2035,8 +2044,8 @@ XCamReturn rk_aiq_uapi_setMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool on, unsign
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
-
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
         RKAIQ_IMGPROC_CHECK_RET(ret, "param error, ctx is NULL!");
@@ -2049,6 +2058,7 @@ XCamReturn rk_aiq_uapi_setMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool on, unsign
         ret = XCAM_RETURN_ERROR_PARAM;
         RKAIQ_IMGPROC_CHECK_RET(ret, "param error, strength range is [1,10]!");
     }
+    attr.byPass = false;
     attr.mode = RK_AIQ_DEHAZE_MODE_MANUAL;
     attr.stManual.strength = level;
     ret = rk_aiq_user_api_adehaze_setSwAttrib(ctx, attr);
@@ -2061,6 +2071,7 @@ XCamReturn rk_aiq_uapi_getMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -2079,18 +2090,28 @@ XCamReturn rk_aiq_uapi_getMDhzStrth(const rk_aiq_sys_ctx_t* ctx, bool *on, unsig
     IMGPROC_FUNC_EXIT
     return ret;
 }
-
+/*
+*****************************
+*
+* Desc: enable dehaze
+* Argument:
+*   When dehaze enable, dehaze on and para use use IQ xml
+*   When dehaze disable, dehaze off and enhance para use use IQ xml
+*
+*****************************
+*/
 XCamReturn rk_aiq_uapi_enableDhz(const rk_aiq_sys_ctx_t* ctx)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
-
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
         RKAIQ_IMGPROC_CHECK_RET(ret, "param error, ctx is NULL!");
     }
     attr.byPass = false;
+    attr.mode = RK_AIQ_DEHAZE_MODE_AUTO;
     ret = rk_aiq_user_api_adehaze_setSwAttrib(ctx, attr);
     RKAIQ_IMGPROC_CHECK_RET(ret, "enable dehaze failed!");
     IMGPROC_FUNC_EXIT
@@ -2101,7 +2122,7 @@ XCamReturn rk_aiq_uapi_disableDhz(const rk_aiq_sys_ctx_t* ctx)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     adehaze_sw_t attr;
-
+    memset(&attr, 0, sizeof(attr));
     IMGPROC_FUNC_ENTER
     if (ctx == NULL) {
         ret = XCAM_RETURN_ERROR_PARAM;
@@ -2533,7 +2554,7 @@ XCamReturn rk_aiq_uapi_setFecCorrectDirection(const rk_aiq_sys_ctx_t* ctx,
 }
 
 XCamReturn rk_aiq_uapi_setFecCorrectMode(const rk_aiq_sys_ctx_t* ctx,
-                                         const fec_correct_mode_t mode)
+        const fec_correct_mode_t mode)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     IMGPROC_FUNC_ENTER

@@ -199,6 +199,10 @@ private:
     bool parseEntrySensorAhdrTmoDetailsLowLight(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAhdrLocalTMO(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAhdrGlobalTMO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDR(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDRMode(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDRModeStrength(const XMLElement* pelement, int index );
+    bool parseEntrySensorAWDRModeConfig(const XMLElement* pelement, int index );
     bool parseEntrySensorBlcModeCell(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorBlc(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLut3d(const XMLElement* pelement, void* param = NULL);

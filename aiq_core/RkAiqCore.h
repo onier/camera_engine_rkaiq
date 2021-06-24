@@ -186,6 +186,46 @@ private:
     SafeList<ispHwEvt_t> mEvtsQueue;
 };
 
+typedef struct RkAiqTxBufInfo_s {
+    SmartPtr<RkAiqExpParamsProxy> expParams;
+    SmartPtr<VideoBuffer> txBuf;
+} RkAiqTxBufInfo;
+
+class RkAiqCoreTxBufAnalyzerThread
+    : public Thread {
+public:
+    RkAiqCoreTxBufAnalyzerThread(RkAiqCore* rkAiqCore)
+        : Thread("RkAiqCoreTxBufAnalyzerThread")
+        , mRkAiqCore(rkAiqCore) {};
+    ~RkAiqCoreTxBufAnalyzerThread() {
+        mTxBufQueue.clear ();
+    };
+
+    void triger_stop() {
+        mTxBufQueue.pause_pop ();
+    };
+
+    void triger_start() {
+        mTxBufQueue.clear ();
+        mTxBufQueue.resume_pop ();
+    };
+
+    bool push_buf (const SmartPtr<RkAiqTxBufInfo> &buffer) {
+        mTxBufQueue.push (buffer);
+        return true;
+    };
+
+protected:
+    //virtual bool started ();
+    virtual void stopped () {
+        mTxBufQueue.clear ();
+    };
+    virtual bool loop ();
+private:
+    RkAiqCore* mRkAiqCore;
+    SafeList<RkAiqTxBufInfo> mTxBufQueue;
+};
+
 struct RkAiqHwInfo {
     bool fl_supported;   // led flash
     bool fl_strth_adj;   // led streng_adjust
@@ -197,6 +237,7 @@ struct RkAiqHwInfo {
 class RkAiqCore {
     friend class RkAiqCoreThread;
     friend class RkAiqCoreEvtsThread;
+    friend class RkAiqCoreTxBufAnalyzerThread;
 public:
     RkAiqCore();
     virtual ~RkAiqCore();
@@ -223,6 +264,7 @@ public:
         return mAiqCurParams;
     };
     XCamReturn pushStats(SmartPtr<VideoBuffer> &buffer);
+    XCamReturn pushTxBuf(SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqExpParamsProxy>& expParams);
     XCamReturn pushEvts(SmartPtr<ispHwEvt_t> &evts);
     XCamReturn addAlgo(RkAiqAlgoDesComm& algo);
     XCamReturn enableAlgo(int algoType, int id, bool enable);
@@ -282,6 +324,7 @@ public:
         bool sns_flip;
         RKAiqAecExpInfo_t preExp;
         RKAiqAecExpInfo_t curExp;
+        rk_aiq_tx_info_t tx_buf;
         void reset() {
             xcam_mem_clear(preResComb);
             xcam_mem_clear(procResComb);
@@ -311,10 +354,12 @@ private:
         RK_AIQ_CORE_ANALYZE_ALL,
         RK_AIQ_CORE_ANALYZE_MEAS,
         RK_AIQ_CORE_ANALYZE_OTHER,
+        RK_AIQ_CORE_ANALYZE_AFD,
     };
     // in analyzer thread
     XCamReturn analyze(const SmartPtr<VideoBuffer> &buffer);
     XCamReturn events_analyze(const SmartPtr<ispHwEvt_t> &evts);
+    XCamReturn txBufAnalyze(const SmartPtr<RkAiqTxBufInfo> &buffer);
     SmartPtr<RkAiqFullParamsProxy> analyzeInternal(enum rk_aiq_core_analyze_type_e type);
     SmartPtr<RkAiqFullParamsProxy> analyzeInternalPp();
     XCamReturn preProcess(enum rk_aiq_core_analyze_type_e type);
@@ -330,6 +375,7 @@ private:
     void addDefaultAlgos();
     XCamReturn genIspResult(RkAiqFullParams *aiqParams, enum rk_aiq_core_analyze_type_e type);
     XCamReturn genIspAeResult(RkAiqFullParams* params);
+    XCamReturn genIspAfdResult(RkAiqFullParams* params);
     XCamReturn genIspAwbResult(RkAiqFullParams* params);
     XCamReturn genIspAfResult(RkAiqFullParams* params);
     XCamReturn genIspAhdrResult(RkAiqFullParams* params);
@@ -369,6 +415,8 @@ private:
     SmartPtr<RkAiqCoreThread> mRkAiqCoreTh;
     SmartPtr<RkAiqCoreThread> mRkAiqCorePpTh;
     SmartPtr<RkAiqCoreEvtsThread> mRkAiqCoreEvtsTh;
+    SmartPtr<RkAiqCoreTxBufAnalyzerThread> mRkAiqCoreTxBufAnalyzerTh;
+
     int mState;
     RkAiqAnalyzerCb* mCb;
     std::map<int, SmartPtr<RkAiqHandle>> mAeAlgoHandleMap;
@@ -396,6 +444,7 @@ private:
     std::map<int, SmartPtr<RkAiqHandle>> mAorbAlgoHandleMap;
     std::map<int, SmartPtr<RkAiqHandle>> mAr2yAlgoHandleMap;
     std::map<int, SmartPtr<RkAiqHandle>> mAwdrAlgoHandleMap;
+    std::map<int, SmartPtr<RkAiqHandle>> mAfdAlgoHandleMap;
     SmartPtr<RkAiqHandle> mCurAhdrAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAnrAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAdhazAlgoHdl;
@@ -421,6 +470,7 @@ private:
     SmartPtr<RkAiqHandle> mCurAeAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAwbAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAfAlgoHdl;
+    SmartPtr<RkAiqHandle> mCurAfdAlgoHdl;
     SmartPtr<RkAiqFullParamsPool> mAiqParamsPool;
     SmartPtr<RkAiqFullParamsProxy> mAiqCurParams;
     SmartPtr<RkAiqExpParamsPool> mAiqExpParamsPool;

@@ -103,7 +103,8 @@ struct rk_cam_zoom_pos {
 };
 
 struct rk_cam_set_zoom {
-    bool is_need_reback;
+    bool is_need_zoom_reback;
+    bool is_need_focus_reback;
     u32 setzoom_cnt;
     struct rk_cam_zoom_pos zoom_pos[VCMDRV_SETZOOM_MAXCNT];
 };
@@ -157,7 +158,8 @@ public:
     XCamReturn setZoomParams(int position);
     XCamReturn setZoomFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params);
     XCamReturn setZoomFocusParamsSync(SmartPtr<rk_aiq_focus_params_t> attrPtr, bool is_update_time);
-    XCamReturn setZoomFocusRebackSync(bool is_update_time);
+    XCamReturn setZoomFocusRebackSync(SmartPtr<rk_aiq_focus_params_t> attrPtr, bool is_update_time);
+    XCamReturn endZoomChgSync(SmartPtr<rk_aiq_focus_params_t> attrPtr, bool is_update_time);
     XCamReturn getPIrisParams(int* step);
     XCamReturn getFocusParams(int* position);
     XCamReturn getZoomParams(int* position);
@@ -199,6 +201,8 @@ private:
     int _last_dciris_pwmduty;
     int _focus_pos;
     int _zoom_pos;
+    int _last_zoomchg_focus;
+    int _last_zoomchg_zoom;
     int64_t _frame_time[LENSHW_RECORD_SOF_NUM];
     uint32_t _frame_sequence[LENSHW_RECORD_SOF_NUM];
     int _rec_sof_idx;
@@ -209,14 +213,15 @@ private:
     uint32_t _lowfv_seq[LENSHW_RECORD_LOWPASSFV_NUM];
     int _rec_lowfv_idx;
     SmartPtr<LensHwHelperThd> _lenshw_thd;
+    SmartPtr<LensHwHelperThd> _lenshw_thd1;
 };
 
 class LensHwHelperThd
     : public Thread {
 public:
-    LensHwHelperThd(LensHw *lenshw)
+    LensHwHelperThd(LensHw *lenshw, int id)
         : Thread("LensHwHelperThread")
-          , mLensHw(lenshw) {};
+          , mLensHw(lenshw), mId(id) {};
     ~LensHwHelperThd() {
         mAttrQueue.clear ();
     };
@@ -250,8 +255,7 @@ protected:
     virtual bool loop ();
 private:
     LensHw *mLensHw;
-
-    SmartPtr<LensHwHelperThd> _lenshw_thd;
+    int mId;
     SafeList<rk_aiq_focus_params_t> mAttrQueue;
 };
 

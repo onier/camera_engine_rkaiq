@@ -25,6 +25,7 @@
 #include "ae/rk_aiq_types_ae_algo_int.h"
 // forward declare
 typedef struct _RkAiqAlgoPreResAe     RkAiqAlgoPreResAe;
+typedef struct _RkAiqAlgoPreResAfd    RkAiqAlgoPreResAfd;
 typedef struct _RkAiqAlgoPreResAwb    RkAiqAlgoPreResAwb;
 typedef struct _RkAiqAlgoPreResAf     RkAiqAlgoPreResAf;
 typedef struct _RkAiqAlgoPreResAsd    RkAiqAlgoPreResAsd;
@@ -51,6 +52,7 @@ typedef struct _RkAiqAlgoPreResAr2y   RkAiqAlgoPreResAr2y;
 typedef struct _RkAiqAlgoPreResAwdr   RkAiqAlgoPreResAwdr;
 
 typedef struct _RkAiqAlgoProcResAe    RkAiqAlgoProcResAe;
+typedef struct _RkAiqAlgoProcResAfd   RkAiqAlgoProcResAfd;
 typedef struct _RkAiqAlgoProcResAwb   RkAiqAlgoProcResAwb;
 typedef struct _RkAiqAlgoProcResAf    RkAiqAlgoProcResAf;
 typedef struct _RkAiqAlgoProcResAsd   RkAiqAlgoProcResAsd;
@@ -77,6 +79,7 @@ typedef struct _RkAiqAlgoProcResAr2y  RkAiqAlgoProcResAr2y;
 typedef struct _RkAiqAlgoProcResAwdr  RkAiqAlgoProcResAwdr;
 
 typedef struct _RkAiqAlgoPostResAe    RkAiqAlgoPostResAe;
+typedef struct _RkAiqAlgoPostResAfd   RkAiqAlgoPostResAfd;
 typedef struct _RkAiqAlgoPostResAwb   RkAiqAlgoPostResAwb;
 typedef struct _RkAiqAlgoPostResAf    RkAiqAlgoPostResAf;
 typedef struct _RkAiqAlgoPostResAsd   RkAiqAlgoPostResAsd;
@@ -104,6 +107,7 @@ typedef struct _RkAiqAlgoPostResAwdr  RkAiqAlgoPostResAwdr;
 
 typedef struct _RkAiqPreResComb {
     RkAiqAlgoPreResAe*    ae_pre_res;
+    RkAiqAlgoPreResAfd*   afd_pre_res;
     RkAiqAlgoPreResAwb*   awb_pre_res;
     RkAiqAlgoPreResAf*    af_pre_res;
     RkAiqAlgoPreResAsd*   asd_pre_res;
@@ -132,6 +136,7 @@ typedef struct _RkAiqPreResComb {
 
 typedef struct _RkAiqProcResComb {
     RkAiqAlgoProcResAe*    ae_proc_res;
+    RkAiqAlgoProcResAfd*   afd_proc_res;
     RkAiqAlgoProcResAwb*   awb_proc_res;
     RkAiqAlgoProcResAf*    af_proc_res;
     RkAiqAlgoProcResAsd*   asd_proc_res;
@@ -160,6 +165,7 @@ typedef struct _RkAiqProcResComb {
 
 typedef struct _RkAiqPostResComb {
     RkAiqAlgoPostResAe*    ae_post_res;
+    RkAiqAlgoPostResAfd*   afd_post_res;
     RkAiqAlgoPostResAwb*   awb_post_res;
     RkAiqAlgoPostResAf*    af_post_res;
     RkAiqAlgoPostResAsd*   asd_post_res;
@@ -251,6 +257,39 @@ typedef struct _RkAiqAlgoPostAe {
 typedef struct _RkAiqAlgoPostResAe {
     RkAiqAlgoResCom post_res_com;
 } RkAiqAlgoPostResAe;
+
+// Afd
+typedef struct _RkAiqAlgoConfigAfd {
+    RkAiqAlgoCom com;
+    /*params related to driver setting*/
+    float        LinePeriodsPerField;
+    float        PixelClockFreqMHZ;
+    float        PixelPeriodsPerLine;
+} RkAiqAlgoConfigAfd;
+
+typedef struct _RkAiqAlgoPreAfd {
+    RkAiqAlgoCom com;
+} RkAiqAlgoPreAfd;
+
+typedef struct _RkAiqAlgoPreResAfd {
+    RkAiqAlgoResCom pre_res_com;
+} RkAiqAlgoPreResAfd;
+
+typedef struct _RkAiqAlgoProcAfd {
+    RkAiqAlgoCom com;
+} RkAiqAlgoProcAfd;
+
+typedef struct _RkAiqAlgoProcResAfd {
+    RkAiqAlgoResCom proc_res_com;
+} RkAiqAlgoProcResAfd;
+
+typedef struct _RkAiqAlgoPostAfd {
+    RkAiqAlgoCom com;
+} RkAiqAlgoPostAfd;
+
+typedef struct _RkAiqAlgoPostResAfd {
+    RkAiqAlgoResCom post_res_com;
+} RkAiqAlgoPostResAfd;
 
 //Awb
 typedef struct _RkAiqAlgoConfigAwb {
@@ -981,6 +1020,7 @@ typedef struct _RkAiqAlgoProcAwdr {
 
 typedef struct _RkAiqAlgoProcResAwdr {
     RkAiqAlgoResCom proc_res_com;
+    RkAiqAwdrProcResult_t AwdrProcRes;
 } RkAiqAlgoProcResAwdr;
 
 typedef struct _RkAiqAlgoPostAwdr {

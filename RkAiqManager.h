@@ -125,6 +125,7 @@ class RkAiqManager
     , public IsppStatsListener
     , public IspLumaListener
     , public IspEvtsListener
+    , public IspTxBufListener
     , public RkAiqAnalyzerCb
     , public RkLumaAnalyzerCb {
     friend RkAiqRstApplyThread;
@@ -152,6 +153,8 @@ public:
     XCamReturn ispStatsCb(SmartPtr<VideoBuffer>& ispStats);
     // from IspEvtsListener
     XCamReturn ispEvtsCb(SmartPtr<ispHwEvt_t> evt);
+    // from IspTxBufListener
+    XCamReturn ispTxBufCb(SmartPtr<VideoBuffer>& txBuf);
     // from RkAiqAnalyzerCb
     void rkAiqCalcDone(SmartPtr<RkAiqFullParamsProxy>& results);
     void rkAiqCalcFailed(const char* msg);

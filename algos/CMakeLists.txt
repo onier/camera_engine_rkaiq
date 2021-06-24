@@ -55,6 +55,31 @@ else()
 	set_target_properties(rkaiq_ae PROPERTIES IMPORTED_IMPLIB
         "${PREFIX}rkaiq_ae.${SUFFIX}")
 endif()
+# ----------------------------------------------------------------------------
+# add afd implement
+# ----------------------------------------------------------------------------
+set (AFD_SRC
+    afd/rk_aiq_algo_afd_itf.cpp
+    afd/rk_aiq_afd_algo.cpp
+)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/algos/afd/rk_aiq_algo_afd_itf.cpp")
+	message(${LIBRARY_OUTPUT_PATH})
+	add_library(rkaiq_afd STATIC ${AFD_SRC})
+	set_target_properties(rkaiq_afd PROPERTIES FOLDER "algos/afd")
+	set_target_properties(rkaiq_afd PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+	set_target_properties(rkaiq_afd PROPERTIES C_VISIBILITY_PRESET default)
+	set_target_properties(rkaiq_afd PROPERTIES CXX_VISIBILITY_PRESET default)
+else()
+	message(STATUS "Can NOT found ${CMAKE_SOURCE_DIR}/algos/afd/rk_aiq_algo_afd_itf.cpp. Using lib")
+	file(COPY ${CMAKE_SOURCE_DIR}/algos/afd/librkaiq_afd.a DESTINATION ${LIBRARY_OUTPUT_PATH})
+
+	add_library(rkaiq_afd STATIC IMPORTED)
+	set_target_properties(rkaiq_afd PROPERTIES IMPORTED_LOCATION
+        "${PREFIX}rkaiq_afd.${SUFFIX}")
+	set_target_properties(rkaiq_afd PROPERTIES IMPORTED_IMPLIB
+        "${PREFIX}rkaiq_afd.${SUFFIX}")
+endif()
 
 # ----------------------------------------------------------------------------
 # add awb implement
@@ -687,6 +712,8 @@ endif()
 # ----------------------------------------------------------------------------
 set (AWDR_SRC
 	awdr/rk_aiq_algo_awdr_itf.cpp
+	awdr/rk_aiq_awdr_algo.cpp
+	awdr/rk_aiq_uapi_awdr_int.cpp
     )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/algos/awdr/rk_aiq_algo_awdr_itf.cpp")

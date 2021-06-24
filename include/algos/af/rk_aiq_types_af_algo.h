@@ -1,6 +1,10 @@
 #ifndef __RK_AIQ_TYPES_AF_ALGO_H__
 #define __RK_AIQ_TYPES_AF_ALGO_H__
 
+#include "rk_aiq_comm.h"
+
+RKAIQ_BEGIN_DECLARE
+
 #define RKAIQ_RAWAF_WIN_NUM                2
 #define RKAIQ_RAWAF_LINE_NUM               5
 #define RKAIQ_RAWAF_GAMMA_NUM              17
@@ -86,7 +90,9 @@ typedef struct {
     bool zoom_correction;
     bool lens_pos_valid;
     bool zoom_pos_valid;
-    bool send_reback;
+    bool send_zoom_reback;
+    bool send_focus_reback;
+    bool end_zoom_chg;
     bool focus_noreback;
     int next_pos_num;
     int next_lens_pos[RKAIQ_RAWAF_NEXT_ZOOMFOCUS_NUM];
@@ -98,11 +104,10 @@ typedef struct {
     int manual_zoompos;
 } rk_aiq_af_algo_focus_pos_t;
 
-extern "C" {
 int get_lpfv(uint32_t sequence, uint8_t *image_buf, int32_t _img_width, int32_t _img_height,
     int32_t _img_width_align, int32_t _img_height_align, uint8_t *pAfTmp, uint32_t sub_shp4_4[225],
     uint32_t sub_shp8_8[225], uint32_t high_light[225], uint32_t high_light2[225], rk_aiq_af_algo_meas_t *param);
 
-};
+RKAIQ_END_DECLARE
 
 #endif

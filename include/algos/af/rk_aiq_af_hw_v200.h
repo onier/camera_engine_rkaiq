@@ -119,7 +119,9 @@ typedef struct {
     bool zoom_correction;
     bool lens_pos_valid;
     bool zoom_pos_valid;
-    bool send_reback;
+    bool send_zoom_reback;
+    bool send_focus_reback;
+    bool end_zoom_chg;
     bool focus_noreback;
     int next_pos_num;
     int next_lens_pos[RKAIQ_RAWAF_NEXT_ZOOMFOCUS_NUM];

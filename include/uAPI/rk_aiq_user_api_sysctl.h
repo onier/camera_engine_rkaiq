@@ -408,6 +408,27 @@ XCamReturn
 rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile);
 
 /*!
+ * \brief get current used calibDb struct point
+ *
+ * \param[in] ctx             context
+ * \return current used calibDb struct point
+ */
+
+CamCalibDbContext_t*
+rk_aiq_uapi_sysctl_getCurCalib(const rk_aiq_sys_ctx_t* ctx);
+
+/*!
+ * \brief update calibdb dynamically
+ *
+ * \param[in] ctx             context
+ * \param[out] calib          original calib point could be got by
+ *                            API rk_aiq_uapi_sysctl_getCurCalib
+ */
+
+XCamReturn
+rk_aiq_uapi_sysctl_upateCalib(const rk_aiq_sys_ctx_t* ctx, CamCalibDbContext_t* calib);
+
+/*!
  * \brief get describtion of sensor
  *
  * \param[out] sensorDes

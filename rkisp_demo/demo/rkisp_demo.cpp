@@ -437,8 +437,8 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         attr.manual_meascfg.window_num = 2;
         attr.manual_meascfg.wina_h_offs = 2;
         attr.manual_meascfg.wina_v_offs = 2;
-        attr.manual_meascfg.wina_h_size = 1920;
-        attr.manual_meascfg.wina_v_size = 1080;
+        attr.manual_meascfg.wina_h_size = 2580;
+        attr.manual_meascfg.wina_v_size = 1935;
 
         attr.manual_meascfg.winb_h_offs = 500;
         attr.manual_meascfg.winb_v_offs = 600;
@@ -460,6 +460,16 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         attr.manual_meascfg.afm_var_shift[0] = 0;
         attr.manual_meascfg.lum_var_shift[1] = 4;
         attr.manual_meascfg.afm_var_shift[1] = 4;
+
+        attr.manual_meascfg.sp_meas.enable = true;
+        attr.manual_meascfg.sp_meas.ldg_xl = 10;
+        attr.manual_meascfg.sp_meas.ldg_yl = 28;
+        attr.manual_meascfg.sp_meas.ldg_kl = (255-28)*256/45;
+        attr.manual_meascfg.sp_meas.ldg_xh = 118;
+        attr.manual_meascfg.sp_meas.ldg_yh = 8;
+        attr.manual_meascfg.sp_meas.ldg_kh = (255-8)*256/15;
+        attr.manual_meascfg.sp_meas.highlight_th = 245;
+        attr.manual_meascfg.sp_meas.highlight2_th = 200;
         rk_aiq_user_api_af_SetAttrib(ctx, &attr);
     }
         break;

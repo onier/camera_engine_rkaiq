@@ -358,10 +358,14 @@
  *   - lots of optimizations
  * - add custom AE algo demo
  * - Tuning tool: v1.7.0
+ * v1.0x67.1
+ * - add AFD(Anti Flikering Detection) algo
+ * - add AWDR algo
+ * - fix some crash bugs of motion detection
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x67.0"
-#define RK_AIQ_RELEASE_DATE "2020-06-08"
+#define RK_AIQ_VERSION_REAL_V "v1.0x67.1"
+#define RK_AIQ_RELEASE_DATE "2020-06-24"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 
