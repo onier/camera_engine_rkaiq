@@ -48,14 +48,17 @@ static XCamReturn release_ldch_buf(LDCHContext_t* ldchCtx)
 
 static XCamReturn get_ldch_buf(LDCHContext_t* ldchCtx)
 {
-    ldchCtx->ldch_mem_info = (rk_aiq_ldch_share_mem_info_t *)
+    rk_aiq_ldch_share_mem_info_t *ldch_mem_info = NULL;
+
+    ldch_mem_info = (rk_aiq_ldch_share_mem_info_t *)
             ldchCtx->share_mem_ops->get_free_item(ldchCtx->share_mem_ctx);
-    if (ldchCtx->ldch_mem_info == NULL) {
+    if (ldch_mem_info == NULL) {
         LOGE_ALDCH( "%s(%d): no free ldch buf", __FUNCTION__, __LINE__);
         return XCAM_RETURN_ERROR_MEM;
     } else {
-        LOGD_ALDCH( "get ldch buf fd=%d", ldchCtx->ldch_mem_info->fd);
+        ldchCtx->ldch_mem_info = ldch_mem_info;
         ldchCtx->lut_mapxy = (unsigned short*)ldchCtx->ldch_mem_info->addr;
+        ldchCtx->ldch_mem_info->state[0] = 1; //mark that this buf is using.
     }
 
     return XCAM_RETURN_NO_ERROR;
@@ -65,8 +68,7 @@ static XCamReturn aiqGenLdchMeshInit(LDCHContext_t* ldchCtx)
 {
     if (ldchCtx->genLdchMeshInit) {
         LOGW_ALDCH("genLDCHMesh has been initialized!!\n");
-        get_ldch_buf(ldchCtx);
-        return XCAM_RETURN_NO_ERROR;
+        return get_ldch_buf(ldchCtx);
     }
 
 	genLdchMeshInit(ldchCtx->src_width, ldchCtx->src_height,
@@ -255,12 +257,13 @@ prepare(RkAiqAlgoCom* params)
     if (!ldchCtx->ldch_en)
         return XCAM_RETURN_NO_ERROR;
 
-    aiqGenLdchMeshInit(ldchCtx);
-    bool success = genLDCMeshNLevel(ldchCtx->ldchParams, ldchCtx->camCoeff,
-                                    ldchCtx->correct_level, ldchCtx->lut_mapxy);
-    if (!success) {
-        LOGW_ALDCH("lut is not exist");
-        ldchCtx->ldch_en = 0;
+    if (aiqGenLdchMeshInit(ldchCtx) == XCAM_RETURN_NO_ERROR) {
+        bool success = genLDCMeshNLevel(ldchCtx->ldchParams, ldchCtx->camCoeff,
+                                        ldchCtx->correct_level, ldchCtx->lut_mapxy);
+        if (!success) {
+            LOGW_ALDCH("lut is not exist");
+            ldchCtx->ldch_en = 0;
+        }
     }
 #else
     if (!ldchCtx->ldch_en)
@@ -353,7 +356,6 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                 return XCAM_RETURN_NO_ERROR;
             }
             ldchPreOut->ldch_result.lut_mapxy_buf_fd = ldchCtx->ldch_mem_info->fd;
-            ldchCtx->ldch_mem_info->state[0] = 1; //mark that this buf is using.
         }
     }
 
@@ -395,29 +397,33 @@ bool RKAiqAldchThread::loop()
 
     if (!attrib.ptr()) {
         LOGW_ANALYZER("RKAiqAldchThread got empty attrib, stop thread");
-        return false;
+        return true;
     }
 #if GENMESH_ONLINE
     if (attrib->en && (hLDCH->ldch_en != attrib->en || \
 	    attrib->correct_level != hLDCH->correct_level)) {
-        aiqGenLdchMeshInit(hLDCH);
-        bool success = genLDCMeshNLevel(hLDCH->ldchParams, hLDCH->camCoeff,
-                attrib->correct_level, hLDCH->lut_mapxy);
-        if (!success)
-            LOGW_ALDCH("lut is not exist");
+        if (aiqGenLdchMeshInit(hLDCH) == XCAM_RETURN_NO_ERROR) {
+            bool success = genLDCMeshNLevel(hLDCH->ldchParams, hLDCH->camCoeff,
+                    attrib->correct_level, hLDCH->lut_mapxy);
+            if (!success) {
+                LOGW_ALDCH("lut is not exist");
+                ret = XCAM_RETURN_ERROR_PARAM;
+            }
+        } else {
+            ret = XCAM_RETURN_ERROR_MEM;
+        }
     }
-    hLDCH->ldch_en = hLDCH->user_config.en;
-    hLDCH->correct_level = hLDCH->user_config.correct_level;
 #endif
     if (ret == XCAM_RETURN_NO_ERROR) {
+        hLDCH->ldch_en = hLDCH->user_config.en;
+        hLDCH->correct_level = hLDCH->user_config.correct_level;
         hLDCH->isAttribUpdated = true;
         LOGV_ANALYZER("ldch en(%d), level(%d)\n", hLDCH->ldch_en, hLDCH->correct_level);
-        return true;
+    } else {
+        LOGE_ANALYZER("RKAiqAldchThread failed to read mesh table!");
     }
-
-    LOGE_ANALYZER("RKAiqAldchThread failed to read mesh table!");
 
     EXIT_ANALYZER_FUNCTION();
 
-    return false;
+    return true;
 }

@@ -456,6 +456,17 @@ XCamReturn rk_aiq_uapi_getSearchPath(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_sec_
 /*
 *****************************
 *
+* Desc: af serach path record
+* Argument:
+*
+*
+*****************************
+*/
+XCamReturn rk_aiq_uapi_getSearchResult(const rk_aiq_sys_ctx_t* ctx, rk_aiq_af_result_t* result);
+
+/*
+*****************************
+*
 * Desc: Focus Correstion
 * Argument:
 *

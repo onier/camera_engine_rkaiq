@@ -48,6 +48,8 @@ rk_aiq_user_api_af_GetVcmCfg(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_lens_vcmcfg
 XCamReturn
 rk_aiq_user_api_af_GetSearchPath(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_sec_path_t* path);
 XCamReturn
+rk_aiq_user_api_af_GetSearchResult(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_result_t* result);
+XCamReturn
 rk_aiq_user_api_af_GetZoomRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_zoomrange* range);
 XCamReturn
 rk_aiq_user_api_af_FocusCorrection(const rk_aiq_sys_ctx_t* sys_ctx);

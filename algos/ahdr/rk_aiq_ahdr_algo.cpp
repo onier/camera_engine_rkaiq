@@ -618,7 +618,7 @@ void AhdrGetSensorInfo
 ) {
     LOG1_AHDR( "%s:enter!\n", __FUNCTION__);
 
-    pAhdrCtx->SensorInfo.LongFrmMode = AecHdrProcResult.LongFrmMode;
+    pAhdrCtx->SensorInfo.LongFrmMode = AecHdrProcResult.LongFrmMode && (pAhdrCtx->FrameNumber != 1);
 
     for(int i = 0; i < 3; i++)
     {
@@ -628,13 +628,27 @@ void AhdrGetSensorInfo
         pAhdrCtx->SensorInfo.HdrMaxIntegrationTime[i] = AecHdrProcResult.HdrMaxIntegrationTime[i];
     }
 
-    if(pAhdrCtx->FrameNumber == 2)
+    if(pAhdrCtx->FrameNumber == 1)
+    {
+        //pAhdrCtx->SensorInfo.MaxExpoL = pAhdrCtx->SensorInfo.HdrMaxGain[1] * pAhdrCtx->SensorInfo.HdrMaxIntegrationTime[1];
+        //pAhdrCtx->SensorInfo.MinExpoL = pAhdrCtx->SensorInfo.HdrMinGain[1] * pAhdrCtx->SensorInfo.HdrMinIntegrationTime[1];
+        //pAhdrCtx->SensorInfo.MaxExpoM = 0;
+        //pAhdrCtx->SensorInfo.MinExpoM = 0;
+
+        pAhdrCtx->CurrAeResult.LumaDeviationLinear = AecHdrProcResult.LumaDeviation;
+        pAhdrCtx->CurrAeResult.LumaDeviationLinear = abs(pAhdrCtx->CurrAeResult.LumaDeviationLinear);
+    }
+    else if(pAhdrCtx->FrameNumber == 2)
     {
         pAhdrCtx->SensorInfo.MaxExpoL = pAhdrCtx->SensorInfo.HdrMaxGain[1] * pAhdrCtx->SensorInfo.HdrMaxIntegrationTime[1];
         pAhdrCtx->SensorInfo.MinExpoL = pAhdrCtx->SensorInfo.HdrMinGain[1] * pAhdrCtx->SensorInfo.HdrMinIntegrationTime[1];
         pAhdrCtx->SensorInfo.MaxExpoM = 0;
         pAhdrCtx->SensorInfo.MinExpoM = 0;
 
+        pAhdrCtx->CurrAeResult.LumaDeviationL = AecHdrProcResult.HdrLumaDeviation[1];
+        pAhdrCtx->CurrAeResult.LumaDeviationL = abs(pAhdrCtx->CurrAeResult.LumaDeviationL);
+        pAhdrCtx->CurrAeResult.LumaDeviationS = AecHdrProcResult.HdrLumaDeviation[0];
+        pAhdrCtx->CurrAeResult.LumaDeviationS = abs(pAhdrCtx->CurrAeResult.LumaDeviationS);
     }
     else if(pAhdrCtx->FrameNumber == 3)
     {
@@ -642,12 +656,17 @@ void AhdrGetSensorInfo
         pAhdrCtx->SensorInfo.MinExpoL = pAhdrCtx->SensorInfo.HdrMinGain[2] * pAhdrCtx->SensorInfo.HdrMinIntegrationTime[2];
         pAhdrCtx->SensorInfo.MaxExpoM = pAhdrCtx->SensorInfo.HdrMaxGain[1] * pAhdrCtx->SensorInfo.HdrMaxIntegrationTime[1];
         pAhdrCtx->SensorInfo.MinExpoM = pAhdrCtx->SensorInfo.HdrMinGain[1] * pAhdrCtx->SensorInfo.HdrMinIntegrationTime[1];
-    }
 
+        pAhdrCtx->CurrAeResult.LumaDeviationL = AecHdrProcResult.HdrLumaDeviation[2];
+        pAhdrCtx->CurrAeResult.LumaDeviationL = abs(pAhdrCtx->CurrAeResult.LumaDeviationL);
+        pAhdrCtx->CurrAeResult.LumaDeviationM = AecHdrProcResult.HdrLumaDeviation[1];
+        pAhdrCtx->CurrAeResult.LumaDeviationM = abs(pAhdrCtx->CurrAeResult.LumaDeviationM);
+        pAhdrCtx->CurrAeResult.LumaDeviationS = AecHdrProcResult.HdrLumaDeviation[0];
+        pAhdrCtx->CurrAeResult.LumaDeviationS = abs(pAhdrCtx->CurrAeResult.LumaDeviationS);
+    }
 
     pAhdrCtx->SensorInfo.MaxExpoS = pAhdrCtx->SensorInfo.HdrMaxGain[0] * pAhdrCtx->SensorInfo.HdrMaxIntegrationTime[0];
     pAhdrCtx->SensorInfo.MinExpoS = pAhdrCtx->SensorInfo.HdrMinGain[0] * pAhdrCtx->SensorInfo.HdrMinIntegrationTime[0];
-
 
     LOG1_AHDR( "%s:exit!\n", __FUNCTION__);
 }
@@ -1119,8 +1138,10 @@ void AhdrUpdateConfig
     LOG1_AHDR("%s:  Tmo DetailsHighLight EnvLv[6~12]:%f %f %f %f %f %f %f\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[6], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[7], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[8]
               , pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[9], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[10], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[11], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.EnvLv[11]);
     LOG1_AHDR("%s:  Tmo OETolerance:%f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.Tolerance);
-    LOG1_AHDR("%s:  Tmo DetailsHighLight:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[0], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[1], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[2]
+    LOG1_AHDR("%s:  Tmo DetailsHighLight[0~5]:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[0], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[1], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[2]
               , pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[3], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[4], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[5]);
+    LOG1_AHDR("%s:  Tmo DetailsHighLight[6~12]:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[6], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[7], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[8]
+              , pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[9], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[10], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[11], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[11]);
     LOG1_AHDR("%s:  Tmo DetailsLowLightMode:%f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLightMode);
     LOG1_AHDR("%s:  Tmo FocusLuma:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[0], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[1], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[2]
               , pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[3], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[4], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.FocusLuma[5]);
@@ -1193,8 +1214,10 @@ void AhdrUpdateConfig
               pAhdrCtx->AhdrConfig.merge_para.MDCurveMS_offset[3], pAhdrCtx->AhdrConfig.merge_para.MDCurveMS_offset[4], pAhdrCtx->AhdrConfig.merge_para.MDCurveMS_offset[5]);
     LOG1_AHDR("%s:  Tmo algo GlobeLuma:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[0], pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[1], pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[2]
               , pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[3], pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[4], pAhdrCtx->AhdrConfig.tmo_para.Luma.GlobeLuma[5]);
-    LOG1_AHDR("%s:  Tmo algo DetailsHighLight:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[0], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[1], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[2]
+    LOG1_AHDR("%s:  Tmo algo DetailsHighLight[0~5]:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[0], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[1], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[2]
               , pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[3], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[4], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[5]);
+    LOG1_AHDR("%s:  Tmo algo DetailsHighLight[6~12]:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[6], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[7], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[8]
+              , pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[9], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[10], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[11], pAhdrCtx->AhdrConfig.tmo_para.DtsHiLit.DetailsHighLight[11]);
     LOG1_AHDR("%s:  Tmo algo DetailsLowLight:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[0], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[1], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[2]
               , pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[3], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[4], pAhdrCtx->AhdrConfig.tmo_para.DtsLoLit.DetailsLowLight[5]);
     LOG1_AHDR("%s:  Tmo algo TmoContrast:%f %f %f %f %f %f:\n", __FUNCTION__, pAhdrCtx->AhdrConfig.tmo_para.local.LocalTmoStrength[0], pAhdrCtx->AhdrConfig.tmo_para.local.LocalTmoStrength[1], pAhdrCtx->AhdrConfig.tmo_para.local.LocalTmoStrength[2]
@@ -1491,19 +1514,7 @@ RESULT AhdrInit
 
     // pre-initialize context
     memset(pAhdrCtx, 0x00, sizeof(*pAhdrCtx));
-
     pAhdrCtx->state = AHDR_STATE_INITIALIZED;
-
-    // memory check
-    if (NULL == pAhdrCtx) {
-        return (AHDR_RET_WRONG_HANDLE);
-    }
-    // state check
-    if ((AHDR_STATE_INITIALIZED != pAhdrCtx->state)
-            && (AHDR_STATE_STOPPED != pAhdrCtx->state)) {
-        return (AHDR_RET_WRONG_STATE);
-    }
-
     pInstConfig->hAhdr = (AhdrHandle_t)pAhdrCtx;
 
     LOG1_AHDR( "%s:exit!\n", __FUNCTION__);

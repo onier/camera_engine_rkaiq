@@ -33,6 +33,7 @@
 #include "aorb/rk_aiq_types_orb_algo.h"
 #include "awb/rk_aiq_types_awb_algo_int.h"
 #include "agamma/rk_aiq_types_agamma_algo_int.h"
+#include "adegamma/rk_aiq_types_adegamma_algo_int.h"
 #include "adpcc/rk_aiq_types_adpcc_algo_int.h"
 #include "adebayer/rk_aiq_types_algo_adebayer_int.h"
 #include "RkAiqCalibDbTypes.h"
@@ -63,6 +64,7 @@ typedef struct _RkAiqAlgoPreResAdebayer RkAiqAlgoPreResAdebayer;
 typedef struct _RkAiqAlgoPreResAdpcc  RkAiqAlgoPreResAdpcc;
 typedef struct _RkAiqAlgoPreResAfec   RkAiqAlgoPreResAfec;
 typedef struct _RkAiqAlgoPreResAgamma RkAiqAlgoPreResAgamma;
+typedef struct _RkAiqAlgoPreResAdegamma RkAiqAlgoPreResAdegamma;
 typedef struct _RkAiqAlgoPreResAgic   RkAiqAlgoPreResAgic;
 typedef struct _RkAiqAlgoPreResAie    RkAiqAlgoPreResAie;
 typedef struct _RkAiqAlgoPreResAldch  RkAiqAlgoPreResAldch;
@@ -88,6 +90,7 @@ typedef struct _RkAiqAlgoProcResAdebayer RkAiqAlgoProcResAdebayer;
 typedef struct _RkAiqAlgoProcResAdpcc RkAiqAlgoProcResAdpcc;
 typedef struct _RkAiqAlgoProcResAfec  RkAiqAlgoProcResAfec;
 typedef struct _RkAiqAlgoProcResAgamma RkAiqAlgoProcResAgamma;
+typedef struct _RkAiqAlgoProcResAdegamma RkAiqAlgoProcResAdegamma;
 typedef struct _RkAiqAlgoProcResAgic  RkAiqAlgoProcResAgic;
 typedef struct _RkAiqAlgoProcResAie   RkAiqAlgoProcResAie;
 typedef struct _RkAiqAlgoProcResAldch RkAiqAlgoProcResAldch;
@@ -113,6 +116,7 @@ typedef struct _RkAiqAlgoPostResAdebayer RkAiqAlgoPostResAdebayer;
 typedef struct _RkAiqAlgoPostResAdpcc RkAiqAlgoPostResAdpcc;
 typedef struct _RkAiqAlgoPostResAfec  RkAiqAlgoPostResAfec;
 typedef struct _RkAiqAlgoPostResAgamma RkAiqAlgoPostResAgamma;
+typedef struct _RkAiqAlgoPostResAdegamma RkAiqAlgoPostResAdegamma;
 typedef struct _RkAiqAlgoPostResAgic  RkAiqAlgoPostResAgic;
 typedef struct _RkAiqAlgoPostResAie   RkAiqAlgoPostResAie;
 typedef struct _RkAiqAlgoPostResAldch RkAiqAlgoPostResAldch;
@@ -139,6 +143,7 @@ typedef struct _RkAiqPreResComb {
     RkAiqAlgoPreResAdpcc* adpcc_pre_res;
     RkAiqAlgoPreResAfec* afec_pre_res;
     RkAiqAlgoPreResAgamma* agamma_pre_res;
+    RkAiqAlgoPreResAdegamma* adegamma_pre_res;
     RkAiqAlgoPreResAgic* agic_pre_res;
     RkAiqAlgoPreResAie* aie_pre_res;
     RkAiqAlgoPreResAldch* aldch_pre_res;
@@ -166,6 +171,7 @@ typedef struct _RkAiqProcResComb {
     RkAiqAlgoProcResAdpcc* adpcc_proc_res;
     RkAiqAlgoProcResAfec* afec_proc_res;
     RkAiqAlgoProcResAgamma* agamma_proc_res;
+    RkAiqAlgoProcResAdegamma* adegamma_proc_res;
     RkAiqAlgoProcResAgic* agic_proc_res;
     RkAiqAlgoProcResAie* aie_proc_res;
     RkAiqAlgoProcResAldch* aldch_proc_res;
@@ -193,6 +199,7 @@ typedef struct _RkAiqPostResComb {
     RkAiqAlgoPostResAdpcc* adpcc_post_res;
     RkAiqAlgoPostResAfec* afec_post_res;
     RkAiqAlgoPostResAgamma* agamma_post_res;
+    RkAiqAlgoPostResAdegamma* adegamma_post_res;
     RkAiqAlgoPostResAgic* agic_post_res;
     RkAiqAlgoPostResAie* aie_post_res;
     RkAiqAlgoPostResAldch* aldch_post_res;
@@ -219,6 +226,8 @@ typedef struct _RkAiqAlgoComInt {
             bool fill_light_on;
             bool gray_mode;
             bool is_bw_sensor;
+            RKAiqAecExpInfo_t *preExp;
+            RKAiqAecExpInfo_t *curExp;
         } proc;
     } u;
 } RkAiqAlgoComInt;
@@ -563,6 +572,9 @@ typedef struct _RkAiqAlgoConfigAdhazInt {
     RkAiqAlgoConfigAdhaz adhaz_config_com;
     RkAiqAlgoComInt rk_com;
     const CamCalibDbContext_t *calib;
+    unsigned short  rawWidth;               // rawÍ¼¿í
+    unsigned short  rawHeight;
+    int working_mode;
 } RkAiqAlgoConfigAdhazInt;
 
 typedef struct _RkAiqAlgoPreAdhazInt {
@@ -881,6 +893,45 @@ typedef struct _RkAiqAlgoPostAgammaInt {
 typedef struct _RkAiqAlgoPostResAgammaInt {
     RkAiqAlgoPostResAgamma agamma_post_res_com;
 } RkAiqAlgoPostResAgammaInt;
+
+// adegamma
+typedef struct _RkAiqAlgoConfigAdegammaInt {
+    RkAiqAlgoConfigAdegamma adegamma_config_com;
+    RkAiqAlgoComInt rk_com;
+    const CamCalibDbContext_t *calib;
+} RkAiqAlgoConfigAdegammaInt;
+
+typedef struct _RkAiqAlgoPreAdegammaInt {
+    RkAiqAlgoPreAdegamma adegamma_pre_com;
+    RkAiqAlgoComInt rk_com;
+    int work_mode;
+} RkAiqAlgoPreAdegammaInt;
+
+typedef struct _RkAiqAlgoPreResAdegammaInt {
+    RkAiqAlgoPreResAdegamma adegamma_pre_res_com;
+    rk_aiq_degamma_cfg_t adegamma_config;
+} RkAiqAlgoPreResAdegammaInt;
+
+typedef struct _RkAiqAlgoProcAdegammaInt {
+    RkAiqAlgoProcAdegamma adegamma_proc_com;
+    RkAiqAlgoComInt rk_com;
+    const CamCalibDbContext_t *calib;
+} RkAiqAlgoProcAdegammaInt;
+
+typedef struct _RkAiqAlgoProcResAdegammaInt {
+    RkAiqAlgoProcResAdegamma adegamma_proc_res_com;
+
+} RkAiqAlgoProcResAdegammaInt;
+
+typedef struct _RkAiqAlgoPostAdegammaInt {
+    RkAiqAlgoPostAdegamma adegamma_post_com;
+    RkAiqAlgoComInt rk_com;
+} RkAiqAlgoPostAdegammaInt;
+
+typedef struct _RkAiqAlgoPostResAdegammaInt {
+    RkAiqAlgoPostResAdegamma adegamma_post_res_com;
+} RkAiqAlgoPostResAdegammaInt;
+
 
 // agic
 typedef struct _RkAiqAlgoConfigAgicInt {

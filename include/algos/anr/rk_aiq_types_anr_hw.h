@@ -71,6 +71,7 @@ typedef struct RKAnr_Uvnr_Fix_s {
     unsigned char uvnr_en;
     unsigned char uvnr_step1_en;
     unsigned char uvnr_step2_en;
+    unsigned char uvnr_sd32_self_en;
     unsigned char nr_gain_en;
     unsigned char uvnr_nobig_en;
     unsigned char uvnr_big_en;

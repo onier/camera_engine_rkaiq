@@ -151,12 +151,12 @@ public:
     // from IspStatsListener
     XCamReturn ispStatsCb(SmartPtr<VideoBuffer>& ispStats);
     // from IspEvtsListener
-    XCamReturn ispEvtsCb(ispHwEvt_t* evt);
+    XCamReturn ispEvtsCb(SmartPtr<ispHwEvt_t> evt);
     // from RkAiqAnalyzerCb
     void rkAiqCalcDone(SmartPtr<RkAiqFullParamsProxy>& results);
     void rkAiqCalcFailed(const char* msg);
     // from RkLumaAnalyzerCb
-    void rkLumaCalcDone(int frame_id, int count);
+    void rkLumaCalcDone(rk_aiq_luma_params_t luma_params);
     void rkLumaCalcFailed(const char* msg);
     XCamReturn setModuleCtl(rk_aiq_module_id_t mId, bool mod_en);
     XCamReturn getModuleCtl(rk_aiq_module_id_t mId, bool& mod_en);

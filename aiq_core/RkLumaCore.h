@@ -27,6 +27,7 @@
 #include "video_buffer.h"
 #include "rk_aiq_luma.h"
 #include "RkAiqCalibDbTypes.h"
+#include "rk_aiq_types.h"
 
 using namespace XCam;
 namespace RkCam {
@@ -45,7 +46,7 @@ class RkLumaAnalyzerCb {
 public:
     explicit RkLumaAnalyzerCb() {};
     virtual ~RkLumaAnalyzerCb() {};
-    virtual void rkLumaCalcDone(int frame_id, int count) = 0;
+    virtual void rkLumaCalcDone(rk_aiq_luma_params_t luma_params) = 0;
     virtual void rkLumaCalcFailed(const char* msg) = 0;
 private:
     XCAM_DEAD_COPY (RkLumaAnalyzerCb);

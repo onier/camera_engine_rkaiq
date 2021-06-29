@@ -312,6 +312,42 @@ typedef struct TmoProcRes_s
     unsigned short sw_hdrtmo_maxpalpha;
 } TmoProcRes_t;
 
+typedef struct PredictPara_s
+{
+    bool Scenestable;
+    int K_Rolgmean;
+    int iir;
+    int iir_max;
+    int global_tmo_strength;
+    int cnt_mode;
+    int cnt_vsize;
+} PredictPara_t;
+
+typedef struct PredictKPara_s
+{
+    float correction_factor;
+    float correction_offset;
+    float Hdr3xLongPercent;
+    float UseLongUpTh;
+    float UseLongLowTh;
+
+} PredictKPara_t;
+
+typedef struct TmoFlickerPara_s
+{
+    int cnt_mode;
+    int cnt_vsize;
+    bool GlobalTmoStrengthDown;
+    float GlobalTmoStrength;
+    float LumaDeviation[3];
+    float StableThr;
+    int iir;
+    int iirmax;
+    int height;
+    int width;
+    PredictKPara_t PredictK;
+} TmoFlickerPara_t;
+
 typedef struct RkAiqAhdrProcResult_s
 {
     TmoProcRes_t TmoProcRes;
@@ -321,6 +357,8 @@ typedef struct RkAiqAhdrProcResult_s
     bool isHdrGlobalTmo;
     bool bTmoEn;
     bool isLinearTmo;
+    TmoFlickerPara_t TmoFlicker;
+    PredictPara_t Predict;
 } RkAiqAhdrProcResult_t;
 
 

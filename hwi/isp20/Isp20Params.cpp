@@ -724,6 +724,12 @@ void Isp20Params::convertAiqTmoToIsp20Params(struct isp2x_isp_params_cfg& isp_cf
     isp_cfg.others.hdrtmo_cfg.palpha_0p18   = ahdr_data.TmoProcRes.sw_hdrtmo_palpha_0p18;
     isp_cfg.others.hdrtmo_cfg.maxgain       = ahdr_data.TmoProcRes.sw_hdrtmo_maxgain;
     isp_cfg.others.hdrtmo_cfg.maxpalpha     = ahdr_data.TmoProcRes.sw_hdrtmo_maxpalpha;
+    isp_cfg.others.hdrtmo_cfg.predict.global_tmo = ahdr_data.isHdrGlobalTmo;
+    isp_cfg.others.hdrtmo_cfg.predict.scene_stable = ahdr_data.Predict.Scenestable;
+    isp_cfg.others.hdrtmo_cfg.predict.k_rolgmean = ahdr_data.Predict.K_Rolgmean;
+    isp_cfg.others.hdrtmo_cfg.predict.iir = ahdr_data.Predict.iir;
+    isp_cfg.others.hdrtmo_cfg.predict.iir_max = ahdr_data.Predict.iir_max;
+    isp_cfg.others.hdrtmo_cfg.predict.global_tmo_strength = ahdr_data.Predict.global_tmo_strength;
 
 #if 0
     LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "%d: cnt_vsize %d", __LINE__, isp_cfg.others.hdrtmo_cfg.cnt_vsize);
@@ -825,12 +831,26 @@ Isp20Params::convertAiqAwbGainToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg
     struct isp2x_awb_gain_cfg *  cfg = &isp_cfg.others.awb_gain_cfg;
     uint16_t max_wb_gain = (1 << (ISP2X_WBGAIN_FIXSCALE_BIT + 2)) - 1;
     rk_aiq_wb_gain_t awb_gain1 = awb_gain;
+    //blc
     if(blc.stResult.enable) {
         awb_gain1.bgain *= (float)((1 << ISP2X_BLC_BIT_MAX) - 1) / ((1 << ISP2X_BLC_BIT_MAX) - 1 - blc.stResult.blc_b);
         awb_gain1.gbgain *= (float)((1 << ISP2X_BLC_BIT_MAX) - 1) / ((1 << ISP2X_BLC_BIT_MAX) - 1 - blc.stResult.blc_gb);
         awb_gain1.rgain *= (float)((1 << ISP2X_BLC_BIT_MAX) - 1) / ((1 << ISP2X_BLC_BIT_MAX) - 1 - blc.stResult.blc_r);
         awb_gain1.grgain *= (float)((1 << ISP2X_BLC_BIT_MAX) - 1) / ((1 << ISP2X_BLC_BIT_MAX) - 1 - blc.stResult.blc_gr);
     }
+    // rescale
+    float max_value  = awb_gain1.bgain > awb_gain1.gbgain ? awb_gain1.bgain : awb_gain1.gbgain;
+    max_value = max_value > awb_gain1.rgain ? max_value : awb_gain1.rgain;
+    float max_wb_gain_f = (float)max_wb_gain/(1 << (ISP2X_WBGAIN_FIXSCALE_BIT));
+    if (max_value  > max_wb_gain_f ){
+        float scale = max_value/max_wb_gain_f;
+        awb_gain1.bgain /= scale;
+        awb_gain1.gbgain /= scale;
+        awb_gain1.grgain /= scale;
+        awb_gain1.rgain /= scale;
+        LOGD_CAMHW("%s: scale %f, awbgain(r,g,g,b):[%f,%f,%f,%f]",__FUNCTION__,scale,awb_gain1.rgain, awb_gain1.grgain, awb_gain1.gbgain, awb_gain1.bgain);
+    }
+    //fix point
     //LOGE_CAMHW_SUBM(ISP20PARAM_SUBM,"max_wb_gain:%d\n",max_wb_gain);
     uint16_t R = (uint16_t)(0.5 + awb_gain1.rgain * (1 << ISP2X_WBGAIN_FIXSCALE_BIT));
     uint16_t B = (uint16_t)(0.5 + awb_gain1.bgain * (1 << ISP2X_WBGAIN_FIXSCALE_BIT));
@@ -865,6 +885,39 @@ void Isp20Params::convertAiqAgammaToIsp20Params(struct isp2x_isp_params_cfg& isp
     }
 }
 
+void Isp20Params::convertAiqAdegammaToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+        const AdegammaProcRes_t& degamma_cfg)
+{
+    if(degamma_cfg.degamma_en) {
+        isp_cfg.module_ens |= ISP2X_MODULE_SDG;
+        isp_cfg.module_en_update |= ISP2X_MODULE_SDG;
+        isp_cfg.module_cfg_update |= ISP2X_MODULE_SDG;
+    } else {
+        isp_cfg.module_ens &= ~ISP2X_MODULE_SDG;
+        isp_cfg.module_en_update |= ISP2X_MODULE_SDG;
+        return;
+    }
+
+    struct isp2x_sdg_cfg* cfg = &isp_cfg.others.sdg_cfg;
+    cfg->xa_pnts.gamma_dx0 = degamma_cfg.degamma_X_d0;
+    cfg->xa_pnts.gamma_dx1 = degamma_cfg.degamma_X_d1;
+    for (int i = 0; i < 17; i++) {
+        cfg->curve_r.gamma_y[i] = degamma_cfg.degamma_tableR[i];
+        cfg->curve_g.gamma_y[i] = degamma_cfg.degamma_tableG[i];
+        cfg->curve_b.gamma_y[i] = degamma_cfg.degamma_tableB[i];
+    }
+
+#if 0
+    LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) DEGAMMA_DX0:%d DEGAMMA_DX0:%d\n", __FUNCTION__, __LINE__, cfg->xa_pnts.gamma_dx0, cfg->xa_pnts.gamma_dx1);
+    LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "DEGAMMA_R_Y:%d %d %d %d %d %d %d %d\n", cfg->curve_r.gamma_y[0], cfg->curve_r.gamma_y[1],
+                    cfg->curve_r.gamma_y[2], cfg->curve_r.gamma_y[3], cfg->curve_r.gamma_y[4], cfg->curve_r.gamma_y[5], cfg->curve_r.gamma_y[6], cfg->curve_r.gamma_y[7]);
+    LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "DEGAMMA_G_Y:%d %d %d %d %d %d %d %d\n", cfg->curve_g.gamma_y[0], cfg->curve_g.gamma_y[1],
+                    cfg->curve_g.gamma_y[2], cfg->curve_g.gamma_y[3], cfg->curve_g.gamma_y[4], cfg->curve_g.gamma_y[5], cfg->curve_g.gamma_y[6], cfg->curve_g.gamma_y[7]);
+    LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "DEGAMMA_B_Y:%d %d %d %d %d %d %d %d\n", cfg->curve_b.gamma_y[0], cfg->curve_b.gamma_y[1],
+                    cfg->curve_b.gamma_y[2], cfg->curve_b.gamma_y[3], cfg->curve_b.gamma_y[4], cfg->curve_b.gamma_y[5], cfg->curve_b.gamma_y[6], cfg->curve_b.gamma_y[7]);
+#endif
+
+}
 
 void Isp20Params::convertAiqAdehazeToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
         const rk_aiq_dehaze_cfg_t& dhaze                     )
@@ -886,6 +939,7 @@ void Isp20Params::convertAiqAdehazeToIsp20Params(struct isp2x_isp_params_cfg& is
     cfg->hist_en          = int(dhaze.dehaze_en[2]);  //0~1  , (1bit) hist_en
     cfg->hist_chn         = int(dhaze.dehaze_en[3]);  //0~1  , (1bit) hist_channel
     cfg->big_en           = int(dhaze.dehaze_en[4]);  //0~1  , (1bit) gain_en
+    cfg->nobig_en = (int)(1 - cfg->big_en);
     cfg->dc_min_th    = int(dhaze.dehaze_self_adp[0]); //0~255, (8bit) dc_min_th
     cfg->dc_max_th    = int(dhaze.dehaze_self_adp[1]               );  //0~255, (8bit) dc_max_th
     cfg->yhist_th    = int(dhaze.dehaze_self_adp[2]                );  //0~255, (8bit) yhist_th
@@ -951,7 +1005,7 @@ void Isp20Params::convertAiqAdehazeToIsp20Params(struct isp2x_isp_params_cfg& is
 
 void
 Isp20Params::convertAiqBlcToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-                                        SmartPtr<RkAiqIspParamsProxy> aiq_results)
+                                        SmartPtr<RkAiqIspOtherParamsProxy> aiq_results)
 {
     LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) enter \n", __FUNCTION__, __LINE__);
 
@@ -987,7 +1041,7 @@ Isp20Params::convertAiqBlcToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
 
 void
 Isp20Params::convertAiqDpccToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-        SmartPtr<RkAiqIspParamsProxy> aiq_results)
+        SmartPtr<RkAiqIspMeasParamsProxy> aiq_results)
 {
     LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) enter \n", __FUNCTION__, __LINE__);
 
@@ -1563,7 +1617,7 @@ Isp20Params::convertAiqUvnrToIsp20Params(struct rkispp_params_cfg& pp_cfg,
     pNrCfg->nr_gain_en = uvnr.nr_gain_en;
     pNrCfg->uvnr_nobig_en = uvnr.uvnr_nobig_en;
     pNrCfg->uvnr_big_en = uvnr.uvnr_big_en;
-
+    pNrCfg->uvnr_sd32_self_en = uvnr.uvnr_sd32_self_en;
 
     //0x0084
     pNrCfg->uvnr_gain_1sigma = uvnr.uvnr_gain_1sigma;
@@ -1970,50 +2024,99 @@ Isp20Params::convertAiqGainToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
 
 
 XCamReturn
-Isp20Params::convertAiqResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-        SmartPtr<RkAiqIspParamsProxy> aiq_results,
-        SmartPtr<RkAiqIspParamsProxy>& last_aiq_results)
+Isp20Params::convertAiqMeasResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+        SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
+        SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results,
+        SmartPtr<RkAiqIspMeasParamsProxy>& last_aiq_results)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    convertAiqHistToIsp20Params(isp_cfg, aiq_results->data()->hist_meas);
-    convertAiqAeToIsp20Params(isp_cfg, aiq_results->data()->aec_meas);
-    convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-    convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
-    convertAiqAwbGainToIsp20Params(isp_cfg, aiq_results->data()->awb_gain, aiq_results->data()->blc,
-                                   aiq_results->data()->awb_gain_update);
-    convertAiqAwbToIsp20Params(isp_cfg, aiq_results->data()->awb_cfg_v200, aiq_results->data()->awb_cfg_update);
-    convertAiqLscToIsp20Params(isp_cfg, aiq_results->data()->lsc);
-    convertAiqCcmToIsp20Params(isp_cfg, aiq_results->data()->ccm);
-    convertAiqAgammaToIsp20Params(isp_cfg, aiq_results->data()->agamma);
-    convertAiqBlcToIsp20Params(isp_cfg, aiq_results);
-    convertAiqDpccToIsp20Params(isp_cfg, aiq_results);
-    convertAiqRawnrToIsp20Params(isp_cfg, aiq_results->data()->rawnr);
-    convertAiqAfToIsp20Params(isp_cfg, aiq_results->data()->af_meas, aiq_results->data()->af_cfg_update);
-    convertAiqAdehazeToIsp20Params(isp_cfg, aiq_results->data()->adhaz_config);
-    convertAiqA3dlutToIsp20Params(isp_cfg, aiq_results->data()->lut3d);
-    if(aiq_results->data()->update_mask & RKAIQ_ISP_LDCH_ID)
-        convertAiqAldchToIsp20Params(isp_cfg, aiq_results->data()->ldch);
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_HIST_ID)
+        convertAiqHistToIsp20Params(isp_cfg, aiq_results->data()->hist_meas);
 
-    //must be at the end of isp module
-    convertAiqGainToIsp20Params(isp_cfg, aiq_results->data()->gain_config);
-    /*
-     * enable the modules that has been verified to work properly on the board
-     * TODO: enable all modules after validation in isp
-     */
-#if 0
-    convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
-    convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
-#endif
-    convertAiqGicToIsp20Params(isp_cfg, aiq_results->data()->gic);
-    convertAiqAdemosaicToIsp20Params(isp_cfg, aiq_results);
-    convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
-    convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AEC_ID)
+        convertAiqAeToIsp20Params(isp_cfg, aiq_results->data()->aec_meas);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AHDRMGE_ID)
+        convertAiqMergeToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AHDRTMO_ID)
+        convertAiqTmoToIsp20Params(isp_cfg, aiq_results->data()->ahdr_proc_res);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AWB_GAIN_ID)
+        convertAiqAwbGainToIsp20Params(isp_cfg, aiq_results->data()->awb_gain,
+                                       aiq_other_results->data()->blc,
+                                       aiq_results->data()->awb_gain_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AWB_ID)
+        convertAiqAwbToIsp20Params(isp_cfg, aiq_results->data()->awb_cfg_v200,
+                                   aiq_results->data()->awb_cfg_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_AF_ID)
+        convertAiqAfToIsp20Params(isp_cfg, aiq_results->data()->af_meas,
+                                  aiq_results->data()->af_cfg_update);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_CCM_ID)
+        convertAiqCcmToIsp20Params(isp_cfg, aiq_results->data()->ccm);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DPCC_ID)
+        convertAiqDpccToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_LSC_ID)
+        convertAiqLscToIsp20Params(isp_cfg, aiq_results->data()->lsc);
+
     last_aiq_results = aiq_results;
 
     return ret;
 }
 
+XCamReturn
+Isp20Params::convertAiqOtherResultsToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+        SmartPtr<RkAiqIspOtherParamsProxy> aiq_results,
+        SmartPtr<RkAiqIspOtherParamsProxy>& last_aiq_results)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_RAWNR_ID)
+        convertAiqRawnrToIsp20Params(isp_cfg, aiq_results->data()->rawnr);
+
+    //must be at the end of isp module
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GAIN_ID)
+        convertAiqGainToIsp20Params(isp_cfg, aiq_results->data()->gain_config);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GAMMA_ID)
+        convertAiqAgammaToIsp20Params(isp_cfg, aiq_results->data()->agamma);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DEGAMMA_ID)
+        convertAiqAdegammaToIsp20Params(isp_cfg, aiq_results->data()->adegamma);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_BLC_ID)
+        convertAiqBlcToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DEHAZE_ID)
+        convertAiqAdehazeToIsp20Params(isp_cfg, aiq_results->data()->adhaz_config);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_LUT3D_ID)
+        convertAiqA3dlutToIsp20Params(isp_cfg, aiq_results->data()->lut3d);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_LDCH_ID)
+        convertAiqAldchToIsp20Params(isp_cfg, aiq_results->data()->ldch);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_GIC_ID)
+        convertAiqGicToIsp20Params(isp_cfg, aiq_results->data()->gic);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_DEBAYER_ID)
+        convertAiqAdemosaicToIsp20Params(isp_cfg, aiq_results);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_IE_ID)
+        convertAiqIeToIsp20Params(isp_cfg, aiq_results->data()->ie);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_CP_ID)
+        convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
+    last_aiq_results = aiq_results;
+
+    return ret;
+}
 void
 Isp20Params::convertAiqFecToIsp20Params(struct rkispp_params_cfg& pp_cfg,
                                         rk_aiq_isp_fec_t& fec)
@@ -2048,8 +2151,45 @@ Isp20Params::convertAiqFecToIsp20Params(struct rkispp_params_cfg& pp_cfg,
 }
 
 XCamReturn
-Isp20Params::convertAiqResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
-        SmartPtr<RkAiqIsppParamsProxy> aiq_results)
+Isp20Params::convertAiqMeasResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
+        SmartPtr<RkAiqIsppMeasParamsProxy> aiq_results,
+        SmartPtr<RkAiqIsppMeasParamsProxy> &last_aiq_results)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    /* reinit, this may override by driver, enable nr & sharp default */
+    //pp_cfg.module_init_ens = ISPP_MODULE_NR | ISPP_MODULE_SHP;// | ISPP_MODULE_ORB;
+    pp_cfg.module_init_ens = _last_pp_module_init_ens;
+
+#if 0
+    if(aiq_results->data()->update_mask & ISPP_MODULE_TNR)
+        convertAiqTnrToIsp20Params(pp_cfg, aiq_results->data()->tnr);
+
+    if(aiq_results->data()->update_mask & ISPP_MODULE_NR) {
+        convertAiqUvnrToIsp20Params(pp_cfg, aiq_results->data()->uvnr);
+        convertAiqYnrToIsp20Params(pp_cfg, aiq_results->data()->ynr);
+    }
+
+    if(aiq_results->data()->update_mask & ISPP_MODULE_SHP)
+        convertAiqSharpenToIsp20Params(pp_cfg, aiq_results->data()->sharpen,
+                                       aiq_results->data()->edgeflt);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISPP_FEC_ID)
+        convertAiqFecToIsp20Params(pp_cfg, aiq_results->data()->fec);
+#endif
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISPP_ORB_ID)
+        convertAiqOrbToIsp20Params(pp_cfg, aiq_results->data()->orb);
+
+    _last_pp_module_init_ens = pp_cfg.module_init_ens;
+
+    last_aiq_results = aiq_results;
+    return ret;
+}
+
+XCamReturn
+Isp20Params::convertAiqOtherResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
+        SmartPtr<RkAiqIsppOtherParamsProxy> aiq_results,
+        SmartPtr<RkAiqIsppOtherParamsProxy> &last_aiq_results)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     /* reinit, this may override by driver, enable nr & sharp default */
@@ -2071,10 +2211,9 @@ Isp20Params::convertAiqResultsToIsp20PpParams(struct rkispp_params_cfg& pp_cfg,
     if(aiq_results->data()->update_mask & RKAIQ_ISPP_FEC_ID)
         convertAiqFecToIsp20Params(pp_cfg, aiq_results->data()->fec);
 
-    if(aiq_results->data()->update_mask & RKAIQ_ISPP_ORB_ID)
-        convertAiqOrbToIsp20Params(pp_cfg, aiq_results->data()->orb);
-
     _last_pp_module_init_ens = pp_cfg.module_init_ens;
+
+    last_aiq_results = aiq_results;
 
     return ret;
 }
@@ -2088,7 +2227,7 @@ Isp20Params::checkIsp20Params(struct isp2x_isp_params_cfg& isp_cfg)
 
 void
 Isp20Params::convertAiqAdemosaicToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
-        SmartPtr<RkAiqIspParamsProxy> aiq_results)
+        SmartPtr<RkAiqIspOtherParamsProxy> aiq_results)
 {
     if (aiq_results->data()->demosaic.enable) {
         isp_cfg.module_ens |= ISP2X_MODULE_DEBAYER;
@@ -2553,14 +2692,18 @@ void Isp20Params::updateIsppModuleForceEns(u32 module_ens)
 }
 
 void
-Isp20Params::forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg, SmartPtr<RkAiqIsppParamsProxy> aiq_results)
+Isp20Params::forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg,
+                                      SmartPtr<RkAiqIsppMeasParamsProxy> aiq_meas_results,
+                                      SmartPtr<RkAiqIsppOtherParamsProxy> aiq_other_results)
 {
     for (int i = RK_ISP2X_PP_TNR_ID; i <= RK_ISP2X_PP_MAX_ID; i++) {
         if (getModuleForceFlag(i)) {
             switch (i) {
             case RK_ISP2X_PP_TNR_ID:
+                if (!aiq_other_results.ptr())
+                    break;
                 if (getModuleForceEn(RK_ISP2X_PP_TNR_ID)) {
-                    if(aiq_results->data()->tnr.tnr_en) {
+                    if(aiq_other_results->data()->tnr.tnr_en) {
                         pp_cfg.module_ens |= ISPP_MODULE_TNR;
                         pp_cfg.module_en_update |= ISPP_MODULE_TNR;
                         pp_cfg.module_cfg_update |= ISPP_MODULE_TNR;
@@ -2575,8 +2718,10 @@ Isp20Params::forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg, SmartPtr
                 }
                 break;
             case RK_ISP2X_PP_NR_ID:
+                if (!aiq_other_results.ptr())
+                    break;
                 if (getModuleForceEn(RK_ISP2X_PP_NR_ID)) {
-                    if(aiq_results->data()->tnr.tnr_en) {
+                    if( aiq_other_results->data()->tnr.tnr_en) {
                         pp_cfg.module_ens |= ISPP_MODULE_NR;
                         pp_cfg.module_en_update |= ISPP_MODULE_NR;
                         pp_cfg.module_cfg_update |= ISPP_MODULE_NR;
@@ -2591,9 +2736,11 @@ Isp20Params::forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg, SmartPtr
                 }
                 break;
             case RK_ISP2X_PP_TSHP_ID:
+                if (!aiq_other_results.ptr())
+                    break;
                 if (getModuleForceEn(RK_ISP2X_PP_TSHP_ID)) {
-                    if(aiq_results->data()->sharpen.stSharpFixV1.sharp_en ||
-                            aiq_results->data()->edgeflt.edgeflt_en) {
+                    if(aiq_other_results->data()->sharpen.stSharpFixV1.sharp_en ||
+                            aiq_other_results->data()->edgeflt.edgeflt_en) {
                         pp_cfg.module_ens |= ISPP_MODULE_SHP;
                         pp_cfg.module_en_update |= ISPP_MODULE_SHP;
                         pp_cfg.module_cfg_update |= ISPP_MODULE_SHP;
@@ -2615,7 +2762,8 @@ Isp20Params::forceOverwriteAiqIsppCfg(struct rkispp_params_cfg& pp_cfg, SmartPtr
 
 void
 Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
-                                     SmartPtr<RkAiqIspParamsProxy> aiq_results)
+                                     SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
+                                     SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results)
 {
     for (int i = 0; i <= RK_ISP2X_MAX_ID; i++) {
         if (getModuleForceFlag(i)) {
@@ -2638,7 +2786,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_BLS_ID:
                 if (getModuleForceEn(RK_ISP2X_BLS_ID)) {
-                    if(aiq_results->data()->blc.stResult.enable) {
+                    if(aiq_other_results->data()->blc.stResult.enable) {
                         isp_cfg.module_ens |= ISP2X_MODULE_BLS;
                         isp_cfg.module_en_update |= ISP2X_MODULE_BLS;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_BLS;
@@ -2702,7 +2850,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_GOC_ID:
                 if (getModuleForceEn(RK_ISP2X_GOC_ID)) {
-                    if(aiq_results->data()->agamma.gamma_en) {
+                    if(aiq_other_results->data()->agamma.gamma_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_GOC;
                         isp_cfg.module_en_update |= ISP2X_MODULE_GOC;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_GOC;
@@ -2718,7 +2866,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_RAWNR_ID:
                 if (getModuleForceEn(RK_ISP2X_RAWNR_ID)) {
-                    if(aiq_results->data()->rawnr.rawnr_en) {
+                    if(aiq_other_results->data()->rawnr.rawnr_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_RAWNR;
                         isp_cfg.module_en_update |= ISP2X_MODULE_RAWNR;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_RAWNR;
@@ -2734,7 +2882,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_3DLUT_ID:
                 if (getModuleForceEn(RK_ISP2X_3DLUT_ID)) {
-                    if(aiq_results->data()->rawnr.rawnr_en) {
+                    if(aiq_other_results->data()->rawnr.rawnr_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_3DLUT;
                         isp_cfg.module_en_update |= ISP2X_MODULE_3DLUT;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_3DLUT;
@@ -2750,7 +2898,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_LDCH_ID:
                 if (getModuleForceEn(RK_ISP2X_LDCH_ID)) {
-                    if(aiq_results->data()->ldch.ldch_en) {
+                    if(aiq_other_results->data()->ldch.ldch_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_LDCH;
                         isp_cfg.module_en_update |= ISP2X_MODULE_LDCH;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_LDCH;
@@ -2766,7 +2914,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_GIC_ID:
                 if (getModuleForceEn(RK_ISP2X_GIC_ID)) {
-                    if(aiq_results->data()->gic.gic_en) {
+                    if(aiq_other_results->data()->gic.gic_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_GIC;
                         isp_cfg.module_en_update |= ISP2X_MODULE_GIC;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_GIC;
@@ -2782,7 +2930,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_GAIN_ID:
                 if (getModuleForceEn(RK_ISP2X_GAIN_ID)) {
-                    if(aiq_results->data()->gain_config.gain_table_en) {
+                    if(aiq_other_results->data()->gain_config.gain_table_en) {
                         isp_cfg.module_ens |= ISP2X_MODULE_GAIN;
                         isp_cfg.module_en_update |= ISP2X_MODULE_GAIN;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_GAIN;
@@ -2798,7 +2946,7 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
                 break;
             case RK_ISP2X_DHAZ_ID:
                 if (getModuleForceEn(RK_ISP2X_DHAZ_ID)) {
-                    if(aiq_results->data()->adhaz_config.dehaze_en[0]) {
+                    if(aiq_other_results->data()->adhaz_config.dehaze_en[0]) {
                         isp_cfg.module_ens |= ISP2X_MODULE_DHAZ;
                         isp_cfg.module_en_update |= ISP2X_MODULE_DHAZ;
                         isp_cfg.module_cfg_update |= ISP2X_MODULE_DHAZ;
@@ -2817,4 +2965,449 @@ Isp20Params::forceOverwriteAiqIspCfg(struct isp2x_isp_params_cfg& isp_cfg,
     }
     updateIspModuleForceEns(isp_cfg.module_ens);
 }
+
+void
+Isp20Params::hdrtmoGetLumaInfo(rk_aiq_luma_params_t * Next, rk_aiq_luma_params_t *Cur,
+                               s32 frameNum, int PixelNumBlock, float blc, float *luma)
+{
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "PixelNumBlock:%d blc:%f\n", PixelNumBlock, blc);
+
+    float nextSLuma[16] ;
+    float curSLuma[16] ;
+    float nextMLuma[16] ;
+    float curMLuma[16] ;
+    float nextLLuma[16];
+    float curLLuma[16];
+
+    if (frameNum == 1)
+    {
+        for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++) {
+            nextLLuma[i] = 0;
+            curLLuma[i] = 0;
+            nextMLuma[i] = 0;
+            curMLuma[i] = 0;
+            nextSLuma[i] = (float)Next->luma[0][i];
+            nextSLuma[i] /= (float)PixelNumBlock;
+            nextSLuma[i] -= blc;
+            curSLuma[i] = (float)Cur->luma[0][i];
+            curSLuma[i] /= (float)PixelNumBlock;
+            curSLuma[i] -= blc;
+        }
+    } else if (frameNum == 2) {
+        for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++) {
+            nextSLuma[i] = (float)Next->luma[1][i];
+            nextSLuma[i] /= (float)PixelNumBlock;
+            nextSLuma[i] -= blc;
+            curSLuma[i] = (float)Cur->luma[1][i];
+            curSLuma[i] /= (float)PixelNumBlock;
+            curSLuma[i] -= blc;
+            nextMLuma[i] = 0;
+            curMLuma[i] = 0;
+            nextLLuma[i] = (float)Next->luma[0][i];
+            nextLLuma[i] /= (float)PixelNumBlock;
+            nextLLuma[i] -= blc;
+            curLLuma[i] = (float)Cur->luma[0][i];
+            curLLuma[i] /= (float)PixelNumBlock;
+            curLLuma[i] -= blc;
+        }
+    } else if (frameNum == 3) {
+
+        for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++) {
+            nextSLuma[i] = (float)Next->luma[2][i];
+            nextSLuma[i] /= (float)PixelNumBlock;
+            nextSLuma[i] -= blc;
+            curSLuma[i] = (float)Cur->luma[2][i];
+            curSLuma[i] /= (float)PixelNumBlock;
+            curSLuma[i] -= blc;
+            nextMLuma[i] = (float)Next->luma[1][i];
+            nextMLuma[i] /= (float)PixelNumBlock;
+            nextMLuma[i] -= blc;
+            curMLuma[i] = (float)Cur->luma[1][i];
+            curMLuma[i] /= (float)PixelNumBlock;
+            curMLuma[i] -= blc;
+            nextLLuma[i] = (float)Next->luma[0][i];
+            nextLLuma[i] /= (float)PixelNumBlock;
+            nextLLuma[i] -= blc;
+            curLLuma[i] = (float)Cur->luma[0][i];
+            curLLuma[i] /= (float)PixelNumBlock;
+            curLLuma[i] -= blc;
+        }
+    }
+
+    for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++) {
+        luma[i] = curSLuma[i];
+        luma[i + 16] = curMLuma[i];
+        luma[i + 32] = curLLuma[i];
+        luma[i + 48] = nextSLuma[i];
+        luma[i + 64] = nextMLuma[i];
+        luma[i + 80] = nextLLuma[i];
+    }
+}
+
+void
+Isp20Params::hdrtmoGetAeInfo(RKAiqAecExpInfo_t* Next, RKAiqAecExpInfo_t* Cur, s32 frameNum, float* expo)
+{
+    float nextLExpo = 0;
+    float curLExpo = 0;
+    float nextMExpo = 0;
+    float curMExpo = 0;
+    float nextSExpo = 0;
+    float curSExpo = 0;
+
+    if (frameNum == 1)
+    {
+        nextLExpo = 0;
+        curLExpo = 0;
+        nextMExpo = 0;
+        curMExpo = 0;
+        nextSExpo = Next->LinearExp.exp_real_params.analog_gain * \
+                    Next->LinearExp.exp_real_params.integration_time;
+        curSExpo = Cur->LinearExp.exp_real_params.analog_gain * \
+                   Cur->LinearExp.exp_real_params.integration_time;
+    } else if (frameNum == 2) {
+        nextLExpo = Next->HdrExp[1].exp_real_params.analog_gain * \
+                    Next->HdrExp[1].exp_real_params.integration_time;
+        curLExpo = Cur->HdrExp[1].exp_real_params.analog_gain * \
+                   Cur->HdrExp[1].exp_real_params.integration_time;
+        nextMExpo = nextLExpo;
+        curMExpo = curLExpo;
+        nextSExpo = Next->HdrExp[0].exp_real_params.analog_gain * \
+                    Next->HdrExp[0].exp_real_params.integration_time;
+        curSExpo = Cur->HdrExp[0].exp_real_params.analog_gain * \
+                   Cur->HdrExp[0].exp_real_params.integration_time;
+    } else if (frameNum == 3) {
+        nextLExpo = Next->HdrExp[2].exp_real_params.analog_gain * \
+                    Next->HdrExp[2].exp_real_params.integration_time;
+        curLExpo = Cur->HdrExp[2].exp_real_params.analog_gain * \
+                   Cur->HdrExp[2].exp_real_params.integration_time;
+        nextMExpo = Next->HdrExp[1].exp_real_params.analog_gain * \
+                    Next->HdrExp[1].exp_real_params.integration_time;
+        curMExpo = Cur->HdrExp[1].exp_real_params.analog_gain * \
+                   Cur->HdrExp[1].exp_real_params.integration_time;
+        nextSExpo = Next->HdrExp[0].exp_real_params.analog_gain * \
+                    Next->HdrExp[0].exp_real_params.integration_time;
+        curSExpo = Cur->HdrExp[0].exp_real_params.analog_gain * \
+                   Cur->HdrExp[0].exp_real_params.integration_time;
+    }
+
+    expo[0] = curSExpo;
+    expo[1] = curMExpo;
+    expo[2] = curLExpo;
+    expo[3] = nextSExpo;
+    expo[4] = nextMExpo;
+    expo[5] = nextLExpo;
+
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "Cur Expo: S:%f M:%f L:%f\n", curSExpo, curMExpo, curLExpo);
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "Next Expo: S:%f M:%f L:%f\n", nextSExpo, nextMExpo, nextLExpo);
+
+}
+
+bool
+Isp20Params::hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWeight, s32 frameNum, float *LumaDeviation, float StableThr)
+{
+    bool SceneStable = true;
+    //float StableThr = 0.1;
+    float LumaDeviationL = 0;
+    float LumaDeviationM = 0;
+    float LumaDeviationS = 0;
+    float LumaDeviationLinear = 0;
+    float LumaDeviationFinnal = 0;
+
+    if(AntiTmoFlicker.preFrameNum != frameNum) {
+        AntiTmoFlicker.preFrameNum = 0;
+        AntiTmoFlicker.FirstChange = false;
+        AntiTmoFlicker.FirstChangeNum = 0;
+        AntiTmoFlicker.FirstChangeDone = false;
+        AntiTmoFlicker.FirstChangeDoneNum = 0;
+    }
+
+    if(frameNum == 1) {
+        LumaDeviationLinear = LumaDeviation[0];
+        LumaDeviationFinnal = LumaDeviationLinear;
+    }
+    else if(frameNum == 2) {
+        LumaDeviationS = LumaDeviation[0];
+        LumaDeviationL = LumaDeviation[1];
+
+        if(LumaDeviationL > 0)
+            LumaDeviationFinnal = LumaDeviationL;
+        else if(LumaDeviationL == 0 && LumaDeviationS > 0)
+            LumaDeviationFinnal = LumaDeviationS;
+
+    }
+    else if(frameNum == 3) {
+        LumaDeviationS = LumaDeviation[0];
+        LumaDeviationM = LumaDeviation[1];
+        LumaDeviationL = LumaDeviation[2];
+
+        if(LumaDeviationM > 0)
+            LumaDeviationFinnal = LumaDeviationM;
+        else if(LumaDeviationM == 0 && LumaDeviationL > 0)
+            LumaDeviationFinnal = LumaDeviationL;
+        else if(LumaDeviationM == 0 && LumaDeviationL == 0 && LumaDeviationS == 0)
+            LumaDeviationFinnal = LumaDeviationS;
+
+    }
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "frameId:%ld LumaDeviationLinear:%f LumaDeviationS:%f LumaDeviationM:%f LumaDeviationL:%f\n",
+                    frameId, LumaDeviationLinear, LumaDeviationS, LumaDeviationM, LumaDeviationL);
+
+    if(AntiTmoFlicker.FirstChange == false) {
+        if(LumaDeviationFinnal) {
+            AntiTmoFlicker.FirstChange = true;
+            AntiTmoFlicker.FirstChangeNum = frameId;
+        }
+    }
+
+    if(AntiTmoFlicker.FirstChangeDone == false && AntiTmoFlicker.FirstChange == true) {
+        if(LumaDeviationFinnal == 0) {
+            AntiTmoFlicker.FirstChangeDone = true;
+            AntiTmoFlicker.FirstChangeDoneNum = frameId;
+        }
+    }
+
+    if(AntiTmoFlicker.FirstChangeDoneNum && AntiTmoFlicker.FirstChangeNum) {
+        if(LumaDeviationFinnal <= StableThr)
+            SceneStable = true;
+        else
+            SceneStable = false;
+    }
+    else
+        SceneStable = true;
+
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "preFrameNum:%d frameNum:%d FirstChange:%d FirstChangeNum:%d FirstChangeDone:%d FirstChangeDoneNum:%d\n",
+                    AntiTmoFlicker.preFrameNum, frameNum, AntiTmoFlicker.FirstChange, AntiTmoFlicker.FirstChangeNum,
+                    AntiTmoFlicker.FirstChangeDone, AntiTmoFlicker.FirstChangeDoneNum);
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "LumaDeviationFinnal:%f StableThr:%f SceneStable:%d \n", LumaDeviationFinnal, StableThr, SceneStable);
+
+    //store framrnum
+    AntiTmoFlicker.preFrameNum = frameNum;
+
+    return SceneStable;
+}
+
+s32
+Isp20Params::hdrtmoPredictK(float* luma, float* expo, s32 frameNum, PredictKPara_t *TmoPara)
+{
+    int PredictK = 0;
+    float PredictKfloat = 0;
+
+    float curSExpo = expo[0];
+    float curMExpo = expo[1];
+    float curLExpo = expo[2];
+    float nextSExpo = expo[3];
+    float nextMExpo = expo[4];
+    float nextLExpo = expo[5];
+
+    float nextLLuma[16];
+    float curLLuma[16];
+    float nextSLuma[16];
+    float curSLuma[16];
+    float nextMLuma[16];
+    float curMLuma[16];
+
+    for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++)
+    {
+        curSLuma[i] = luma[i];
+        curMLuma[i] = luma[i + 16];
+        curLLuma[i] = luma[i + 32];
+        nextSLuma[i] = luma[i + 48];
+        nextMLuma[i] = luma[i + 64];
+        nextLLuma[i] = luma[i + 80];
+    }
+
+    float correction_factor = TmoPara->correction_factor;
+    float ratio = 1;
+    float offset = TmoPara->correction_offset;
+    float LongExpoRatio = 1;
+    float ShortExpoRatio = 1;
+    float MiddleExpoRatio = 1;
+    float MiddleLumaChange = 1;
+    float LongLumaChange = 1;
+    float ShortLumaChange = 1;
+    float EnvLvChange = 0;
+
+    //get expo change
+    if(frameNum == 3 || frameNum == 2) {
+        if(nextLExpo != 0 && curLExpo != 0)
+            LongExpoRatio = nextLExpo / curLExpo;
+        else
+            LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Long frame expo!!!");
+    }
+
+    if(frameNum == 3) {
+        if(nextMExpo != 0 && curMExpo != 0)
+            ShortExpoRatio = nextMExpo / curMExpo;
+        else
+            LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Short frame expo!!!");
+    }
+
+    if(nextSExpo != 0 && curSExpo != 0)
+        ShortExpoRatio = nextSExpo / curSExpo;
+    else
+        LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Short frame expo!!!");
+
+    float nextLMeanLuma = 0;
+    float curLMeanLuma = 0;
+    float curMMeanLuma = 0;
+    float nextMMeanLuma = 0;
+    float nextSMeanLuma = 0;
+    float curSMeanLuma = 0;
+    for(int i = 0; i < ISP2X_MIPI_LUMA_MEAN_MAX; i++)
+    {
+        nextLMeanLuma += nextLLuma[i];
+        curLMeanLuma += curLLuma[i];
+        nextMMeanLuma += nextMLuma[i];
+        curMMeanLuma += curMLuma[i];
+        nextSMeanLuma += nextSLuma[i];
+        curSMeanLuma += curSLuma[i];
+    }
+    nextLMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+    curLMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+    nextMMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+    curMMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+    nextSMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+    curSMeanLuma /= ISP2X_MIPI_LUMA_MEAN_MAX;
+
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextLLuma:%f curLLuma:%f\n", nextLMeanLuma, curLMeanLuma);
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextSLuma:%f curSLuma:%f\n", nextSMeanLuma, curSMeanLuma);
+
+    //get luma change
+    if(frameNum == 3 || frameNum == 2) {
+        if(nextLMeanLuma > 0 && curLMeanLuma > 0)
+            LongLumaChange = nextLMeanLuma / curLMeanLuma;
+        else if(nextLMeanLuma <= 0 && curLMeanLuma > 0)
+        {
+            nextLMeanLuma = 1;
+            LongLumaChange = nextLMeanLuma / curLMeanLuma;
+        }
+        else if(nextLMeanLuma > 0 && curLMeanLuma <= 0)
+        {
+            curLMeanLuma = 1;
+            LongLumaChange = nextLMeanLuma / curLMeanLuma;
+        }
+        else {
+            curLMeanLuma = 1;
+            nextLMeanLuma = 1;
+            LongLumaChange = nextLMeanLuma / curLMeanLuma;
+        }
+    }
+
+    if(frameNum == 3) {
+        if(nextMMeanLuma > 0 && curMMeanLuma > 0)
+            MiddleLumaChange = nextMMeanLuma / curMMeanLuma;
+        else if(nextMMeanLuma <= 0 && curMMeanLuma > 0)
+        {
+            nextMMeanLuma = 1;
+            MiddleLumaChange = nextMMeanLuma / curMMeanLuma;
+        }
+        else if(nextMMeanLuma > 0 && curMMeanLuma <= 0)
+        {
+            curMMeanLuma = 1;
+            MiddleLumaChange = nextMMeanLuma / curMMeanLuma;
+        }
+        else {
+            curMMeanLuma = 1;
+            nextMMeanLuma = 1;
+            MiddleLumaChange = nextMMeanLuma / curMMeanLuma;
+        }
+    }
+
+    if(nextSMeanLuma > 0 && curSMeanLuma > 0)
+        ShortLumaChange = nextSMeanLuma / curSMeanLuma;
+    else if(nextSMeanLuma <= 0 && curSMeanLuma > 0)
+    {
+        nextSMeanLuma = 1;
+        ShortLumaChange = nextSMeanLuma / curSMeanLuma;
+    }
+    else if(nextSMeanLuma > 0 && curSMeanLuma <= 0)
+    {
+        curSMeanLuma = 1;
+        ShortLumaChange = nextSMeanLuma / curSMeanLuma;
+    }
+    else {
+        curSMeanLuma = 1;
+        nextSMeanLuma = 1;
+        ShortLumaChange = nextSMeanLuma / curSMeanLuma;
+    }
+
+    //cal predictK
+    if (frameNum == 1)
+    {
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextLuma:%f curLuma:%f LumaChange:%f\n", nextSMeanLuma, curSMeanLuma, ShortLumaChange);
+        ratio = ShortLumaChange;
+
+        EnvLvChange = nextSMeanLuma / nextSExpo - curSMeanLuma / curSExpo;
+        EnvLvChange = EnvLvChange >= 0 ? EnvLvChange : (-EnvLvChange);
+        EnvLvChange /= curSMeanLuma / curSExpo;
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextEnvLv:%f curEnvLv:%f EnvLvChange:%f\n", nextSMeanLuma / nextSExpo,
+                        curSMeanLuma / curSExpo, EnvLvChange);
+    }
+    else if (frameNum == 2)
+    {
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextLLuma:%f curLLuma:%f LongLumaChange:%f\n", nextLMeanLuma, curLMeanLuma, LongLumaChange);
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextSLuma:%f curSLuma:%f ShortLumaChange:%f\n", nextSMeanLuma, curSMeanLuma, ShortLumaChange);
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "LongPercent:%f UseLongLowTh:%f UseLongUpTh:%f\n", 1, TmoPara->UseLongLowTh, TmoPara->UseLongUpTh);
+
+        if(LongLumaChange > TmoPara->UseLongLowTh || LongLumaChange < TmoPara->UseLongUpTh)
+            ratio = LongLumaChange;
+        else
+            ratio = ShortLumaChange;
+
+        EnvLvChange = nextLMeanLuma / nextLExpo - curLMeanLuma / curLExpo;
+        EnvLvChange = EnvLvChange >= 0 ? EnvLvChange : (-EnvLvChange);
+        EnvLvChange /= curLMeanLuma / curLExpo;
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextEnvLv:%f curEnvLv:%f EnvLvChange:%f\n", nextLMeanLuma / nextLExpo,
+                        curLMeanLuma / curLExpo, EnvLvChange);
+
+    }
+    else if (frameNum == 3)
+    {
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextLLuma:%f curLLuma:%f LongLumaChange:%f\n", nextLMeanLuma, curLMeanLuma, LongLumaChange);
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextMLuma:%f curMLuma:%f MiddleLumaChange:%f\n", nextMMeanLuma, curMMeanLuma, MiddleLumaChange);
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextSLuma:%f curSLuma:%f ShortLumaChange:%f\n", nextSMeanLuma, curSMeanLuma, ShortLumaChange);
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "LongPercent:%f UseLongLowTh:%f UseLongUpTh:%f\n", TmoPara->Hdr3xLongPercent,
+                        TmoPara->UseLongLowTh, TmoPara->UseLongUpTh);
+
+        float LongLumaChangeNew = TmoPara->Hdr3xLongPercent * LongLumaChange + (1 - TmoPara->Hdr3xLongPercent) * MiddleLumaChange;
+        if(LongLumaChangeNew > TmoPara->UseLongLowTh || LongLumaChangeNew < TmoPara->UseLongUpTh)
+            ratio = LongLumaChangeNew;
+        else
+            ratio = ShortLumaChange;
+
+        EnvLvChange = nextMMeanLuma / nextMExpo - curMMeanLuma / curMExpo;
+        EnvLvChange = EnvLvChange >= 0 ? EnvLvChange : (-EnvLvChange);
+        EnvLvChange /= curMMeanLuma / curMExpo;
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "nextEnvLv:%f curEnvLv:%f EnvLvChange:%f\n", nextMMeanLuma / nextMExpo,
+                        curMMeanLuma / curMExpo, EnvLvChange);
+    }
+
+    if(ratio >= 1)
+        PredictKfloat = log(correction_factor * ratio + offset) / log(2);
+    else if(ratio < 1 && ratio > 0)
+    {
+        float tmp = ratio / correction_factor - offset;
+        tmp = tmp >= 1 ? 1 : tmp <= 0 ? 0.00001 : tmp;
+        PredictKfloat = log(tmp) / log(2);
+    }
+    else
+        LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong luma change!!!");
+
+    //add EnvLv judge
+    if(EnvLvChange > 0.005) {
+        float tmp = curLMeanLuma - nextLMeanLuma;
+        tmp = tmp >= 0 ? tmp : (-tmp);
+        if(tmp < 1)
+            PredictKfloat = 0;
+    }
+    else
+        PredictKfloat = 0;
+
+    PredictKfloat *= 2048;
+    PredictK = (int)PredictKfloat;
+
+    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "ratio:%f EnvLvChange:%f PredictKfloat:%f PredictK:%d\n",
+                    ratio, EnvLvChange, PredictKfloat, PredictK);
+    return PredictK;
+}
+
 }; //namspace RkCam

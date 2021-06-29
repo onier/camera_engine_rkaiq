@@ -2,7 +2,7 @@
 
 RKAIQ_BEGIN_DECLARE
 
-ANRresult_t uvnr_get_mode_cell_idx_by_name(CalibDb_UVNR_t *pCalibdb, char *name, int *mode_idx)
+ANRresult_t uvnr_get_mode_cell_idx_by_name(CalibDb_UVNR_2_t *pCalibdb, char *name, int *mode_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -22,13 +22,18 @@ ANRresult_t uvnr_get_mode_cell_idx_by_name(CalibDb_UVNR_t *pCalibdb, char *name,
 		return ANR_RET_NULL_POINTER;
 	}
 
-	for(i=0; i<CALIBDB_NR_SHARP_SETTING_LEVEL; i++){
+	if(pCalibdb->mode_num < 1){
+		LOGE_ANR("%s(%d): uvnr mode cell num is zero\n", __FUNCTION__, __LINE__);
+		return ANR_RET_NULL_POINTER;
+	}
+	
+	for(i=0; i<pCalibdb->mode_num; i++){
 		if(strncmp(name, pCalibdb->mode_cell[i].name, sizeof(pCalibdb->mode_cell[i].name)) == 0){
 			break;
 		}
 	}
 
-	if(i < CALIBDB_MAX_MODE_NUM){
+	if(i < pCalibdb->mode_num){
 		*mode_idx = i;
 		res = ANR_RET_SUCCESS;
 	}else{
@@ -41,7 +46,7 @@ ANRresult_t uvnr_get_mode_cell_idx_by_name(CalibDb_UVNR_t *pCalibdb, char *name,
 
 }
 
-ANRresult_t uvnr_get_setting_idx_by_name(CalibDb_UVNR_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
+ANRresult_t uvnr_get_setting_idx_by_name(CalibDb_UVNR_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -80,7 +85,7 @@ ANRresult_t uvnr_get_setting_idx_by_name(CalibDb_UVNR_t *pCalibdb, char *name, i
 
 }
 
-ANRresult_t uvnr_config_setting_param(RKAnr_Uvnr_Params_t *pParams, CalibDb_UVNR_t *pCalibdb, char* param_mode, char * snr_name)
+ANRresult_t uvnr_config_setting_param(RKAnr_Uvnr_Params_t *pParams, CalibDb_UVNR_2_t *pCalibdb, char* param_mode, char * snr_name)
 {
 	ANRresult_t res = ANR_RET_SUCCESS;
 	int mode_idx = 0;
@@ -112,7 +117,7 @@ ANRresult_t uvnr_config_setting_param(RKAnr_Uvnr_Params_t *pParams, CalibDb_UVNR
 
 }
 
-ANRresult_t init_uvnr_params(RKAnr_Uvnr_Params_t *pParams, CalibDb_UVNR_t *pCalibdb, int mode_idx, int setting_idx)
+ANRresult_t init_uvnr_params(RKAnr_Uvnr_Params_t *pParams, CalibDb_UVNR_2_t *pCalibdb, int mode_idx, int setting_idx)
 {
     ANRresult_t res = ANR_RET_SUCCESS;
     int i = 0;
@@ -251,8 +256,11 @@ ANRresult_t select_uvnr_params_by_ISO(RKAnr_Uvnr_Params_t *stRKUVNrParams, RKAnr
         return ANR_RET_NULL_POINTER;
     }
 
-    iso = pExpInfo->arIso[pExpInfo->hdr_mode];
-
+	if(pExpInfo->mfnr_mode_3to1){
+		iso = pExpInfo->preIso[pExpInfo->hdr_mode];
+	}else{
+   		iso = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}
     //确定iso等级
     //rkuvnriso@50 100 200 400 800 1600 3200  6400 12800
     //      isogain: 1  2   4   8   16  32   64    128  256
@@ -447,6 +455,7 @@ ANRresult_t uvnr_fix_transfer(RKAnr_Uvnr_Params_Select_t *uvnr, RKAnr_Uvnr_Fix_t
     pNrCfg->nr_gain_en = 1;
     pNrCfg->uvnr_nobig_en = 0;
     pNrCfg->uvnr_big_en = 0;
+    pNrCfg->uvnr_sd32_self_en = 1;
 
 
     //0x0084
@@ -562,7 +571,7 @@ ANRresult_t uvnr_fix_Printf(RKAnr_Uvnr_Fix_t  * pNrCfg)
              pNrCfg->uvnr_gain_offset);
 
     //0x008c
-    LOGD_ANR("(0x008c) uvnr_gain_uvgain:%d uvnr_step2_en:%d uvnr_gain_t2gen:%d uvnr_gain_iso:%d\n",
+    LOGD_ANR("uvnr: (0x008c) uvnr_gain_uvgain:%d uvnr_step2_en:%d uvnr_gain_t2gen:%d uvnr_gain_iso:%d\n",
              pNrCfg->uvnr_gain_uvgain[0],
              pNrCfg->uvnr_gain_uvgain[1],
              pNrCfg->uvnr_gain_t2gen,

@@ -143,21 +143,19 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         stExpInfo.hdr_mode = 2;
     }
 
-#if 1
-    RkAiqAlgoPreResAeInt* pAEPreRes =
-        (RkAiqAlgoPreResAeInt*)(pAdpccProcParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
+    RKAiqAecExpInfo_t* pAERes = pAdpccProcParams->rk_com.u.proc.curExp;
 
-    if(pAEPreRes != NULL) {
+    if(pAERes != NULL) {
         if(pAdpccProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            stExpInfo.arPreResAGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain;
-            stExpInfo.arPreResDGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain;
-            stExpInfo.arPreResTime[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.integration_time;
+            stExpInfo.arPreResAGain[0] = pAERes->LinearExp.exp_real_params.analog_gain;
+            stExpInfo.arPreResDGain[0] = pAERes->LinearExp.exp_real_params.digital_gain;
+            stExpInfo.arPreResTime[0] = pAERes->LinearExp.exp_real_params.integration_time;
             stExpInfo.arPreResIso[0] = stExpInfo.arPreResAGain[0] * 50;
         } else {
             for(int i = 0; i < 3; i++) {
-                stExpInfo.arPreResAGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.analog_gain;
-                stExpInfo.arPreResDGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.digital_gain;
-                stExpInfo.arPreResTime[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.integration_time;
+                stExpInfo.arPreResAGain[i] = pAERes->HdrExp[i].exp_real_params.analog_gain;
+                stExpInfo.arPreResDGain[i] = pAERes->HdrExp[i].exp_real_params.digital_gain;
+                stExpInfo.arPreResTime[i] = pAERes->HdrExp[i].exp_real_params.integration_time;
                 stExpInfo.arPreResIso[i] = stExpInfo.arPreResAGain[i] * stExpInfo.arPreResDGain[i] * 50;
 
                 LOGD_ADPCC("%s:%d index:%d again:%f dgain:%f time:%f iso:%d hdr_mode:%d\n",
@@ -171,7 +169,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
             }
         }
     } else {
-        LOGE_ADPCC("%s:%d pAEPreRes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
+        LOGE_ADPCC("%s:%d pAERes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
 
 
@@ -242,8 +240,6 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     else
         LOGE_ADPCC("%s:%d pAEProcRes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
 
-
-#endif
 
     AdpccResult_t ret = AdpccProcess(pAdpccCtx, &stExpInfo);
     if(ret != ADPCC_RET_SUCCESS) {
