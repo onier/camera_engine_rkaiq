@@ -395,6 +395,18 @@ include_directories(include/iq_parser_v2/j2s)
 # ----------------------------------------------------------------------------
 add_subdirectory(algos)
 
+if(ARCH STREQUAL "aarch64")
+	file(COPY "algos/ae/linux/arm64/librkaiq_ae.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/af/linux/arm64/librkaiq_af.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/asd/linux/arm64/librkaiq_asd.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/awb/linux/arm64/librkaiq_awb.a" DESTINATION all_lib/Release/)
+elseif()
+	file(COPY "algos/ae/linux/arm/librkaiq_ae.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/af/linux/arm/librkaiq_af.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/asd/linux/arm/librkaiq_asd.a" DESTINATION all_lib/Release/)
+	file(COPY "algos/awb/linux/arm/librkaiq_awb.a" DESTINATION all_lib/Release/)
+endif()
+
 # surpress link_directories warning
 cmake_policy(SET CMP0015 NEW)
 
