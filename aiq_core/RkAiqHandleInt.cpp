@@ -78,6 +78,9 @@ XCamReturn RkAiqHandleIntCom::configInparamsCom(RkAiqAlgoCom* com, int type)
     case RK_AIQ_ALGO_TYPE_AGAMMA:
         GET_RK_COM(Agamma);
         break;
+    case RK_AIQ_ALGO_TYPE_ADEGAMMA:
+        GET_RK_COM(Adegamma);
+        break;
     case RK_AIQ_ALGO_TYPE_AWDR:
         GET_RK_COM(Awdr);
         break;
@@ -133,6 +136,8 @@ XCamReturn RkAiqHandleIntCom::configInparamsCom(RkAiqAlgoCom* com, int type)
         rk_com->u.proc.fill_light_on = shared->fill_light_on;
         rk_com->u.proc.gray_mode = shared->gray_mode;
         rk_com->u.proc.is_bw_sensor = shared->is_bw_sensor;
+        rk_com->u.proc.preExp = &shared->preExp;
+        rk_com->u.proc.curExp = &shared->curExp;
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -1022,11 +1027,8 @@ RkAiqAfHandleInt::updateConfig(bool needSync)
         mCfgMutex.lock();
     // if something changed
     if (updateAtt) {
-        mCurAtt = mNewAtt;
-        updateAtt = false;
-        // TODO
-        rk_aiq_uapi_af_SetAttrib(mAlgoCtx, mCurAtt, false);
-        sendSignal();
+        rk_aiq_uapi_af_SetAttrib(mAlgoCtx, mNewAtt, false);
+        isUpdateAttDone = true;
     }
     if (needSync)
         mCfgMutex.unlock();
@@ -1053,6 +1055,7 @@ RkAiqAfHandleInt::setAttrib(rk_aiq_af_attrib_t *att)
     if (0 != memcmp(&mCurAtt, att, sizeof(rk_aiq_af_attrib_t))) {
         mNewAtt = *att;
         updateAtt = true;
+        isUpdateAttDone = false;
         waitSignal();
     }
 
@@ -1161,6 +1164,19 @@ RkAiqAfHandleInt::GetSearchPath(rk_aiq_af_sec_path_t* path)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     rk_aiq_uapi_af_getSearchPath(mAlgoCtx, path);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAfHandleInt::GetSearchResult(rk_aiq_af_result_t* result)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_af_getSearchResult(mAlgoCtx, result);
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -1288,6 +1304,13 @@ RkAiqAfHandleInt::postProcess()
     // set result to mAiqCore
     comb->af_post_res = (RkAiqAlgoPostResAf*)af_post_res_int ;
 
+    if (updateAtt && isUpdateAttDone) {
+        mCurAtt = mNewAtt;
+        updateAtt = false;
+        isUpdateAttDone = false;
+        sendSignal();
+    }
+
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -1409,7 +1432,7 @@ RkAiqAnrHandleInt::setIQPara(rk_aiq_nr_IQPara_t *para)
     if (0 != memcmp(&mCurIQpara, para, sizeof(rk_aiq_nr_IQPara_t))) {
         RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
         if (shared->calib->mfnr.enable && shared->calib->mfnr.motion_detect_en) {
-            if((para->module_bits & (1 << ANR_MODULE_MFNR)) && !para->stMfnrPara.enable){
+            if((para->module_bits & (1 << ANR_MODULE_MFNR)) && !para->stMfnrPara.enable) {
                 para->stMfnrPara.enable = !para->stMfnrPara.enable;
                 LOGE("motion detect is running, disable mfnr is not permit!");
             }
@@ -1970,6 +1993,9 @@ RkAiqAdhazHandleInt::prepare()
     RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
 
     adhaz_config_int->calib = shared->calib;
+    adhaz_config_int->rawHeight = shared->snsDes.isp_acq_height;
+    adhaz_config_int->rawWidth = shared->snsDes.isp_acq_width;
+    adhaz_config_int->working_mode = shared->working_mode;
 
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->prepare(mConfig);
@@ -4365,6 +4391,206 @@ RkAiqAgammaHandleInt::postProcess()
     RKAIQCORE_CHECK_RET(ret, "agamma algo post_process failed");
     // set result to mAiqCore
     comb->agamma_post_res = (RkAiqAlgoPostResAgamma*)agamma_post_res_int ;
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+void
+RkAiqAdegammaHandleInt::init()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    RkAiqAdegammaHandle::deInit();
+    mConfig       = (RkAiqAlgoCom*)(new RkAiqAlgoConfigAdegammaInt());
+    mPreInParam   = (RkAiqAlgoCom*)(new RkAiqAlgoPreAdegammaInt());
+    mPreOutParam  = (RkAiqAlgoResCom*)(new RkAiqAlgoPreResAdegammaInt());
+    mProcInParam  = (RkAiqAlgoCom*)(new RkAiqAlgoProcAdegammaInt());
+    mProcOutParam = (RkAiqAlgoResCom*)(new RkAiqAlgoProcResAdegammaInt());
+    mPostInParam  = (RkAiqAlgoCom*)(new RkAiqAlgoPostAdegammaInt());
+    mPostOutParam = (RkAiqAlgoResCom*)(new RkAiqAlgoPostResAdegammaInt());
+
+    EXIT_ANALYZER_FUNCTION();
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::updateConfig(bool needSync)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (needSync)
+        mCfgMutex.lock();
+    // if something changed
+    if (updateAtt) {
+        mCurAtt = mNewAtt;
+        updateAtt = false;
+        // TODO
+        rk_aiq_uapi_adegamma_SetAttrib(mAlgoCtx, mCurAtt, false);
+        waitSignal();
+    }
+
+    if (needSync)
+        mCfgMutex.unlock();
+
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::setAttrib(rk_aiq_degamma_attrib_t att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    mCfgMutex.lock();
+    //TODO
+    // check if there is different between att & mCurAtt
+    // if something changed, set att to mNewAtt, and
+    // the new params will be effective later when updateConfig
+    // called by RkAiqCore
+
+    // if something changed
+    if (0 != memcmp(&mCurAtt, &att, sizeof(rk_aiq_degamma_attrib_t))) {
+        mNewAtt = att;
+        updateAtt = true;
+        sendSignal();
+    }
+
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::getAttrib(rk_aiq_degamma_attrib_t *att)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    rk_aiq_uapi_adegamma_GetAttrib(mAlgoCtx, att);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+
+XCamReturn
+RkAiqAdegammaHandleInt::prepare()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    ret = RkAiqAdegammaHandle::prepare();
+    RKAIQCORE_CHECK_RET(ret, "adegamma handle prepare failed");
+
+    RkAiqAlgoConfigAdegammaInt* adegamma_config_int = (RkAiqAlgoConfigAdegammaInt*)mConfig;
+    RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+
+    adegamma_config_int->calib = shared ->calib;
+
+    RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
+    ret = des->prepare(mConfig);
+    RKAIQCORE_CHECK_RET(ret, "adegamma algo prepare failed");
+
+    EXIT_ANALYZER_FUNCTION();
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::preProcess()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    RkAiqAlgoPreAdegammaInt* adegamma_pre_int = (RkAiqAlgoPreAdegammaInt*)mPreInParam;
+    RkAiqAlgoPreResAdegammaInt* adegamma_pre_res_int = (RkAiqAlgoPreResAdegammaInt*)mPreOutParam;
+    RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+    RkAiqIspStats* ispStats = &shared->ispStats;
+    RkAiqPreResComb* comb = &shared->preResComb;
+
+    ret = RkAiqAdegammaHandle::preProcess();
+    if (ret) {
+        comb->adegamma_pre_res = NULL;
+        RKAIQCORE_CHECK_RET(ret, "adegamma handle preProcess failed");
+    }
+
+    comb->adegamma_pre_res = NULL;
+
+    RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
+    ret = des->pre_process(mPreInParam, mPreOutParam);
+    RKAIQCORE_CHECK_RET(ret, "adegamma algo pre_process failed");
+
+    // set result to mAiqCore
+    comb->adegamma_pre_res = (RkAiqAlgoPreResAdegamma*)adegamma_pre_res_int;
+
+    EXIT_ANALYZER_FUNCTION();
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::processing()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    RkAiqAlgoProcAdegammaInt* adegamma_proc_int = (RkAiqAlgoProcAdegammaInt*)mProcInParam;
+    RkAiqAlgoProcResAdegammaInt* adegamma_proc_res_int = (RkAiqAlgoProcResAdegammaInt*)mProcOutParam;
+    RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+    RkAiqProcResComb* comb = &shared->procResComb;
+    RkAiqIspStats* ispStats = &shared->ispStats;
+
+    ret = RkAiqAdegammaHandle::processing();
+    if (ret) {
+        comb->adegamma_proc_res = NULL;
+        RKAIQCORE_CHECK_RET(ret, "adegamma handle processing failed");
+    }
+
+    comb->adegamma_proc_res = NULL;
+    adegamma_proc_int->calib = shared->calib;
+
+    RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
+    ret = des->processing(mProcInParam, mProcOutParam);
+    RKAIQCORE_CHECK_RET(ret, "adegamma algo processing failed");
+
+    comb->adegamma_proc_res = (RkAiqAlgoProcResAdegamma*)adegamma_proc_res_int;
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn
+RkAiqAdegammaHandleInt::postProcess()
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    RkAiqAlgoPostAdegammaInt* adegamma_post_int = (RkAiqAlgoPostAdegammaInt*)mPostInParam;
+    RkAiqAlgoPostResAdegammaInt* adegamma_post_res_int = (RkAiqAlgoPostResAdegammaInt*)mPostOutParam;
+    RkAiqCore::RkAiqAlgosShared_t* shared = &mAiqCore->mAlogsSharedParams;
+    RkAiqPostResComb* comb = &shared->postResComb;
+    RkAiqIspStats* ispStats = &shared->ispStats;
+
+    ret = RkAiqAdegammaHandle::postProcess();
+    if (ret) {
+        comb->adegamma_post_res = NULL;
+        RKAIQCORE_CHECK_RET(ret, "adegamma handle postProcess failed");
+        return ret;
+    }
+
+    comb->adegamma_post_res = NULL;
+    RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
+    ret = des->post_process(mPostInParam, mPostOutParam);
+    RKAIQCORE_CHECK_RET(ret, "agamma algo post_process failed");
+    // set result to mAiqCore
+    comb->adegamma_post_res = (RkAiqAlgoPostResAdegamma*)adegamma_post_res_int ;
 
     EXIT_ANALYZER_FUNCTION();
     return ret;

@@ -85,6 +85,7 @@ AsharpResult_t AsharpInit(AsharpContext_t **ppAsharpCtx, CamCalibDbContext_t *pC
     //get v1 params from xml file
     pAsharpCtx->stSharpCalib = pCalibDb->sharp;
     pAsharpCtx->stEdgeFltCalib = pCalibDb->edgeFilter;
+	pAsharpCtx->mfnr_mode_3to1 = pCalibDb->mfnr.mode_3to1;
 #endif
 
 #ifdef RK_SIMULATOR_HW
@@ -105,7 +106,7 @@ AsharpResult_t AsharpInit(AsharpContext_t **ppAsharpCtx, CamCalibDbContext_t *pC
 
 
 #if ASHARP_USE_XML_FILE
-	pAsharpCtx->stExpInfo.snr_mode = 1;
+	pAsharpCtx->stExpInfo.snr_mode = 0;
 	pAsharpCtx->eParamMode = ASHARP_PARAM_MODE_NORMAL;
 	ASharpConfigSettingParam(pAsharpCtx, pAsharpCtx->eParamMode, pAsharpCtx->stExpInfo.snr_mode);
 #endif
@@ -223,7 +224,13 @@ AsharpResult_t AsharpProcess(AsharpContext_t *pAsharpCtx, AsharpExpInfo_t *pExpI
 	}
 
 	AsharpParamModeProcess(pAsharpCtx, pExpInfo, &mode);
-		
+	pExpInfo->mfnr_mode_3to1 = pAsharpCtx->mfnr_mode_3to1;
+    if(pExpInfo->mfnr_mode_3to1){
+        pExpInfo->snr_mode = pExpInfo->pre_snr_mode;
+    }else{
+        pExpInfo->snr_mode = pExpInfo->cur_snr_mode;
+    }
+
 	#if ASHARP_USE_XML_FILE
 	if(pExpInfo->snr_mode != pAsharpCtx->stExpInfo.snr_mode || pAsharpCtx->eParamMode != mode){
 		LOGD_ASHARP(" sharp mode:%d snr_mode:%d\n", mode, pExpInfo->snr_mode);
@@ -510,7 +517,7 @@ AsharpResult_t ASharpConfigSettingParam(AsharpContext_t *pAsharpCtx, AsharpParam
 		sprintf(snr_name, "%s", "LSNR");
 	}else{
 		LOGE_ASHARP("%s(%d): not support snr mode!\n", __FUNCTION__, __LINE__);
-		sprintf(snr_name, "%s", "HSNR");
+		sprintf(snr_name, "%s", "LSNR");
 	}
 
 	pAsharpCtx->stAuto.sharpEn = pAsharpCtx->stSharpCalib.enable;

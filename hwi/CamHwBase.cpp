@@ -95,7 +95,13 @@ CamHwBase::getSensorModeData(const char* sns_ent_name,
 }
 
 XCamReturn
-CamHwBase::setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams)
+CamHwBase::setIspMeasParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispMeasParams)
+{
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+CamHwBase::setIspOtherParams(SmartPtr<RkAiqIspOtherParamsProxy>& ispOtherParams)
 {
     return XCAM_RETURN_NO_ERROR;
 }
@@ -119,7 +125,13 @@ CamHwBase::setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params)
 }
 
 XCamReturn
-CamHwBase::setIsppParams(SmartPtr<RkAiqIsppParamsProxy>& isppParams)
+CamHwBase::setIsppMeasParams(SmartPtr<RkAiqIsppMeasParamsProxy>& isppParams)
+{
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+CamHwBase::setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherParams)
 {
     return XCAM_RETURN_NO_ERROR;
 }
@@ -174,6 +186,18 @@ XCamReturn
 CamHwBase::poll_buffer_failed (int64_t timestamp, const char *msg)
 {
     // TODO
+    return XCAM_RETURN_ERROR_FAILED;
+}
+
+XCamReturn
+CamHwBase::poll_event_ready (uint32_t sequence, int type)
+{
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+CamHwBase::poll_event_failed (int64_t timestamp, const char *msg)
+{
     return XCAM_RETURN_ERROR_FAILED;
 }
 

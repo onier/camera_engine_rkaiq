@@ -54,8 +54,8 @@ RKAIQ_BEGIN_DECLARE
     SmartLock lock (*ctx->_apiMutex.ptr());
 
 typedef struct rk_aiq_sys_preinit_cfg_s {
-   rk_aiq_working_mode_t mode;
-   std::string force_iq_file;
+    rk_aiq_working_mode_t mode;
+    std::string force_iq_file;
 } rk_aiq_sys_preinit_cfg_t;
 
 static std::map<std::string, rk_aiq_sys_preinit_cfg_t> g_rk_aiq_sys_preinit_cfg_map;
@@ -194,7 +194,7 @@ rk_aiq_uapi_sysctl_init(const char* sns_ent_name,
         goto error;
     ctx->_rkAiqManager->setAiqCalibDb(ctx->_calibDb);
     ret = ctx->_rkAiqManager->init();
-    ctx->_socket->Process(ctx);
+    ctx->_socket->Process(ctx, sns_ent_name);
     if (ret)
         goto error;
 
@@ -222,25 +222,27 @@ rk_aiq_uapi_sysctl_deinit_locked(rk_aiq_sys_ctx_t* ctx)
         ctx->_rkAiqManager->deInit();
 
     ctx->_socket->Deinit();
+    delete(ctx->_socket);
     ctx->_camHw.release();
     ctx->_analyzer.release();
     ctx->_lumaAnalyzer.release();
     ctx->_rkAiqManager.release();
-    
+
     if (ctx->_sensor_entity_name)
         xcam_free((void*)(ctx->_sensor_entity_name));
 
     //RkAiqCalibDb::releaseCalibDb();
-
-    delete ctx;
 }
 
 void
 rk_aiq_uapi_sysctl_deinit(rk_aiq_sys_ctx_t* ctx)
 {
     ENTER_XCORE_FUNCTION();
-    RKAIQ_API_SMART_LOCK(ctx);
-    rk_aiq_uapi_sysctl_deinit_locked(ctx);
+    {
+        RKAIQ_API_SMART_LOCK(ctx);
+        rk_aiq_uapi_sysctl_deinit_locked(ctx);
+    }
+    delete ctx;
     EXIT_XCORE_FUNCTION();
 }
 
@@ -393,9 +395,9 @@ rk_aiq_uapi_sysctl_get3AStats(const rk_aiq_sys_ctx_t* ctx,
 
 XCamReturn
 rk_aiq_uapi_sysctl_get3AStatsBlk(const rk_aiq_sys_ctx_t* ctx,
-                              rk_aiq_isp_stats_t **stats, int timeout_ms)
+                                 rk_aiq_isp_stats_t **stats, int timeout_ms)
 {
-    // blocked API, add lock ? 
+    // blocked API, add lock ?
     //RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->get3AStatsFromCachedList(stats, timeout_ms);
 }
@@ -438,6 +440,7 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_a3dlut.cpp"
 #include "rk_aiq_user_api_adehaze.cpp"
 #include "rk_aiq_user_api_agamma.cpp"
+#include "rk_aiq_user_api_adegamma.cpp"
 #include "rk_aiq_user_api_ablc.cpp"
 #include "rk_aiq_user_api_adpcc.cpp"
 #include "rk_aiq_user_api_ae.cpp"
@@ -619,7 +622,7 @@ void rk_aiq_uapi_get_version_info(rk_aiq_ver_info_t* vers)
     memcpy(vers->iq_parser_ver, start, stop - start);
 
     start = strstr(ver_str, RK_AIQ_CALIB_VERSION_MAGIC_CODE_HEAD) +
-        strlen(RK_AIQ_CALIB_VERSION_MAGIC_CODE_HEAD);
+            strlen(RK_AIQ_CALIB_VERSION_MAGIC_CODE_HEAD);
 
     vers->iq_parser_magic_code = atoi(start);
 
@@ -778,21 +781,21 @@ rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
     LOGI("applying new iq file:%s\n", iqfile);
 
     if (!sys_ctx) {
-      LOGE("%s: sys_ctx is invalied\n", __func__);
-      return XCAM_RETURN_ERROR_FAILED;
+        LOGE("%s: sys_ctx is invalied\n", __func__);
+        return XCAM_RETURN_ERROR_FAILED;
     }
 
     auto newCalibDb = RkAiqCalibDb::createCalibDb(iqfile);
     if (!newCalibDb) {
-      LOGE("failed to create new CalibDb for:%s\n", iqfile);
-      return XCAM_RETURN_ERROR_FAILED;
+        LOGE("failed to create new CalibDb for:%s\n", iqfile);
+        return XCAM_RETURN_ERROR_FAILED;
     }
 
     ret = sys_ctx->_rkAiqManager->updateCalibDb(newCalibDb);
 
     if (ret) {
-      LOGE("failed to update iqfile\n");
-      ret = XCAM_RETURN_ERROR_FAILED;
+        LOGE("failed to update iqfile\n");
+        ret = XCAM_RETURN_ERROR_FAILED;
     }
 
     return ret;

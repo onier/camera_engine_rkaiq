@@ -63,8 +63,8 @@ typedef struct AsharpContext_s {
     Asharp_Manual_Attr_t stManual;
 
     //xml
-    CalibDb_Sharp_t stSharpCalib;
-    CalibDb_EdgeFilter_t stEdgeFltCalib;
+    CalibDb_Sharp_2_t stSharpCalib;
+    CalibDb_EdgeFilter_2_t stEdgeFltCalib;
 
     float fStrength;
 
@@ -73,6 +73,7 @@ typedef struct AsharpContext_s {
 	AsharpParamMode_t eParamMode;
 
 	int prepare_type;
+	int mfnr_mode_3to1;
 } AsharpContext_t;
 
 

@@ -46,22 +46,51 @@ rk_aiq_uapi_anr_SetIQPara(RkAiqAlgoContext *ctx,
     ANRContext_t* pAnrCtx = (ANRContext_t*)ctx;
 
 	if(pPara->module_bits & (1 << ANR_MODULE_BAYERNR)){
-		pAnrCtx->stBayernrCalib = pPara->stBayernrPara;
+		//pAnrCtx->stBayernrCalib = pPara->stBayernrPara;
+		pAnrCtx->stBayernrCalib.enable = pPara->stBayernrPara.enable;
+		memcpy(pAnrCtx->stBayernrCalib.version, pPara->stBayernrPara.version, sizeof(pPara->stBayernrPara.version));
+		for(int i=0; i<pAnrCtx->stBayernrCalib.mode_num; i++){
+			pAnrCtx->stBayernrCalib.mode_cell[i] = pPara->stBayernrPara.mode_cell[i];
+		}
 		pAnrCtx->isIQParaUpdate = true;
 	}
 
 	if(pPara->module_bits & (1 << ANR_MODULE_MFNR)){
-		pAnrCtx->stMfnrCalib = pPara->stMfnrPara;
+		//pAnrCtx->stMfnrCalib = pPara->stMfnrPara;
+		pAnrCtx->stMfnrCalib.enable = pPara->stMfnrPara.enable;
+		memcpy(pAnrCtx->stMfnrCalib.version, pPara->stMfnrPara.version, sizeof(pPara->stMfnrPara.version));
+		pAnrCtx->stMfnrCalib.local_gain_en = pPara->stMfnrPara.local_gain_en;
+		pAnrCtx->stMfnrCalib.motion_detect_en = pPara->stMfnrPara.motion_detect_en;
+		pAnrCtx->stMfnrCalib.mode_3to1 = pPara->stMfnrPara.mode_3to1;
+		pAnrCtx->stMfnrCalib.max_level = pPara->stMfnrPara.max_level;
+		pAnrCtx->stMfnrCalib.max_level_uv = pPara->stMfnrPara.max_level_uv;
+		pAnrCtx->stMfnrCalib.back_ref_num = pPara->stMfnrPara.back_ref_num;
+		for(int i=0; i<4; i++){
+			pAnrCtx->stMfnrCalib.uv_ratio[i] = pPara->stMfnrPara.uv_ratio[i];
+		}
+		for(int i=0; i<pAnrCtx->stMfnrCalib.mode_num; i++){
+			pAnrCtx->stMfnrCalib.mode_cell[i] = pPara->stMfnrPara.mode_cell[i];
+		}
 		pAnrCtx->isIQParaUpdate = true;
 	}
 
 	if(pPara->module_bits & (1 << ANR_MODULE_UVNR)){
-		pAnrCtx->stUvnrCalib = pPara->stUvnrPara;
+		//pAnrCtx->stUvnrCalib = pPara->stUvnrPara;
+		pAnrCtx->stUvnrCalib.enable = pPara->stUvnrPara.enable;
+		memcpy(pAnrCtx->stUvnrCalib.version, pPara->stUvnrPara.version, sizeof(pPara->stUvnrPara.version));
+		for(int i=0; i<pAnrCtx->stUvnrCalib.mode_num; i++){
+			pAnrCtx->stUvnrCalib.mode_cell[i] = pPara->stUvnrPara.mode_cell[i];
+		}
 		pAnrCtx->isIQParaUpdate = true;
 	}
 
 	if(pPara->module_bits & (1 << ANR_MODULE_YNR)){
-		pAnrCtx->stYnrCalib = pPara->stYnrPara;
+		//pAnrCtx->stYnrCalib = pPara->stYnrPara;
+		pAnrCtx->stYnrCalib.enable = pPara->stYnrPara.enable;
+		memcpy(pAnrCtx->stYnrCalib.version, pPara->stYnrPara.version, sizeof(pPara->stYnrPara.version));
+		for(int i=0; i<pAnrCtx->stYnrCalib.mode_num; i++){
+			pAnrCtx->stYnrCalib.mode_cell[i] = pPara->stYnrPara.mode_cell[i];
+		}
 		pAnrCtx->isIQParaUpdate = true;
 	}
 
@@ -76,10 +105,48 @@ rk_aiq_uapi_anr_GetIQPara(RkAiqAlgoContext *ctx,
 
 	ANRContext_t* pAnrCtx = (ANRContext_t*)ctx;
 
-	pPara->stBayernrPara = pAnrCtx->stBayernrCalib;
-	pPara->stMfnrPara = pAnrCtx->stMfnrCalib;
-	pPara->stUvnrPara = pAnrCtx->stUvnrCalib;
-	pPara->stYnrPara = pAnrCtx->stYnrCalib;
+	//pPara->stBayernrPara = pAnrCtx->stBayernrCalib;
+	memset(&pPara->stBayernrPara, 0x00, sizeof(CalibDb_BayerNr_t));
+	pPara->stBayernrPara.enable = pAnrCtx->stBayernrCalib.enable;
+	memcpy(pPara->stBayernrPara.version, pAnrCtx->stBayernrCalib.version, sizeof(pPara->stBayernrPara.version));
+	for(int i=0; i<pAnrCtx->stBayernrCalib.mode_num; i++){
+		pPara->stBayernrPara.mode_cell[i] = pAnrCtx->stBayernrCalib.mode_cell[i];
+	}
+	
+	//pPara->stMfnrPara = pAnrCtx->stMfnrCalib;
+	memset(&pPara->stMfnrPara, 0x00, sizeof(CalibDb_MFNR_t));
+	pPara->stMfnrPara.enable = pAnrCtx->stMfnrCalib.enable;
+	memcpy(pPara->stMfnrPara.version, pAnrCtx->stMfnrCalib.version, sizeof(pPara->stMfnrPara.version));
+	pPara->stMfnrPara.local_gain_en = pAnrCtx->stMfnrCalib.local_gain_en;
+	pPara->stMfnrPara.motion_detect_en = pAnrCtx->stMfnrCalib.motion_detect_en;
+	pPara->stMfnrPara.mode_3to1 = pAnrCtx->stMfnrCalib.mode_3to1;
+	pPara->stMfnrPara.max_level = pAnrCtx->stMfnrCalib.max_level;
+	pPara->stMfnrPara.max_level_uv = pAnrCtx->stMfnrCalib.max_level_uv;
+	pPara->stMfnrPara.back_ref_num = pAnrCtx->stMfnrCalib.back_ref_num;
+	for(int i=0; i<4; i++){
+		pPara->stMfnrPara.uv_ratio[i] = pAnrCtx->stMfnrCalib.uv_ratio[i];
+	}
+	for(int i=0; i<pAnrCtx->stMfnrCalib.mode_num; i++){
+		pPara->stMfnrPara.mode_cell[i] = pAnrCtx->stMfnrCalib.mode_cell[i];
+	}
+
+	
+	//pPara->stUvnrPara = pAnrCtx->stUvnrCalib;
+	memset(&pPara->stUvnrPara, 0x00, sizeof(CalibDb_UVNR_t));
+	pPara->stUvnrPara.enable = pAnrCtx->stUvnrCalib.enable;
+	memcpy(pPara->stUvnrPara.version, pAnrCtx->stUvnrCalib.version, sizeof(pPara->stUvnrPara.version));
+	for(int i=0; i<pAnrCtx->stUvnrCalib.mode_num; i++){
+		pPara->stUvnrPara.mode_cell[i] = pAnrCtx->stUvnrCalib.mode_cell[i];
+	}
+
+	
+	//pPara->stYnrPara = pAnrCtx->stYnrCalib;
+	memset(&pPara->stYnrPara, 0x00, sizeof(CalibDb_YNR_t));
+	pPara->stYnrPara.enable = pAnrCtx->stYnrCalib.enable;
+	memcpy(pPara->stYnrPara.version, pAnrCtx->stYnrCalib.version, sizeof(pPara->stYnrPara.version));
+	for(int i=0; i<pAnrCtx->stYnrCalib.mode_num; i++){
+		pPara->stYnrPara.mode_cell[i] = pAnrCtx->stYnrCalib.mode_cell[i];
+	}
 	
     return XCAM_RETURN_NO_ERROR;
 }
@@ -149,7 +216,7 @@ rk_aiq_uapi_anr_GetLumaSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -170,7 +237,7 @@ rk_aiq_uapi_anr_GetLumaTFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -234,7 +301,7 @@ rk_aiq_uapi_anr_GetChromaSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 	
 
@@ -256,7 +323,7 @@ rk_aiq_uapi_anr_GetChromaTFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 
 	return XCAM_RETURN_NO_ERROR;
@@ -299,7 +366,7 @@ rk_aiq_uapi_anr_GetRawnrSFStrength(const RkAiqAlgoContext *ctx,
 	if(fStrength <= 1){
 		*pPercent = fStrength * 0.5;
 	}else{
-		*pPercent = 2 * (fStrength - 1)/(fMax - 1) + 0.5;
+		*pPercent = (fStrength - 1)/((fMax - 1) * 2)+ 0.5;
 	}
 	
 

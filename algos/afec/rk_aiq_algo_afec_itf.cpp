@@ -39,6 +39,7 @@ static XCamReturn alloc_fec_buf(FECContext_t* fecCtx)
     fecCtx->share_mem_ops->alloc_mem(fecCtx->share_mem_ops,
                                      &share_mem_config,
                                      &fecCtx->share_mem_ctx);
+    fecCtx->hasGenMeshInit = true;
     return XCAM_RETURN_NO_ERROR;
 }
 
@@ -47,6 +48,7 @@ static XCamReturn release_fec_buf(FECContext_t* fecCtx)
     if (fecCtx->share_mem_ctx)
         fecCtx->share_mem_ops->release_mem(fecCtx->share_mem_ctx);
 
+    fecCtx->hasGenMeshInit = false;
     return XCAM_RETURN_NO_ERROR;
 }
 
@@ -125,8 +127,9 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
     fecCtx->fecParams.correctX = 1;
     fecCtx->fecParams.correctY = 1;
     fecCtx->fecParams.saveMesh4bin = 0;
+    fecCtx->hasGenMeshInit = false;
 
-    ctx->hFEC->eState = FEC_STATE_INVALID;
+    ctx->hFEC->eState = FEC_STATE_INITIALIZED;
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -311,12 +314,28 @@ prepare(RkAiqAlgoCom* params)
             fecCtx->camCoeff.a0, fecCtx->camCoeff.a2,
             fecCtx->camCoeff.a3, fecCtx->camCoeff.a4);
 #endif
+
+    /*
+     * don't reinitialize FEC information in the following cases:
+     *  1. Switch between HDR and normal mode
+     *  2. update calib
+     */
+
+    if (fecCtx->hasGenMeshInit &&
+        (fecCtx->working_mode != params->u.prepare.working_mode || \
+        !!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB))) {
+        fecCtx->working_mode = params->u.prepare.working_mode;
+        LOGW_AFEC("don't reinitialize FEC info when switching modes or updating calib\n");
+        return XCAM_RETURN_NO_ERROR;
+    }
+
     fecCtx->share_mem_ops = rkaiqAfecConfig->mem_ops_ptr;
     fecCtx->src_width = params->u.prepare.sns_op_width;
     fecCtx->src_height = params->u.prepare.sns_op_height;
     fecCtx->resource_path = rkaiqAfecConfig->resource_path;
     fecCtx->dst_width = params->u.prepare.sns_op_width;
     fecCtx->dst_height = params->u.prepare.sns_op_height;
+    fecCtx->working_mode = params->u.prepare.working_mode;
 
     if (fecCtx->src_width <= 1920) {
         fecCtx->mesh_density = 0;
@@ -394,7 +413,10 @@ prepare(RkAiqAlgoCom* params)
     fecCtx->fec_mesh_h_size = fecCtx->fecParams.meshSizeW;
     fecCtx->fec_mesh_v_size = fecCtx->fecParams.meshSizeH;
     alloc_fec_buf(fecCtx);
-    get_fec_buf(fecCtx);
+    if (get_fec_buf(fecCtx) != XCAM_RETURN_NO_ERROR) {
+        LOGE_AFEC("%s: get fec buf failed!", __FUNCTION__);
+        goto out;
+    }
     fecCtx->fec_mesh_size = fecCtx->fecParams.meshSize4bin;
     LOGI_AFEC("en: %d, mode(%d), bypass(%d), correct_level(%d), direction(%d), dimen(%d-%d), mesh dimen(%d-%d), size(%d)",
               fecCtx->fec_en,
@@ -409,7 +431,7 @@ prepare(RkAiqAlgoCom* params)
     fecCtx->afecReadMeshThread->triger_start();
     fecCtx->afecReadMeshThread->start();
     if (!fecCtx->fec_en)
-        return XCAM_RETURN_NO_ERROR;
+        goto out;
 #else
     fecCtx->fec_mesh_size =
         cal_fec_mesh(fecCtx->src_width, fecCtx->src_height, fecCtx->mesh_density,
@@ -448,7 +470,9 @@ prepare(RkAiqAlgoCom* params)
 
 #endif
     read_mesh_table(fecCtx, fecCtx->user_config.correct_level);
-    fecCtx->eState = FEC_STATE_INITIALIZED;
+
+out:
+    fecCtx->eState = FEC_STATE_STOPPED;
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -477,13 +501,11 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     // if mode == RK_AIQ_ISPP_STATIC_FEC_WORKING_MODE_STABLIZATION
     // params may be changed
     if (!fecCtx->fec_en)
-        return XCAM_RETURN_NO_ERROR;
-    fecCtx->eState = FEC_STATE_RUNNING;
+        goto out;
 
-    if (inparams->u.proc.init) {
+    if (inparams->u.proc.init && fecCtx->eState == FEC_STATE_STOPPED) {
         fecPreOut->afec_result.update = 1;
     } else {
-
         if (fecCtx->isAttribUpdated) {
             fecCtx->isAttribUpdated = false;
             fecPreOut->afec_result.update = 1;
@@ -512,12 +534,14 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         if (fecCtx->fec_mem_info == NULL) {
             LOGE_AFEC("%s: no available fec buf!", __FUNCTION__);
             fecPreOut->afec_result.update = 0;
-            return XCAM_RETURN_NO_ERROR;
+            goto out;
         }
         fecPreOut->afec_result.mesh_buf_fd = fecCtx->fec_mem_info->fd;
         fecCtx->fec_mem_info->state[0] = 1; //mark that this buf is using.
     }
 
+out:
+    fecCtx->eState = FEC_STATE_RUNNING;
     return XCAM_RETURN_NO_ERROR;
 }
 
@@ -562,7 +586,12 @@ bool RKAiqAfecThread::loop()
         hFEC->isAttribUpdated = true;
         return true;
     }
-    get_fec_buf(hFEC);
+
+    if (get_fec_buf(hFEC) != XCAM_RETURN_NO_ERROR) {
+        LOGE_AFEC("%s: get fec buf failed!", __FUNCTION__);
+        return true;
+    }
+
     if (hFEC->user_config.bypass) {
         ret = read_mesh_table(hFEC, 0);
     } else {

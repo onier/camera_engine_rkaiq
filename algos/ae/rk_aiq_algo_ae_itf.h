@@ -52,10 +52,13 @@
  * v0.1.6-20201211
  * support P-iris/DC-iris
  * support SyncTest
+ * v0.1.7-20210127
+ * support R/G/B/Y rawstats
+ * support dynamic AecSpeed
  */
 
 
-#define RKISP_ALGO_AE_VERSION     "v0.1.6"
+#define RKISP_ALGO_AE_VERSION     "v0.1.7"
 #define RKISP_ALGO_AE_VENDOR      "Rockchip"
 #define RKISP_ALGO_AE_DESCRIPTION "Rockchip Ae algo for ISP2.0"
 

@@ -64,7 +64,7 @@ typedef enum rk_aiq_ccm_op_mode_s {
     RK_AIQ_CCM_MODE_INVALID                     = 0,        /**< initialization value */
     RK_AIQ_CCM_MODE_MANUAL                      = 1,        /**< run manual lens shading correction */
     RK_AIQ_CCM_MODE_AUTO                        = 2,        /**< run auto lens shading correction */
-    //RK_AIQ_CCM_MODE_TOOL                        = 3,        /**< config from stTool  */
+    RK_AIQ_CCM_MODE_TOOL                        = 3,        /**< config from stTool  */
     RK_AIQ_CCM_MODE_MAX
 } rk_aiq_ccm_op_mode_t;
 
@@ -73,6 +73,9 @@ typedef struct rk_aiq_ccm_attrib_s {
     rk_aiq_ccm_op_mode_t mode;
     rk_aiq_ccm_mccm_attrib_t stManual;
     rk_aiq_ccm_accm_attrib_t stAuto;
+    float finalSat;
+    CalibDb_CcmMatrixProfile_t usedCcmProf1;
+    CalibDb_CcmMatrixProfile_t usedCcmProf2;
     float curr_wbgain[2];
     CalibDb_Ccm_t stTool;
 } rk_aiq_ccm_attrib_t;

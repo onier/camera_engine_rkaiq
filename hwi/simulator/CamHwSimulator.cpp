@@ -247,7 +247,7 @@ CamHwSimulator::init(const char* sns_ent_name)
 }
 
 XCamReturn
-CamHwSimulator::setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams)
+CamHwSimulator::setIspParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispParams)
 {
     ENTER_CAMHW_FUNCTION();
     CamHwBase::setIspParams(ispParams);
@@ -308,7 +308,7 @@ CamHwSimulator::setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams)
 }
 
 XCamReturn
-CamHwSimulator::setHdrProcessCount(int frame_id, int count)
+CamHwSimulator::setHdrProcessCount(int frame_id, rk_aiq_luma_params_t luma_params)
 {
     ENTER_CAMHW_FUNCTION();
 

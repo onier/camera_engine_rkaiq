@@ -63,6 +63,8 @@ prepare(RkAiqAlgoCom* params)
     AdehazeHandle_t * AdehazeHandle = (AdehazeHandle_t *)params->ctx;
     AdehazeHandle->working_mode = config->adhaz_config_com.com.u.prepare.working_mode;
     AdehazeHandle->prepare_type = params->u.prepare.conf_type;
+    AdehazeHandle->width = config->rawWidth;
+    AdehazeHandle->height = config->rawHeight;
 
 
 
@@ -120,20 +122,19 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         stExpInfo.hdr_mode = 2;
     }
 
-    RkAiqAlgoPreResAeInt* pAEPreRes =
-        (RkAiqAlgoPreResAeInt*)(procPara->rk_com.u.proc.pre_res_comb->ae_pre_res);
+    RKAiqAecExpInfo_t* pAERes = procPara->rk_com.u.proc.curExp;
 
-    if(pAEPreRes != NULL) {
+    if(pAERes != NULL) {
         if(AdehazeHandle->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            stExpInfo.arAGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain;
-            stExpInfo.arDGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain;
-            stExpInfo.arTime[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.integration_time;
+            stExpInfo.arAGain[0] = pAERes->LinearExp.exp_real_params.analog_gain;
+            stExpInfo.arDGain[0] = pAERes->LinearExp.exp_real_params.digital_gain;
+            stExpInfo.arTime[0] = pAERes->LinearExp.exp_real_params.integration_time;
             stExpInfo.arIso[0] = stExpInfo.arAGain[0] * stExpInfo.arDGain[0] * 50;
         } else {
             for(int i = 0; i < 3; i++) {
-                stExpInfo.arAGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.analog_gain;
-                stExpInfo.arDGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.digital_gain;
-                stExpInfo.arTime[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.integration_time;
+                stExpInfo.arAGain[i] = pAERes->HdrExp[i].exp_real_params.analog_gain;
+                stExpInfo.arDGain[i] = pAERes->HdrExp[i].exp_real_params.digital_gain;
+                stExpInfo.arTime[i] = pAERes->HdrExp[i].exp_real_params.integration_time;
                 stExpInfo.arIso[i] = stExpInfo.arAGain[i] * stExpInfo.arDGain[i] * 50;
 
                 LOGD_ADEHAZE("index:%d again:%f dgain:%f time:%f iso:%d hdr_mode:%d\n",
@@ -146,7 +147,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
             }
         }
     } else {
-        LOGE_ADEHAZE("%s:%d pAEPreRes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
+        LOGE_ADEHAZE("%s:%d pAERes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
 
     iso = stExpInfo.arIso[stExpInfo.hdr_mode];

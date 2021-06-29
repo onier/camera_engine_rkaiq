@@ -32,6 +32,7 @@
 #include "xcam_mutex.h"
 #include "adehaze/rk_aiq_uapi_adehaze_int.h"
 #include "agamma/rk_aiq_uapi_agamma_int.h"
+#include "adegamma/rk_aiq_uapi_adegamma_int.h"
 #include "ablc/rk_aiq_uapi_ablc_int.h"
 #include "adpcc/rk_aiq_uapi_adpcc_int.h"
 #include "anr/rk_aiq_uapi_anr_int.h"
@@ -189,7 +190,7 @@ public:
         , RkAiqHandleIntCom(des, aiqCore) {
         memset(&mCurAtt, 0, sizeof(rk_aiq_wb_attrib_t));
         memset(&mNewAtt, 0, sizeof(rk_aiq_wb_attrib_t));
-      };
+    };
     virtual ~RkAiqAwbHandleInt() {
         RkAiqAwbHandle::deInit();
     };
@@ -247,6 +248,7 @@ public:
     XCamReturn Tracking();
     XCamReturn setZoomPos(int zoom_pos);
     XCamReturn GetSearchPath(rk_aiq_af_sec_path_t* path);
+    XCamReturn GetSearchResult(rk_aiq_af_result_t* result);
 
 protected:
     virtual void init();
@@ -257,6 +259,7 @@ private:
     // TODO
     rk_aiq_af_attrib_t mCurAtt;
     rk_aiq_af_attrib_t mNewAtt;
+    bool isUpdateAttDone;
 };
 
 class RkAiqAdebayerHandleInt:
@@ -414,6 +417,41 @@ private:
     rk_aiq_gamma_attrib_t mNewAtt;
 };
 
+// adegamma
+class RkAiqAdegammaHandleInt:
+    virtual public RkAiqAdegammaHandle,
+    virtual public RkAiqHandleIntCom {
+public:
+    explicit RkAiqAdegammaHandleInt(RkAiqAlgoDesComm* des, RkAiqCore* aiqCore)
+        : RkAiqHandle(des, aiqCore)
+        , RkAiqAdegammaHandle(des, aiqCore)
+        , RkAiqHandleIntCom(des, aiqCore) {
+        memset(&mCurAtt, 0, sizeof(rk_aiq_degamma_attrib_t));
+        memset(&mNewAtt, 0, sizeof(rk_aiq_degamma_attrib_t));
+    };
+    virtual ~RkAiqAdegammaHandleInt() {
+        RkAiqAdegammaHandle::deInit();
+    };
+    virtual XCamReturn updateConfig(bool needSync);
+    virtual XCamReturn prepare();
+    virtual XCamReturn preProcess();
+    virtual XCamReturn processing();
+    virtual XCamReturn postProcess();
+    // TODO add algo specific methords, this is a sample
+    XCamReturn setAttrib(rk_aiq_degamma_attrib_t att);
+    XCamReturn getAttrib(rk_aiq_degamma_attrib_t *att);
+    //XCamReturn queryLscInfo(rk_aiq_lsc_querry_info_t *lsc_querry_info );
+
+protected:
+    virtual void init();
+    virtual void deInit() {
+        RkAiqAdegammaHandle::deInit();
+    };
+private:
+    // TODO
+    rk_aiq_degamma_attrib_t mCurAtt;
+    rk_aiq_degamma_attrib_t mNewAtt;
+};
 
 // alsc
 class RkAiqAlscHandleInt:
@@ -701,10 +739,10 @@ public:
         : RkAiqHandle(des, aiqCore)
         , RkAiqAfecHandle(des, aiqCore)
         , RkAiqHandleIntCom(des, aiqCore) {
-            memset(&mCurAtt, 0, sizeof(rk_aiq_fec_attrib_t));
-            memset(&mNewAtt, 0, sizeof(rk_aiq_fec_attrib_t));
-            mCurAtt.en = 0xff;
-        };
+        memset(&mCurAtt, 0, sizeof(rk_aiq_fec_attrib_t));
+        memset(&mNewAtt, 0, sizeof(rk_aiq_fec_attrib_t));
+        mCurAtt.en = 0xff;
+    };
     virtual ~RkAiqAfecHandleInt() {
         RkAiqAfecHandle::deInit();
     };
@@ -765,9 +803,9 @@ public:
         : RkAiqHandle(des, aiqCore)
         , RkAiqAldchHandle(des, aiqCore)
         , RkAiqHandleIntCom(des, aiqCore) {
-            memset(&mCurAtt, 0, sizeof(rk_aiq_ldch_attrib_t));
-            memset(&mNewAtt, 0, sizeof(rk_aiq_ldch_attrib_t));
-        };
+        memset(&mCurAtt, 0, sizeof(rk_aiq_ldch_attrib_t));
+        memset(&mNewAtt, 0, sizeof(rk_aiq_ldch_attrib_t));
+    };
     virtual ~RkAiqAldchHandleInt() {
         RkAiqAldchHandle::deInit();
     };

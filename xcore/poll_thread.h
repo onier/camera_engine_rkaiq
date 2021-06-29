@@ -44,6 +44,8 @@ public:
     virtual ~PollCallback() {}
     virtual XCamReturn poll_buffer_ready (SmartPtr<VideoBuffer> &buf, int type) = 0;
     virtual XCamReturn poll_buffer_failed (int64_t timestamp, const char *msg) = 0;
+    virtual XCamReturn poll_event_ready (uint32_t sequence, int type) = 0;
+    virtual XCamReturn poll_event_failed (int64_t timestamp, const char *msg) = 0;
 
 private:
     XCAM_DEAD_COPY (PollCallback);

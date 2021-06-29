@@ -58,22 +58,26 @@ public:
     };
     virtual XCamReturn getSensorModeData(const char* sns_ent_name,
                                          rk_aiq_exposure_sensor_descriptor& sns_des);
-    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams);
+    virtual XCamReturn setIspMeasParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispMeasParams);
+    virtual XCamReturn setIspOtherParams(SmartPtr<RkAiqIspOtherParamsProxy>& ispOtherParams);
     virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar);
     virtual XCamReturn setIrisParams(SmartPtr<RkAiqIrisParamsProxy>& irisPar, CalibDb_IrisType_t irisType);
     virtual XCamReturn setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params);
     virtual XCamReturn setCpslParams(SmartPtr<RkAiqCpslParamsProxy>& cpsl_params);
-    virtual XCamReturn setIsppParams(SmartPtr<RkAiqIsppParamsProxy>& isppParams);
+    virtual XCamReturn setIsppMeasParams(SmartPtr<RkAiqIsppMeasParamsProxy>& isppMeasParams);
+    virtual XCamReturn setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherParams);
     virtual XCamReturn setIsppStatsListener(IsppStatsListener* isppStatsListener);
     virtual XCamReturn setIspLumaListener(IspLumaListener* lumaListener);
     virtual XCamReturn setIspStatsListener(IspStatsListener* statsListener);
     virtual XCamReturn setEvtsListener(IspEvtsListener* evtListener);
-    virtual XCamReturn setHdrProcessCount(int frame_id, int count) {
+    virtual XCamReturn setHdrProcessCount(rk_aiq_luma_params_t luma_params) {
         return XCAM_RETURN_ERROR_FAILED;
     };
     // from PollCallback
     virtual XCamReturn poll_buffer_ready (SmartPtr<VideoBuffer> &buf, int type);
     virtual XCamReturn poll_buffer_failed (int64_t timestamp, const char *msg);
+    virtual XCamReturn poll_event_ready (uint32_t sequence, int type);
+    virtual XCamReturn poll_event_failed (int64_t timestamp, const char *msg);
     virtual XCamReturn notify_capture_raw() {
         return  XCAM_RETURN_ERROR_FAILED;
     }
@@ -116,6 +120,18 @@ public:
         return  XCAM_RETURN_ERROR_FAILED;
     }
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops) {};
+    virtual XCamReturn getEffectiveIspParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispParams, int frame_id) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    };
+    XCamReturn setIspParamsSync(int frameId) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    };
+    XCamReturn setIsppParamsSync(int frameId) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    };
+    uint64_t getIspModuleEnState() {
+        return true;
+    };
 protected:
     SmartPtr<V4l2Device> mIsppStatsDev;
     SmartPtr<V4l2Device> mIsppParamsDev;

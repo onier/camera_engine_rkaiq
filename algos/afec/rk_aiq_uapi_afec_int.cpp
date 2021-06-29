@@ -32,7 +32,7 @@ rk_aiq_uapi_afec_SetAttrib(RkAiqAlgoContext *ctx,
             attr.en, attr.bypass, attr.correct_level, attr.direction);
 
     if (fec_contex->fec_en != attr.en && \
-        (fec_contex->eState == FEC_STATE_INITIALIZED || \
+        (fec_contex->eState == FEC_STATE_STOPPED || \
          fec_contex->eState == FEC_STATE_RUNNING)) {
         LOGE_AFEC("failed, Fec en(%d-%d) don't support switch at running time!\n",
                   fec_contex->fec_en, attr.en);

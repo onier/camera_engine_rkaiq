@@ -45,12 +45,11 @@
 #define		ALPHA_DIV_FIX_BITS					(7 + 7)
 
 #define 	RATIO_BITS_NUM 						7
-#define 	RATIO_BITS_R_NUM 					4
+#define 	RATIO_BITS_R_NUM 					5
 
 
-#define 	MOTION_DETECTION_SIGMA_BIT          5
 
-
+#define		MT_VERSION 							1
 #define		ENABLE_NEON
 
 void motion_detect(
@@ -68,7 +67,8 @@ void motion_detect(
 	float	sigmaHScale,
 	float	sigmaLScale,
 	float	uv_ratio,
-	float	light_clip);
+	float	light_clip,
+	int 	static_ratio_r_bit);
 
 
 #endif

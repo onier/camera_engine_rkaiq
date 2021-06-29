@@ -31,6 +31,7 @@
 #include "ahdr/rk_aiq_types_ahdr_algo_int.h"
 #include "ahdr/rk_aiq_types_ahdr_algo.h"
 #include "agamma/rk_aiq_types_agamma_algo_int.h"
+#include "adegamma/rk_aiq_types_adegamma_algo_int.h"
 #include "adehaze/rk_aiq_types_adehaze_algo.h"
 #include "acp/rk_aiq_types_acp_algo.h"
 #include "aie/rk_aiq_types_aie_algo_int.h"
@@ -320,6 +321,11 @@ typedef struct {
     int32_t pos[64];
     float sharpness[64];
 } rk_aiq_af_sec_path_t;
+
+typedef struct {
+    rk_aiq_af_sec_stat_t stat;
+    int32_t final_pos;
+} rk_aiq_af_result_t;
 
 typedef struct {
     int min_pos;
@@ -618,13 +624,18 @@ typedef enum rk_aiq_rawbuf_type_s {
     RK_AIQ_RAW_FD,
     RK_AIQ_RAW_DATA,
     RK_AIQ_RAW_FILE
-}rk_aiq_rawbuf_type_t;
+} rk_aiq_rawbuf_type_t;
 
 typedef struct rk_aiq_raw_prop_s {
     uint32_t frame_width;
     uint32_t frame_height;
     rk_aiq_format_t format;
     rk_aiq_rawbuf_type_t rawbuf_type;
-}rk_aiq_raw_prop_t;
+} rk_aiq_raw_prop_t;
 
+typedef struct {
+    int frame_id;
+    uint16_t hdrProcessCnt;
+    unsigned int luma[3][16];
+} rk_aiq_luma_params_t;
 #endif
