@@ -457,7 +457,7 @@ RkAiqCore::analyzeInternal()
         return NULL;
     }
 
-#if 0
+#if 1
     // for test
     int fd = open("/tmp/cpsl", O_RDWR);
     if (fd != -1) {
@@ -2937,13 +2937,23 @@ RkAiqCore::genCpslResult(RkAiqFullParams* params)
         }
     } else {
         RkAiqAlgoPreResAsdInt* asd_pre_rk = (RkAiqAlgoPreResAsdInt*)mAlogsSharedParams.preResComb.asd_pre_res;
-        if (asd_pre_rk) {
-            asd_preprocess_result_t* asd_result = &asd_pre_rk->asd_result;
-            if (mCurCpslOn != asd_result->cpsl_on) {
-                need_update = true;
-                cpsl_on = asd_result->cpsl_on;
-            }
-        }
+	if (asd_pre_rk) {
+	    asd_preprocess_result_t* asd_result = &asd_pre_rk->asd_result;
+	    if (mCurCpslOn != asd_result->cpsl_on) {
+		need_update = true;
+		cpsl_on = asd_result->cpsl_on;
+		if(cpsl_on) {
+			mGrayMode = RK_AIQ_GRAY_MODE_ON;
+			mAlogsSharedParams.gray_mode = true;
+			LOGD_ANALYZER("cpsl on gray mode %d", mGrayMode);
+		}
+		else {
+			mGrayMode = RK_AIQ_GRAY_MODE_OFF;
+			mAlogsSharedParams.gray_mode = false;
+			LOGD_ANALYZER("cpsl off gray mode %d", mGrayMode);
+		}
+	    }
+	}
         cpsl_param->fl.power[0] = 1.0f;
         cpsl_param->fl_ir.power[0] = 1.0f;
     }
