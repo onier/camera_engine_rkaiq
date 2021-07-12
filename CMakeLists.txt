@@ -459,6 +459,11 @@ execute_process(COMMAND sh
 	${VERSIONFILEPATH})
 
 #add_subdirectory(tests)
+install(TARGETS rkaiq
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+       )
 
 install(DIRECTORY include/ DESTINATION include/rkaiq
 		FILES_MATCHING PATTERN "*.h")
