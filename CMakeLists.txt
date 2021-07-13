@@ -407,6 +407,8 @@ elseif()
 	file(COPY "algos/awb/linux/arm/librkaiq_awb.a" DESTINATION all_lib/Release/)
 endif()
 
+add_subdirectory(rkaiq_3A_server)
+
 # surpress link_directories warning
 cmake_policy(SET CMP0015 NEW)
 
