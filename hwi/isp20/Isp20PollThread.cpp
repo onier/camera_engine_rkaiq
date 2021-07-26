@@ -371,7 +371,8 @@ Isp20PollThread::set_event_handle_dev(SmartPtr<BaseSensorHw> &dev)
             }
         }
 
-        if ((_fmt = find_fmt(pixelformat)))
+        _fmt = find_fmt(pixelformat);
+        if (_fmt)
             _stride_perline = calculate_stride_per_line(*_fmt, _bytes_perline);
     }
 
@@ -1209,7 +1210,7 @@ const struct capture_fmt* Isp20PollThread::find_fmt(const uint32_t pixelformat)
     const struct capture_fmt *fmt;
     unsigned int i;
 
-    for (i = 0; i < sizeof(csirx_fmts); i++) {
+    for (i = 0; i < sizeof(csirx_fmts)/sizeof(csirx_fmts[0]); i++) {
         fmt = &csirx_fmts[i];
         if (fmt->fourcc == pixelformat)
             return fmt;
