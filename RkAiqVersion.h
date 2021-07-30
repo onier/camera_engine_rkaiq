@@ -336,7 +336,7 @@
  * - support dynamic lsc&nr iq cell
  * v1.0x56.3
  * - update motion detection algo from jimmy
- * v3.0x60.0
+ * v2.0x60.0
  * - isp driver v1.0x6.1
  * - new tuning tool v2.0.0
  * - use json iq instead of xml
@@ -346,7 +346,7 @@
  * - THIS VERSION ONLY SUPPORT rk356x NOW
  */
 
-#define RK_AIQ_VERSION_REAL_V "v3.0x60.0"
+#define RK_AIQ_VERSION_REAL_V "v2.0x60.0"
 #define RK_AIQ_RELEASE_DATE "2021-07-02"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/

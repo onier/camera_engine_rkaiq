@@ -3999,7 +3999,7 @@ RkAiqCore::genCpslResult(RkAiqFullParams* params)
         }
     } else {
         RkAiqAlgosGroupShared_t* shared = nullptr;
-        int groupId = getGroupId(RK_AIQ_ALGO_TYPE_ACGC);
+        int groupId = getGroupId(RK_AIQ_ALGO_TYPE_ASD);
         if (groupId >= 0) {
             if (getGroupSharedParams(groupId, shared) != XCAM_RETURN_NO_ERROR)
                 return XCAM_RETURN_BYPASS;
@@ -4169,11 +4169,11 @@ RkAiqCore::setCalib(const CamCalibDbV2Context_t* aiqCalib)
 }
 
 XCamReturn RkAiqCore::calibTuning(const CamCalibDbV2Context_t* aiqCalib,
-                                  AlgoList& change_list)
+                                  ModuleNameList& change_name_list)
 {
     ENTER_ANALYZER_FUNCTION();
 
-    if (!aiqCalib || !change_list) {
+    if (!aiqCalib || !change_name_list) {
         LOGE_ANALYZER("invalied tuning param\n");
         return XCAM_RETURN_ERROR_PARAM;
     }
@@ -4182,6 +4182,23 @@ XCamReturn RkAiqCore::calibTuning(const CamCalibDbV2Context_t* aiqCalib,
     /* TODO: xuhf WARNING */
     mAlogsComSharedParams.calibv2 = aiqCalib;
     mAlogsComSharedParams.conf_type = RK_AIQ_ALGO_CONFTYPE_UPDATECALIB;
+
+    std::for_each(std::begin(*change_name_list), std::end(*change_name_list),
+                  [this](const std::string& name) {
+                      if (!name.compare(0, 4, "cpsl", 0, 4)) {
+                          initCpsl();
+                      } else if (!name.compare(0, 11, "colorAsGrey", 0, 11)) {
+                          setGrayMode(mGrayMode);
+                      }
+                  });
+
+    AlgoList change_list = std::make_shared<std::list<RkAiqAlgoType_t>>();
+    std::transform(
+        change_name_list->begin(), change_name_list->end(), std::back_inserter(*change_list),
+        [](const std::string name) { return RkAiqCalibDbV2::string2algostype(name.c_str()); });
+
+    change_list->sort();
+    change_list->unique();
 
     // Call prepare of the Alog handle annd notify update param
     list<RkAiqAlgoType_t>::iterator it;
@@ -4677,7 +4694,7 @@ void RkAiqCore::onThumbnailsResult(const rkaiq_thumbnails_t& thumbnail) {
                   thumbnail.config.stream_type, thumbnail.config.width_intfactor,
                   thumbnail.config.height_intfactor, thumbnail.buffer->info.width,
                   thumbnail.buffer->info.height);
-#if 1
+#if 0
     thumbnail.buffer->ref(thumbnail.buffer);
     if (thumbnail.frame_id == 1) {
         char* ptr = reinterpret_cast<char*>(thumbnail.buffer->map(thumbnail.buffer));
