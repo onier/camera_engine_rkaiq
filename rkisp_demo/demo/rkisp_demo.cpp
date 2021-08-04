@@ -105,23 +105,23 @@ static demo_context_t *g_main_ctx = NULL, *g_second_ctx = NULL;
 void restore_terminal_settings(void)
 {
     // Apply saved settings
-    tcsetattr(0, TCSANOW, &oldt); 
+    tcsetattr(0, TCSANOW, &oldt);
 }
 
 //make terminal read 1 char at a time
 void disable_terminal_return(void)
 {
     struct termios newt;
-    
+
     //save terminal settings
-    tcgetattr(0, &oldt); 
+    tcgetattr(0, &oldt);
     //init new settings
-    newt = oldt;  
+    newt = oldt;
     //change settings
     newt.c_lflag &= ~(ICANON | ECHO);
     //apply settings
     tcsetattr(0, TCSANOW, &newt);
-    
+
     //make sure settings will be restored when program ends
     atexit(restore_terminal_settings);
 }
@@ -167,8 +167,9 @@ void test_update_iqfile(const rk_aiq_sys_ctx_t* ctx)
   rk_aiq_uapi_sysctl_updateIq(ctx, iqfile);
 }
 
+static int set_ae_onoff(const rk_aiq_sys_ctx_t* ctx, bool onoff);
 void test_imgproc(const demo_context_t* demo_ctx) {
-    
+
    if (demo_ctx == NULL) {
       return;
    }
@@ -271,10 +272,21 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         rk_aiq_uapi_getMWBGain(ctx,&gain);
         printf("getMWBGain=[%f %f %f %f]\n",gain.rgain,gain.grgain,gain.gbgain,gain.bgain);
         break;
-    case 'g':
-        break;
-    case 'h':
-        break;
+    case 'g': {
+        rk_aiq_cpsl_info_t info;
+        rk_aiq_uapi_sysctl_getCpsLtInfo(ctx, &info);
+        printf("mode:%d, on:%d, gray:%s \n", info.mode, info.on, (info.gray?"true":"false"));
+        printf("led:%f, ir:%f, s:%f, s_intv:%d, lsrc:%d \n", info.strength_led,
+            info.strength_ir, info.sensitivity, info.sw_interval, info.lght_src);
+    } break;
+    case 'h': {
+        rk_aiq_cpsl_cfg_t cfg;
+        cfg.mode = RK_AIQ_OP_MODE_MANUAL;
+        cfg.lght_src = RK_AIQ_CPSLS_LED;
+        //cfg.gray_on = true;
+        cfg.u.m.on = true;
+        rk_aiq_uapi_sysctl_setCpsLtCfg(ctx, &cfg);
+    } break;
     case 'i':
         rk_aiq_uapi_setAntiFlickerMode(ctx,ANTIFLICKER_NORMAL_MODE);
         printf("setAntiFlickerMode normal\n");
@@ -399,7 +411,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
 
         rk_aiq_uapi_getFocusRange(ctx, &range);
         printf("focus.min_pos %d, focus.max_pos %d\n", range.min_pos, range.max_pos);
-        
+
         rk_aiq_uapi_getFixedModeCode(ctx, &code);
 
         code++;
@@ -429,7 +441,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         rk_aiq_af_attrib_t attr;
         uint16_t gamma_y[RKAIQ_RAWAF_GAMMA_NUM] =
                  {0, 45, 108, 179, 245, 344, 409, 459, 500, 567, 622, 676, 759, 833, 896, 962, 1023};
-    
+
         rk_aiq_user_api_af_GetAttrib(ctx, &attr);
         attr.manual_meascfg.contrast_af_en = 1;
         attr.manual_meascfg.rawaf_sel = 0; // normal = 0; hdr = 1
@@ -488,10 +500,10 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         break;
     case 'I':
         rk_aiq_nr_IQPara_t stNRIQPara;
-        rk_aiq_nr_IQPara_t stGetNRIQPara;    
+        rk_aiq_nr_IQPara_t stGetNRIQPara;
        stNRIQPara.module_bits = (1<<ANR_MODULE_BAYERNR) | (1<< ANR_MODULE_MFNR) | (1<< ANR_MODULE_UVNR) | (1<< ANR_MODULE_YNR);
        stGetNRIQPara.module_bits = (1<<ANR_MODULE_BAYERNR) | (1<< ANR_MODULE_MFNR) | (1<< ANR_MODULE_UVNR) | (1<< ANR_MODULE_YNR);
-       rk_aiq_user_api_anr_GetIQPara(ctx, &stNRIQPara);  
+       rk_aiq_user_api_anr_GetIQPara(ctx, &stNRIQPara);
 
        for(int m=0; m<3; m++){
            for(int k=0; k<2; k++){
@@ -513,7 +525,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].weight_limit_uv[0] = 2;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].weight_limit_uv[1] = 2;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].weight_limit_uv[2] = 2;
-                    
+
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].y_lo_bfscale[0] = 0.4;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].y_lo_bfscale[1] = 0.6;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].y_lo_bfscale[2] = 0.8;
@@ -527,7 +539,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_lo_bfscale[0] = 0.1;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_lo_bfscale[1] = 0.2;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_lo_bfscale[2] = 0.3;
-                    
+
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_hi_bfscale[0] = 0.1;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_hi_bfscale[1] = 0.2;
                     stNRIQPara.stMfnrPara.mode_cell[m].setting[k].mfnr_iso[i].uv_hi_bfscale[2] = 0.3;
@@ -544,7 +556,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
                     stNRIQPara.stYnrPara.mode_cell[m].setting[k].ynr_iso[i].hi_bfScale[3] = 1.0;
 
                     stNRIQPara.stYnrPara.mode_cell[m].setting[k].ynr_iso[i].hi_denoiseStrength = 1.0;
-                    
+
                     stNRIQPara.stYnrPara.mode_cell[m].setting[k].ynr_iso[i].hi_denoiseWeight[0] = 1.0;
                     stNRIQPara.stYnrPara.mode_cell[m].setting[k].ynr_iso[i].hi_denoiseWeight[1] = 1.0;
                     stNRIQPara.stYnrPara.mode_cell[m].setting[k].ynr_iso[i].hi_denoiseWeight[2] = 1.0;
@@ -567,11 +579,11 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         }
        }
 
-        rk_aiq_user_api_anr_SetIQPara(ctx, &stNRIQPara); 
+        rk_aiq_user_api_anr_SetIQPara(ctx, &stNRIQPara);
 
         sleep(5);
          //printf all the para
-         rk_aiq_user_api_anr_GetIQPara(ctx, &stGetNRIQPara);  
+         rk_aiq_user_api_anr_GetIQPara(ctx, &stGetNRIQPara);
 
         for(int m=0; m<1; m++){
         for(int k=0; k<1; k++){
@@ -638,7 +650,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
 
               printf("!!!!!!!!!!set:%d cell:%d  end !!!!!!!!!!\n\n", k, i);
                }
-        }     
+        }
         }
         break;
      case 'J':
@@ -682,7 +694,7 @@ void test_imgproc(const demo_context_t* demo_ctx) {
 
                 printf("!!!!!!!!!!set:%d cell:%d  end !!!!!!!!!!\n", k, i);
                }
-          }   
+          }
         }
        break;
     case 'K':
@@ -698,12 +710,17 @@ void test_imgproc(const demo_context_t* demo_ctx) {
         printf("after set mir %d, flip %d \n", mirror, flip);
        break;
     case 'L':
-       printf("test fec correct level100\n");
-       rk_aiq_uapi_setFecCorrectLevel(ctx, 100);
+       printf("test fec correct level200\n");
+       rk_aiq_uapi_setFecCorrectLevel(ctx, 200);
        break;
     case 'M':
-       printf("test fec correct level255\n");
-       rk_aiq_uapi_setFecCorrectLevel(ctx, 255);
+       {
+           for (int m = 0; m < 256; m++) {
+               printf("test fec correct level %d\n", m);
+               rk_aiq_uapi_setFecCorrectLevel(ctx, m);
+               sleep(1);
+           }
+       }
        break;
     case 'N':
        printf("test bypass fec\n");
@@ -735,12 +752,17 @@ void test_imgproc(const demo_context_t* demo_ctx) {
        rk_aiq_uapi_setLdchEn(ctx, false);
        break;
     case 'S':
-       printf("test ldch correct level100\n");
-       rk_aiq_uapi_setLdchCorrectLevel(ctx, 100);
+       printf("test ldch correct level200\n");
+       rk_aiq_uapi_setLdchCorrectLevel(ctx, 200);
        break;
     case 'T':
-       printf("test ldch correct level255\n");
-       rk_aiq_uapi_setLdchCorrectLevel(ctx, 255);
+       {
+           for (int m = 0; m < 256; m++) {
+               printf("test ldch correct level %d\n", m);
+               rk_aiq_uapi_setLdchCorrectLevel(ctx, m);
+               sleep(1);
+           }
+       }
        break;
     case 'U':
        {
@@ -754,6 +776,14 @@ void test_imgproc(const demo_context_t* demo_ctx) {
        {
          test_update_iqfile(ctx);
        }
+       break;
+    case '[':
+       set_ae_onoff(ctx, true);
+       printf("set ae on\n");
+       break;
+    case ']':
+       set_ae_onoff(ctx, false);
+       printf("set ae off\n");
        break;
     default:
         break;
@@ -1003,7 +1033,7 @@ static int read_frame_pp_oneframe(demo_context_t *ctx)
         else
             bytesused = buf.bytesused;
 
-        // queue to ispp input 
+        // queue to ispp input
         DBG("------ queue 1 index %d to ispp input --------------\n", i);
         CLEAR(buf_pp);
         buf_pp.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -1075,7 +1105,8 @@ static void mainloop(demo_context_t *ctx)
     while ((ctx->frame_count == -1) || (ctx->frame_count-- > 0)) {
         if (ctx->pponeframe)
             read_frame_pp_oneframe(ctx);
-        else{
+        else
+{
             read_frame(ctx);
             XCAM_STATIC_FPS_CALCULATION(rkisp_demo, 30);
         }
@@ -1384,7 +1415,7 @@ static void init_device(demo_context_t *ctx)
 
 static void init_device_pp_oneframe(demo_context_t *ctx)
 {
-    // TODO, set format and link, now do with setup_link.sh    
+    // TODO, set format and link, now do with setup_link.sh
     init_input_dmabuf_oneframe(ctx);
 }
 
@@ -1598,7 +1629,8 @@ static void deinit(demo_context_t *ctx)
     if (ctx->aiq_ctx) {
         printf("%s:-------- deinit aiq -------------\n",get_sensor_name(ctx));
 #ifdef CUSTOM_AE_DEMO_TEST
-        rk_aiq_AELibunRegCallBack(ctx->aiq_ctx, 0);
+        //rk_aiq_AELibunRegCallBack(ctx->aiq_ctx, 0);
+        rk_aiq_uapi_customAE_unRegister(ctx->aiq_ctx);
 #endif
         rk_aiq_uapi_sysctl_deinit(ctx->aiq_ctx);
         printf("%s:-------- deinit aiq end -------------\n",get_sensor_name(ctx));
@@ -1652,6 +1684,29 @@ static void* test_offline_thread(void* args) {
     return 0;
 }
 
+static int set_ae_onoff(const rk_aiq_sys_ctx_t* ctx, bool onoff)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    Uapi_ExpSwAttr_t expSwAttr;
+
+    ret = rk_aiq_user_api_ae_getExpSwAttr(ctx, &expSwAttr);
+    expSwAttr.enable = onoff;
+    ret = rk_aiq_user_api_ae_setExpSwAttr(ctx, expSwAttr);
+
+    return 0;
+}
+
+static int query_ae_state(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    Uapi_ExpQueryInfo_t queryInfo;
+
+    ret = rk_aiq_user_api_ae_queryExpResInfo(ctx, &queryInfo);
+    printf("ae IsConverged: %d\n", queryInfo.IsConverged);
+
+    return 0;
+}
+
 static void set_af_manual_meascfg(const rk_aiq_sys_ctx_t* ctx)
 {
     rk_aiq_af_attrib_t attr;
@@ -1667,11 +1722,11 @@ static void set_af_manual_meascfg(const rk_aiq_sys_ctx_t* ctx)
     attr.manual_meascfg.window_num = 2;
     attr.manual_meascfg.wina_h_offs = 2;
     attr.manual_meascfg.wina_v_offs = 2;
-    attr.manual_meascfg.wina_h_size = 1920;
-    attr.manual_meascfg.wina_v_size = 1080;
+    attr.manual_meascfg.wina_h_size = 2580;
+    attr.manual_meascfg.wina_v_size = 1935;
 
-    attr.manual_meascfg.winb_h_offs = 500;
-    attr.manual_meascfg.winb_v_offs = 600;
+    attr.manual_meascfg.winb_h_offs = 1146;
+    attr.manual_meascfg.winb_v_offs = 972;
     attr.manual_meascfg.winb_h_size = 300;
     attr.manual_meascfg.winb_v_size = 300;
 
@@ -1707,6 +1762,9 @@ static void print_af_stats(rk_aiq_isp_stats_t *stats_ref)
 {
     unsigned long sof_time;
 
+    if (stats_ref->frame_id % 30 != 0)
+        return;
+
     sof_time = stats_ref->af_stats.sof_tim / 1000000LL;
     printf("sof_tim %ld, sharpness roia: 0x%llx-0x%08x roib: 0x%x-0x%08x\n",
            sof_time,
@@ -1714,14 +1772,42 @@ static void print_af_stats(rk_aiq_isp_stats_t *stats_ref)
            stats_ref->af_stats.roia_luminance,
            stats_ref->af_stats.roib_sharpness,
            stats_ref->af_stats.roib_luminance);
-#if 1
+
+    printf("global_sharpness\n");
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            printf("0x%08x, ", stats_ref->af_stats.global_sharpness[15 * i + j]);
+        }
+        printf("\n");
+    }
+    printf("lowpass_fv4_4\n");
     for (int i = 0; i < 15; i++) {
         for (int j = 0; j < 15; j++) {
             printf("0x%08x, ", stats_ref->af_stats.lowpass_fv4_4[15 * i + j]);
         }
         printf("\n");
     }
-#endif
+    printf("lowpass_fv8_8\n");
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            printf("0x%08x, ", stats_ref->af_stats.lowpass_fv8_8[15 * i + j]);
+        }
+        printf("\n");
+    }
+    printf("lowpass_highlht\n");
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            printf("0x%08x, ", stats_ref->af_stats.lowpass_highlht[15 * i + j]);
+        }
+        printf("\n");
+    }
+    printf("lowpass_highlht2\n");
+    for (int i = 0; i < 15; i++) {
+        for (int j = 0; j < 15; j++) {
+            printf("0x%08x, ", stats_ref->af_stats.lowpass_highlht2[15 * i + j]);
+        }
+        printf("\n");
+    }
 }
 static void* stats_thread(void* args) {
     demo_context_t* ctx =  (demo_context_t*)args;
@@ -1735,6 +1821,7 @@ static void* stats_thread(void* args) {
         ret = rk_aiq_uapi_sysctl_get3AStatsBlk(ctx->aiq_ctx , &stats_ref, -1);
         if (ret == XCAM_RETURN_NO_ERROR && stats_ref != NULL) {
             printf("get one stats frame id %d \n", stats_ref->frame_id);
+            query_ae_state(ctx->aiq_ctx);
             print_af_stats(stats_ref);
             rk_aiq_uapi_sysctl_release3AStatsRef(ctx->aiq_ctx, stats_ref);
         } else {
@@ -1823,11 +1910,19 @@ static void rkisp_routine(demo_context_t *ctx)
             if (ctx->writeFileSync)
                 rk_aiq_uapi_debug_captureRawYuvSync(ctx->aiq_ctx, CAPTURE_RAW_AND_YUV_SYNC);
 #ifdef CUSTOM_AE_DEMO_TEST
-            ae_reg.stAeExpFunc.pfn_ae_init = ae_init;
-            ae_reg.stAeExpFunc.pfn_ae_run = ae_run;
-            ae_reg.stAeExpFunc.pfn_ae_ctrl = ae_ctrl;
-            ae_reg.stAeExpFunc.pfn_ae_exit = ae_exit;
-            rk_aiq_AELibRegCallBack(ctx->aiq_ctx, &ae_reg, 0);
+            //ae_reg.stAeExpFunc.pfn_ae_init = ae_init;
+            //ae_reg.stAeExpFunc.pfn_ae_run = ae_run;
+            //ae_reg.stAeExpFunc.pfn_ae_ctrl = ae_ctrl;
+            //ae_reg.stAeExpFunc.pfn_ae_exit = ae_exit;
+            //rk_aiq_AELibRegCallBack(ctx->aiq_ctx, &ae_reg, 0);
+            rk_aiq_customeAe_cbs_t cbs = {
+                .pfn_ae_init = custom_ae_init,
+                .pfn_ae_run = custom_ae_run,
+                .pfn_ae_ctrl= custom_ae_ctrl,
+                .pfn_ae_exit = custom_ae_exit,
+            };
+            rk_aiq_uapi_customAE_register(ctx->aiq_ctx, &cbs);
+            rk_aiq_uapi_customAE_enable(ctx->aiq_ctx, true);
 #endif
 
 #ifdef OFFLINE_FRAME_TEST
@@ -1939,7 +2034,7 @@ int main(int argc, char **argv)
         .capture_yuv_num = 0,
         .is_capture_yuv = false,
         .ctl_type = TEST_CTL_TYPE_DEFAULT,
-        .iqpath = {'\0'}, 
+        .iqpath = {'\0'},
     };
     demo_context_t second_ctx;
 

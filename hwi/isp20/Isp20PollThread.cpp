@@ -370,11 +370,11 @@ Isp20PollThread::set_event_handle_dev(SmartPtr<BaseSensorHw> &dev)
                 sns_height = sns_sd_sel.r.height;
             }
         }
-
-        _fmt = find_fmt(pixelformat);
-        if (_fmt)
-            _stride_perline = calculate_stride_per_line(*_fmt, _bytes_perline);
     }
+
+    _fmt = find_fmt(pixelformat);
+    if (_fmt)
+        _stride_perline = calculate_stride_per_line(*_fmt, _bytes_perline);
 
     EXIT_CAMHW_FUNCTION();
     return true;
@@ -416,6 +416,7 @@ Isp20PollThread::Isp20PollThread()
     , _skip_num(0)
     , _skip_to_seq(0)
     , _cache_tx_data(false)
+    , _fmt(NULL)
 {
     _mipi_dev_max = 0;
     for (int i = 0; i < 3; i++) {
@@ -772,28 +773,32 @@ Isp20PollThread::handle_tx_buf(SmartPtr<V4l2BufferProxy> &tx_buf, int dev_index)
                 dev_index == ISP_MIPI_HDR_L) {
             SmartPtr<VideoBuffer> buf = tx_buf;
             VideoBufferInfo info = tx_buf->get_video_info();
-            info.color_bits = _fmt->bpp[0];
+            if (_fmt)
+                info.color_bits = _fmt->bpp[0];
             info.strides[0] = _stride_perline;
             buf->set_video_info(info);
-
-            _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
+            if (_poll_callback)
+                _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
         } else if ((_working_mode == RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR || \
                     _working_mode == RK_AIQ_ISP_HDR_MODE_2_LINE_HDR) && \
                    dev_index == ISP_MIPI_HDR_M) {
             SmartPtr<VideoBuffer> buf = tx_buf;
             VideoBufferInfo info = tx_buf->get_video_info();
-            info.color_bits = _fmt->bpp[0];
+            if (_fmt)
+                info.color_bits = _fmt->bpp[0];
             info.strides[0] = _stride_perline;
             buf->set_video_info(info);
-
-            _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
+            if (_poll_callback)
+                _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
         } else if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
             SmartPtr<VideoBuffer> buf = tx_buf;
             VideoBufferInfo info = tx_buf->get_video_info();
-            info.color_bits = _fmt->bpp[0];
+            if (_fmt)
+                info.color_bits = _fmt->bpp[0];
             info.strides[0] = _stride_perline;
             buf->set_video_info(info);
-             _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
+            if (_poll_callback)
+                _poll_callback->poll_buffer_ready(buf, ISP_POLL_TX_BUF);
         }
     }
     _isp_mipi_tx_infos[dev_index].buf_list.push(tx_buf);
@@ -1342,7 +1347,8 @@ int Isp20PollThread::calculate_stride_per_line(const struct capture_fmt& fmt,
     struct v4l2_format format;
     memset(&format, 0, sizeof(format));
 
-    _isp_mipi_tx_infos[0].dev->get_format(format);
+    if (_isp_mipi_tx_infos[0].dev.ptr())
+        _isp_mipi_tx_infos[0].dev->get_format(format);
     stridePerLine = format.fmt.pix_mp.plane_fmt[0].bytesperline;
 #endif
 
@@ -1366,7 +1372,10 @@ Isp20PollThread::write_frame_header_to_raw(FILE *fp, int dev_index,
     uint8_t mode = 0;
     uint8_t frame_type = 0, storage_type = 0;
 
-    if (fp == nullptr)
+    if (fp == NULL)
+        return XCAM_RETURN_ERROR_PARAM;
+
+    if (_fmt == NULL)
         return XCAM_RETURN_ERROR_PARAM;
 
     if (_working_mode == RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR || \

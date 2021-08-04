@@ -218,10 +218,25 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
  *
  * \param[in] ctx             context
  * \param[in] algo_type       algo type defined by RkAiqAlgoDesComm.type
- * \return return 0 if success
+ * \return return NULL if failed
  */
 RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type);
+
+/*!
+ * \brief get algo lib context
+ * The returned algo context will be used as the first param of algo private APIs.
+ * For those customer's algo lib, this interface should be called after
+ * \ref rk_aiq_uapi_sysctl_regLib, or will return NULL.
+ *
+ * \param[in] ctx             context
+ * \param[in] algo_type       algo type defined by RkAiqAlgoDesComm.type
+ * \param[in] lib_id          0 for system integrated algos;\n
+ *                            returned by call \ref rk_aiq_uapi_sysctl_regLib for customer algos
+ * \return return NULL if failed
+ */
+RkAiqAlgoContext*
+rk_aiq_uapi_sysctl_getAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type, const int lib_id);
 
 /*!
  * \brief get 3a stats

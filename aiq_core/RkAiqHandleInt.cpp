@@ -588,7 +588,6 @@ RkAiqAeHandleInt::prepare()
     /*****************AecConfig pic-info params*****************/
     ae_config_int->RawWidth = shared->snsDes.isp_acq_width;
     ae_config_int->RawHeight = shared->snsDes.isp_acq_height;
-    ae_config_int->nr_switch = shared->snsDes.nr_switch;
 
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->prepare(mConfig);
@@ -3668,7 +3667,7 @@ RkAiqAccmHandleInt::processing()
         LOGE("fail to get awb gain form AWB module,use default value ");
     }
     // id != 0 means the thirdparty's algo
-    #if 0
+#if 0
     if (mDes->id != 0) {
         RkAiqAlgoPreResAeInt *ae_int = (RkAiqAlgoPreResAeInt*)shared->preResComb.ae_pre_res;
         if( ae_int) {
@@ -3722,7 +3721,7 @@ RkAiqAccmHandleInt::processing()
             LOGE("fail to get sensor gain form AE module,use default value ");
         }
     }
-    #else
+#else
     RKAiqAecExpInfo_t *pCurExp = &shared->curExp;
     if(pCurExp) {
         if((rk_aiq_working_mode_t)shared->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
@@ -3748,7 +3747,7 @@ RkAiqAccmHandleInt::processing()
     } else {
         LOGE("fail to get sensor gain form AE module,use default value ");
     }
-    #endif
+#endif
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret = des->processing(mProcInParam, mProcOutParam);
     RKAIQCORE_CHECK_RET(ret, "accm algo processing failed");
@@ -5748,36 +5747,40 @@ RkAiqAlscHandleInt::processing()
     if(pCurExp) {
         switch (cur_mode)
         {
-            case RK_AIQ_WORKING_MODE_NORMAL:
-            {
-                alsc_proc_int->alsc_sw_info.sensorGain
-                    = pCurExp->LinearExp.exp_real_params.analog_gain
-                    * pCurExp->LinearExp.exp_real_params.digital_gain
-                    * pCurExp->LinearExp.exp_real_params.isp_dgain;
-            }break;
+        case RK_AIQ_WORKING_MODE_NORMAL:
+        {
+            alsc_proc_int->alsc_sw_info.sensorGain
+                = pCurExp->LinearExp.exp_real_params.analog_gain
+                  * pCurExp->LinearExp.exp_real_params.digital_gain
+                  * pCurExp->LinearExp.exp_real_params.isp_dgain;
+        }
+        break;
 
-            case RK_AIQ_WORKING_MODE_ISP_HDR2:
-            {
-                LOGD("sensor gain choose from second hdr frame for alsc");
-                alsc_proc_int->alsc_sw_info.sensorGain
-                    = pCurExp->HdrExp[1].exp_real_params.analog_gain
-                    * pCurExp->HdrExp[1].exp_real_params.digital_gain
-                    * pCurExp->HdrExp[1].exp_real_params.isp_dgain;
-            }break;
+        case RK_AIQ_WORKING_MODE_ISP_HDR2:
+        {
+            LOGD("sensor gain choose from second hdr frame for alsc");
+            alsc_proc_int->alsc_sw_info.sensorGain
+                = pCurExp->HdrExp[1].exp_real_params.analog_gain
+                  * pCurExp->HdrExp[1].exp_real_params.digital_gain
+                  * pCurExp->HdrExp[1].exp_real_params.isp_dgain;
+        }
+        break;
 
-            case RK_AIQ_WORKING_MODE_ISP_HDR3:
-            {
-                LOGD("sensor gain choose from third hdr frame for alsc");
-                alsc_proc_int->alsc_sw_info.sensorGain
-                    = pCurExp->HdrExp[2].exp_real_params.analog_gain
-                    * pCurExp->HdrExp[2].exp_real_params.digital_gain
-                    * pCurExp->HdrExp[2].exp_real_params.isp_dgain;
-            }break;
+        case RK_AIQ_WORKING_MODE_ISP_HDR3:
+        {
+            LOGD("sensor gain choose from third hdr frame for alsc");
+            alsc_proc_int->alsc_sw_info.sensorGain
+                = pCurExp->HdrExp[2].exp_real_params.analog_gain
+                  * pCurExp->HdrExp[2].exp_real_params.digital_gain
+                  * pCurExp->HdrExp[2].exp_real_params.isp_dgain;
+        }
+        break;
 
-            default:
-            {
-                LOGE("working_mode (%d) is invaild, fail to get sensor gain form AE module, use default value ", shared->working_mode);
-            }break;
+        default:
+        {
+            LOGE("working_mode (%d) is invaild, fail to get sensor gain form AE module, use default value ", shared->working_mode);
+        }
+        break;
         }
     } else {
         LOGE("fail to get sensor gain form AE module,use default value ");

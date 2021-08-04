@@ -3094,6 +3094,13 @@ CamHwIsp20::setIspParamsSync(int frameId)
         _full_active_isp_params.module_en_update = ~0;
         // just re-config the enabled moddules
         _full_active_isp_params.module_cfg_update = _full_active_isp_params.module_ens;
+
+        // don't update ldch params if restoring params from pause state
+        if (_state == CAM_HW_STATE_PAUSED) {
+            _full_active_isp_params.module_en_update &= ~(1ULL << RK_ISP2X_LDCH_ID);
+            _full_active_isp_params.module_cfg_update &= ~(1ULL << RK_ISP2X_LDCH_ID);
+            LOGW_CAMHW_SUBM(ISP20HW_SUBM, "don't update ldch params if restoring params from pause state\n");
+        }
     } else {
         _full_active_isp_params.module_en_update = 0;
         // use module_ens to store module status, so we can use it to restore

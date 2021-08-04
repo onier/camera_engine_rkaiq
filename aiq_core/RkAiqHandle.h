@@ -25,6 +25,11 @@
 
 namespace RkCam {
 
+typedef enum custom_algo_running_mode_e {
+    CUSTOM_ALGO_RUNNING_MODE_SINGLE,
+    CUSTOM_ALGO_RUNNING_MODE_WITH_RKAE,
+} custom_algo_runnig_mode_t;
+
 class RkAiqCore;
 class RkAiqHandle {
 public:

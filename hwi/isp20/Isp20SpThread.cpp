@@ -1180,11 +1180,6 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 			uint8x8x2_t				vRatio_u8;
 
 
-			vSrc00				    = vld2_u8(pSrc00);
-			vGainIsp00				= vld2_u8(pGainIsp00);
-			vRatio_u8			    = vld2_u8(pRatio00);
-
-
 			for(int j = 0; j < gain_blk_ispp_stride ; j += 8)
 			{
 				offsetX			        = j;
@@ -1196,9 +1191,6 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 
 
 
-				idx_isp     +=16;
-				idx_gain    +=16;
-				idx_ratio   +=16;
 
 				uint16x8x2_t			vSrc00_u16;
 
@@ -1213,6 +1205,10 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 				uint16x4x2_t			vRR00_1;
 
 
+
+    			vSrc00				    = vld2_u8(pSrc00        + idx_isp);
+    			vGainIsp00				= vld2_u8(pGainIsp00    + idx_gain);
+    			vRatio_u8			    = vld2_u8(pRatio00      + idx_ratio);
 				vSrc00_u16.val[0]		= vmovl_u8(vSrc00.val[0]);
 				vSrc00_u16.val[1]		= vmovl_u8(vSrc00.val[1]);
 
@@ -1264,9 +1260,6 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 				reciprocal_vRatio.val[1]= vmulq_f32(vrecpsq_f32(vRatio_f32_4.val[1], reciprocal_vRatio.val[1]), reciprocal_vRatio.val[1]);
 
 
-    			vSrc00				    = vld2_u8(pSrc00        + idx_isp);
-    			vGainIsp00				= vld2_u8(pGainIsp00    + idx_gain);
-    			vRatio_u8			    = vld2_u8(pRatio00      + idx_ratio);
 
 				// multiply ,1 for rounding
 				uint32x4_t				vOut00_lo, vOut00_hi, vOut01_lo, vOut01_hi;
@@ -1283,8 +1276,11 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 				vOut00.val[0]		    = vqrshrn_n_u16(vOut_lo, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM+ 1);
 				vOut00.val[1]			= vqrshrn_n_u16(vOut_hi, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM+ 1);
 
-				vst2_u8(pSrc00 + idx_isp - 16, vOut00);
+				vst2_u8(pSrc00 + idx_isp, vOut00);
 
+				idx_isp     +=16;
+				idx_gain    +=16;
+				idx_ratio   +=16;
 
 
 
@@ -1655,9 +1651,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 					//	int16x8_t frame_limit_reg1=frame_limit_reg;
 
 //frame_limit_reg=                    vqrdmulhq_s16(frame_limit_reg, frame_limit_reg1);
-	                ratio_u8				        = vld2_u8(ratio_addr);
-	                ratio_nxt_u8        	        = vld2_u8(ratio_next_addr);
-                    vSrc0                           = vld2_u8(pSrc00);
+
 	                ratio_r_u16         	        = vld1_u16(ratio_r);
 
                 for(uint16_t y = 0; y < gain_tile_ispp_y; y++)
@@ -1667,11 +1661,9 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
                     vGainIsp00                  = vld2_u8(pGainIsp00);
 
-                    ratio_addr                  += ratio_stride;
-                    ratio_next_addr             += ratio_stride;
-                    pSrc00                      += gain_tile_ispp_x * gainkg_unit;
-                    pGainIsp00                  += gain_blk_isp_stride;
-
+	                ratio_u8				    = vld2_u8(ratio_addr);
+	                ratio_nxt_u8        	    = vld2_u8(ratio_next_addr);
+                    vSrc0                       = vld2_u8(pSrc00);
 
 
 		            ratio_u8.val[0]		        = vmax_u8(ratio_u8.val[0],      ratio_u8.val[1]);
@@ -1765,14 +1757,16 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                         tmpVacc01_u16               = vmulq_u16(vmovl_u8(vSrc.val[1]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 1)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 3))));
 
 
-	                ratio_u8				    = vld2_u8(ratio_addr);
-	                ratio_nxt_u8        	    = vld2_u8(ratio_next_addr);
-                    vSrc0                       = vld2_u8(pSrc00);
 
 					vSrc.val[0]					= vrshrn_n_u16(tmpVacc00_u16, RATIO_BITS_NUM);
                     vSrc.val[1]					= vrshrn_n_u16(tmpVacc01_u16, RATIO_BITS_NUM);
                     vSrc.val[0]                 = vmax_u8(vSrc.val[0], vdup_n_u8(GAIN_MIN_VAL));
                     vSrc.val[1]                 = vmax_u8(vSrc.val[1], vdup_n_u8(GAIN_MIN_VAL));
+
+                    ratio_addr                  += ratio_stride;
+                    ratio_next_addr             += ratio_stride;
+                    pSrc00                      += gain_tile_ispp_x * gainkg_unit;
+                    pGainIsp00                  += gain_blk_isp_stride;
 
 		            vst2_u8(pSrc00_st, vSrc);
                     pSrc00_st                   += gain_tile_ispp_x * gainkg_unit;
@@ -2002,23 +1996,23 @@ Isp20SpThread::init()
     mtParamsSelect_list                 = (RKAnr_Mt_Params_Select_t**)  malloc(static_ratio_num * sizeof(RKAnr_Mt_Params_Select_t*));
     for(int i = 0; i < static_ratio_num; i++)
     {
-        static_ratio[i]                 = (uint8_t*)malloc(ratio_stride      * gain_kg_tile_h_align      *    sizeof(static_ratio[i][0]));
+        static_ratio[i]                 = (uint8_t*)malloc(ratio_stride      * (gain_kg_tile_h_align + 16)      *    sizeof(static_ratio[i][0]));
         memset(static_ratio[i], static_ratio_l, ratio_stride     * gain_kg_tile_h_align);
     }
 
 
     for(int i = 0; i < static_ratio_num; i++)
-        pImgbuf[i]                      = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv)    *   sizeof(pImgbuf[i][0]));
+        pImgbuf[i]                      = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv + 16)    *   sizeof(pImgbuf[i][0]));
 
     for(int i = 0; i < static_ratio_num; i++)
-        gain_isp_buf_bak[i]             = (uint8_t*)malloc(gain_blk_isp_mem_size * sizeof(gain_isp_buf_bak[i][0]));
+        gain_isp_buf_bak[i]             = (uint8_t*)malloc(gain_blk_isp_stride  * (gain_kg_tile_h_align + 16) * sizeof(gain_isp_buf_bak[i][0]));
     for(int i = 0; i < static_ratio_num; i++)
     {
         mtParamsSelect_list[i]          = (RKAnr_Mt_Params_Select_t *)malloc(static_ratio_num   *   sizeof(mtParamsSelect_list[0][0]));
         (*(mtParamsSelect_list[i])).gain_ratio = -1;
     }
 
-	pPreAlpha							= (uint8_t*)malloc(ratio_stride         * gain_kg_tile_h_align      * sizeof(pPreAlpha[0]));
+	pPreAlpha							= (uint8_t*)malloc(ratio_stride         * (gain_kg_tile_h_align + 16)      * sizeof(pPreAlpha[0]));
     memset(pPreAlpha, 0, ratio_stride         * gain_kg_tile_h_align      * sizeof(pPreAlpha[0]));
 
 

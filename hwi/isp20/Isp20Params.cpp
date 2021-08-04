@@ -1030,10 +1030,10 @@ Isp20Params::convertAiqBlcToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
 
     isp_cfg.others.bls_cfg.bls_samples = 0;
 
-    isp_cfg.others.bls_cfg.fixed_val.r = aiq_results->data()->blc.stResult.blc_gr;
+    isp_cfg.others.bls_cfg.fixed_val.r = aiq_results->data()->blc.stResult.blc_r;
     isp_cfg.others.bls_cfg.fixed_val.gr = aiq_results->data()->blc.stResult.blc_gr;
-    isp_cfg.others.bls_cfg.fixed_val.gb = aiq_results->data()->blc.stResult.blc_gr;
-    isp_cfg.others.bls_cfg.fixed_val.b = aiq_results->data()->blc.stResult.blc_gr;
+    isp_cfg.others.bls_cfg.fixed_val.gb = aiq_results->data()->blc.stResult.blc_gb;
+    isp_cfg.others.bls_cfg.fixed_val.b = aiq_results->data()->blc.stResult.blc_b;
 
     LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) exit \n", __FUNCTION__, __LINE__);
 }

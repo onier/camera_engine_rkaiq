@@ -221,6 +221,7 @@ typedef struct _RkAiqAlgoConfigAe {
     float        LinePeriodsPerField;
     float        PixelClockFreqMHZ;
     float        PixelPeriodsPerLine;
+    rk_aiq_sensor_nr_switch_t nr_switch;
 } RkAiqAlgoConfigAe;
 
 typedef struct _RkAiqAlgoPreAe {
@@ -359,6 +360,7 @@ typedef struct _RkAiqAlgoProcAf {
 typedef struct _RkAiqAlgoProcResAf {
     bool af_cfg_update;
     bool lockae;
+    bool lockae_en;
     RkAiqAlgoResCom proc_res_com;
     rk_aiq_isp_af_meas_t af_isp_param;
     rk_aiq_af_focus_pos_meas_t af_focus_param;

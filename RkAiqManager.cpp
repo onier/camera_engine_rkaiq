@@ -402,11 +402,11 @@ RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
     ret = mRkAiqAnalyzer->stop();
     RKAIQMNG_CHECK_RET(ret, "analyzer stop error %d", ret);
 
-    ret = mRkLumaAnalyzer->stop();
-    RKAIQMNG_CHECK_RET(ret, "luma analyzer stop error %d", ret);
+    //ret = mRkLumaAnalyzer->stop();
+    //RKAIQMNG_CHECK_RET(ret, "luma analyzer stop error %d", ret);
 
     // ret = mRkAiqAnalyzer->deInit();
-    ret = mRkLumaAnalyzer->deInit();
+    //ret = mRkLumaAnalyzer->deInit();
 
     mAiqRstAppTh->triger_stop();
     bool bret = mAiqRstAppTh->stop();
@@ -416,7 +416,7 @@ RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
     mCalibDb = newCalibDb;
 
     ret = mRkAiqAnalyzer->setCalib(mCalibDb);
-    ret = mRkLumaAnalyzer->init(&mCalibDb->lumaDetect);
+    //ret = mRkLumaAnalyzer->init(&mCalibDb->lumaDetect);
 
     // 3. re-prepare analyzer
     LOGI_ANALYZER("reprepare analyzer ...");
@@ -447,8 +447,8 @@ RkAiqManager::updateCalibDb(const CamCalibDbContext_t* newCalibDb)
     ret = mRkAiqAnalyzer->start();
     RKAIQMNG_CHECK_RET(ret, "analyzer start error %d", ret);
 
-    ret = mRkLumaAnalyzer->start();
-    RKAIQMNG_CHECK_RET(ret, "luma analyzer start error %d", ret);
+    //ret = mRkLumaAnalyzer->start();
+    //RKAIQMNG_CHECK_RET(ret, "luma analyzer start error %d", ret);
 
     EXIT_XCORE_FUNCTION();
     return XCAM_RETURN_NO_ERROR;

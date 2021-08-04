@@ -34,6 +34,8 @@ XCAM_BEGIN_DECLARE
 
 typedef struct AeLocalConfig_s {
     rk_aiq_ae_param_t stAeParam;
+    CalibDb_Sensor_Para_t stSensorInfo;
+    CalibDb_Dcg_t stDcgInfo;
     rk_aiq_ae_statistics_t stAeInfo;
     RkAiqAecHwConfig_t aeHwConfig;
     rk_aiq_ae_result_t stAeResult;
@@ -46,6 +48,88 @@ typedef struct _RkAiqAlgoContext {
     AeLocalConfig_t config;
     const rk_aiq_sys_ctx_t* aiq_ctx;
 } RkAiqAlgoContext;
+
+/******************************************************************************
+ * AeRegConv()
+ *****************************************************************************/
+static XCamReturn AeRegConv
+(
+    AeLocalConfig_t* pConfig,
+    float SplitIntegrationTime,
+    float SplitGain,
+    unsigned int *regIntegrationTime,
+    unsigned int *regGain,
+    int *pDcgMode
+) {
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    float C1 = 0.0f, C0 = 0.0f, M0 = 0.0f, minReg = 0.0f, maxReg = 0.0f, ag = 0.0f;
+    int i;
+
+    float SplitGainIn = 0.0f, SplitIntegrationTimeIn = 0.0f;
+
+    SplitGainIn = SplitGain;
+    SplitIntegrationTimeIn = SplitIntegrationTime;
+
+    //gain convertion
+    ag = SplitGainIn / (pDcgMode[AEC_NORMAL_FRAME] >= 1 ? pConfig->stDcgInfo.Normal.dcg_ratio : 1.0f);
+
+    if(pConfig->stSensorInfo.GainRange.GainMode == RKAIQ_EXPGAIN_MODE_LINEAR) {
+        for (i = 0; i < pConfig->stSensorInfo.GainRange.array_size; i += 7) {
+            if (ag >= pConfig->stSensorInfo.GainRange.pGainRange[i] && ag <= pConfig->stSensorInfo.GainRange.pGainRange[i + 1]) {
+                C1 = pConfig->stSensorInfo.GainRange.pGainRange[i + 2];
+                C0 = pConfig->stSensorInfo.GainRange.pGainRange[i + 3];
+                M0 = pConfig->stSensorInfo.GainRange.pGainRange[i + 4];
+                minReg = pConfig->stSensorInfo.GainRange.pGainRange[i + 5];
+                maxReg = pConfig->stSensorInfo.GainRange.pGainRange[i + 6];
+                break;
+            }
+        }
+
+        if (C1 == 0.0f) {
+            printf("GAIN OUT OF RANGE: lasttime-gain: %f-%f", SplitIntegrationTimeIn, SplitGainIn);
+            C1 = 16;
+            C0 = 0;
+            M0 = 1;
+            minReg = 16;
+            maxReg = 255;
+        }
+
+
+        printf("ag: %2.2f, C1: %2.2f  C0: %2.2f M0: %2.2f, minReg: %2.2f maxReg: %2.2f",
+               ag, C1, C0, M0, minReg, maxReg);
+
+        *regGain = (int)(C1 * pow(ag, M0) - C0 + 0.5f);
+        if (*regGain < minReg)
+            *regGain = minReg;
+        if (*regGain > maxReg)
+            *regGain = maxReg;
+
+    } else if(pConfig->stSensorInfo.GainRange.GainMode == RKAIQ_EXPGAIN_MODE_NONLINEAR_DB) {
+        *regGain = (int)(20.0f * log10(ag) * 10.0f / 3.0f + 0.5f);
+    }
+
+    //time convertion
+    float timeC0 = pConfig->stSensorInfo.TimeFactor[0];
+    float timeC1 = pConfig->stSensorInfo.TimeFactor[1];
+    float timeC2 = pConfig->stSensorInfo.TimeFactor[2];
+    float timeC3 = pConfig->stSensorInfo.TimeFactor[3];
+    printf("time coefficient: %f-%f-%f-%f", timeC0, timeC1, timeC2, timeC3);
+
+
+    float pclk = pConfig->stAeParam.sensor_desc.pixel_clock_freq_mhz;
+    float hts = pConfig->stAeParam.sensor_desc.pixel_periods_per_line;
+    float vts = pConfig->stAeParam.sensor_desc.frame_length_lines;
+
+    *regIntegrationTime = (int)(timeC0 * vts + timeC1 + timeC2 * ((SplitIntegrationTimeIn * pclk * 1000000 / hts) + timeC3));
+
+
+    int Index = (*regIntegrationTime - pConfig->stSensorInfo.CISTimeRegOdevity.fCoeff[1]) / (pConfig->stSensorInfo.CISTimeRegOdevity.fCoeff[0]);
+    *regIntegrationTime = pConfig->stSensorInfo.CISTimeRegOdevity.fCoeff[0] * Index + pConfig->stSensorInfo.CISTimeRegOdevity.fCoeff[1];
+    *regIntegrationTime = MAX(*regIntegrationTime, pConfig->stSensorInfo.CISTimeRegMin);
+
+    return (ret);
+}
 
 static XCamReturn initAecHwConfig(AeLocalConfig_t* pConfig)
 {
@@ -306,7 +390,7 @@ static XCamReturn updateAecHwConfig(AeLocalConfig_t* pConfig)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     if (pConfig->stAeResult.meas_win.h_size == 0 ||
-        pConfig->stAeResult.meas_win.v_size == 0) {
+            pConfig->stAeResult.meas_win.v_size == 0) {
         pConfig->stAeResult.meas_win.h_size = pConfig->stAeParam.raw_width;
         pConfig->stAeResult.meas_win.v_size = pConfig->stAeParam.raw_height;
     }
@@ -388,6 +472,11 @@ static XCamReturn AeDemoCreateCtx(RkAiqAlgoContext **context, const AlgoCtxInsta
     }
     memset(&ctx->config, 0, sizeof(ctx->config));
 
+    CamCalibDbContext_t* pcalib = rk_aiq_uapi_sysctl_getCurCalib(ctx->aiq_ctx);
+
+    ctx->config.stSensorInfo = pcalib->sensor;
+    ctx->config.stDcgInfo = pcalib->sysContrl.dcg;
+
     *context = ctx;
     printf("%s:Exit!\n", __FUNCTION__);
     return XCAM_RETURN_NO_ERROR;
@@ -445,9 +534,15 @@ static XCamReturn AeDemoPrepare(RkAiqAlgoCom* params)
     pConfig->stAeParam.raw_width = params->u.prepare.sns_op_width;
     pConfig->stAeParam.raw_height = params->u.prepare.sns_op_height;
 
-    printf("--------------- working_mode:%lu raw_width:%lu raw_height:%lu", 
-                   pConfig->stAeParam.working_mode, pConfig->stAeParam.raw_width, pConfig->stAeParam.raw_height);
-    
+    RkAiqAlgoConfigAe* AeCfgParam = (RkAiqAlgoConfigAe*)params;
+
+    pConfig->stAeParam.sensor_desc.frame_length_lines = AeCfgParam->LinePeriodsPerField;
+    pConfig->stAeParam.sensor_desc.pixel_clock_freq_mhz = AeCfgParam->PixelClockFreqMHZ;
+    pConfig->stAeParam.sensor_desc.pixel_periods_per_line = AeCfgParam->PixelPeriodsPerLine;
+
+    printf("--------------- working_mode:%lu raw_width:%lu raw_height:%lu",
+           pConfig->stAeParam.working_mode, pConfig->stAeParam.raw_width, pConfig->stAeParam.raw_height);
+
     initAecHwConfig(pConfig);
     rk_aiq_uapi_sysctl_getSensorDiscrib(params->ctx->aiq_ctx, &pConfig->stAeParam.sensor_desc);
     pConfig->func.pfn_ae_init(pConfig->chanId, &pConfig->stAeParam);
@@ -533,15 +628,22 @@ static XCamReturn AeDemoProcessing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom
     for(int i = 0; i < 3; i++) {
         AeProcResParams->new_ae_exp.HdrExp[i] = pConfig->stAeResult.HdrExp[i];
     }
+    /*convert exp real values to reg values*/
+    ret = AeRegConv(pConfig, AeProcResParams->new_ae_exp.LinearExp.exp_real_params.integration_time,
+                    AeProcResParams->new_ae_exp.LinearExp.exp_real_params.analog_gain,
+                    &AeProcResParams->new_ae_exp.LinearExp.exp_sensor_params.coarse_integration_time,
+                    &AeProcResParams->new_ae_exp.LinearExp.exp_sensor_params.analog_gain_code_global,
+                    &AeProcResParams->new_ae_exp.LinearExp.exp_real_params.dcg_mode);
+
 
     /* 0119：RK修改 */
-   
+
     AeProcResParams->new_ae_exp.frame_length_lines = pConfig->stAeParam.sensor_desc.frame_length_lines;
     AeProcResParams->new_ae_exp.line_length_pixels = pConfig->stAeParam.sensor_desc.line_length_pck;
     AeProcResParams->new_ae_exp.LinearExp.exp_real_params.dcg_mode = -1;
     AeProcResParams->ae_proc_res.exp_set_cnt = 1;
     AeProcResParams->ae_proc_res.exp_set_tbl[0] = AeProcResParams->new_ae_exp;
-        
+
     AeProcResParams->ae_meas = pConfig->aeHwConfig.ae_meas;
     AeProcResParams->hist_meas = pConfig->aeHwConfig.hist_meas;
     AeProcResParams->cur_ae_exp = pConfig->stAeInfo.aec_stats.ae_exp;
@@ -603,7 +705,7 @@ rk_aiq_AELibRegCallBack(const rk_aiq_sys_ctx_t* ctx, rk_aiq_ae_register_t *pstRe
     g_RkIspAlgoDescAeDemo[ChannelID]->pre_process = AeDemoPreProcess;
     g_RkIspAlgoDescAeDemo[ChannelID]->processing = AeDemoProcessing;
     g_RkIspAlgoDescAeDemo[ChannelID]->post_process = AeDemoPostProcess;
-    
+
     ret = rk_aiq_uapi_sysctl_regLib(ctx, &g_RkIspAlgoDescAeDemo[ChannelID]->common);
     if (ret != XCAM_RETURN_NO_ERROR)
         return ret;
@@ -611,7 +713,7 @@ rk_aiq_AELibRegCallBack(const rk_aiq_sys_ctx_t* ctx, rk_aiq_ae_register_t *pstRe
     ret = rk_aiq_uapi_sysctl_enableAxlib(ctx, g_RkIspAlgoDescAeDemo[ChannelID]->common.type, g_RkIspAlgoDescAeDemo[ChannelID]->common.id, true);
     if (ret != XCAM_RETURN_NO_ERROR)
         return ret;
-    
+
     printf("IN rk_aiq_uapi_sysctl_getEnabledAxlibCtx\n");
     RkAiqAlgoContext* algoCtx = rk_aiq_uapi_sysctl_getEnabledAxlibCtx(ctx, g_RkIspAlgoDescAeDemo[ChannelID]->common.type);
     if (algoCtx != NULL) {
@@ -622,7 +724,7 @@ rk_aiq_AELibRegCallBack(const rk_aiq_sys_ctx_t* ctx, rk_aiq_ae_register_t *pstRe
     }
 
     printf("OUT rk_aiq_uapi_sysctl_getEnabledAxlibCtx\n");
-    
+
     return ret;
 }
 
@@ -630,10 +732,10 @@ XCamReturn
 rk_aiq_AELibunRegCallBack(const rk_aiq_sys_ctx_t* ctx, int ChannelID)
 {
     rk_aiq_uapi_sysctl_unRegLib(ctx,
-                                       g_RkIspAlgoDescAeDemo[ChannelID]->common.type,
-                                       g_RkIspAlgoDescAeDemo[ChannelID]->common.id);
+                                g_RkIspAlgoDescAeDemo[ChannelID]->common.type,
+                                g_RkIspAlgoDescAeDemo[ChannelID]->common.id);
     free(g_RkIspAlgoDescAeDemo[ChannelID]);
-	
+
     return XCAM_RETURN_NO_ERROR;
 
 }

@@ -214,6 +214,9 @@ RkAiqCore::RkAiqCore()
     mCurAr2yAlgoHdl = NULL;
     mCurAwdrAlgoHdl = NULL;
     mCurAeAlgoHdl = NULL;
+    mCurCustomAeAlgoHdl = NULL;
+    mCurCustomAwbAlgoHdl = NULL;
+    mCurCustomAfAlgoHdl = NULL;
     mCurAwbAlgoHdl = NULL;
     mCurAfAlgoHdl = NULL;
     xcam_mem_clear(mHwInfo);
@@ -427,9 +430,24 @@ RkAiqCore::prepare(const rk_aiq_exposure_sensor_descriptor* sensor_des,
     } \
     LOGD_ANALYZER("%s handle prepare end ....", #at);
 
+#define PREPARE_CUSTOM_ALGO(at) \
+    LOGD_ANALYZER("%s handle custom prepare start ....", #at); \
+    if (mCurCustom##at##AlgoHdl.ptr() && mCurCustom##at##AlgoHdl->getEnable()) { \
+        /* update user initial params */ \
+        ret = mCurCustom##at##AlgoHdl->updateConfig(true); \
+        RKAIQCORE_CHECK_BYPASS(ret, "%s custom update initial user params failed", #at); \
+        mCurCustom##at##AlgoHdl->setReConfig(mState == RK_AIQ_CORE_STATE_STOPED); \
+        ret = mCurCustom##at##AlgoHdl->prepare(); \
+        RKAIQCORE_CHECK_BYPASS(ret, "%s custom prepare failed", #at); \
+    } \
+    LOGD_ANALYZER("%s handle custom prepare end ....", #at);
+
     PREPARE_ALGO(Ae);
+    PREPARE_CUSTOM_ALGO(Ae);
     PREPARE_ALGO(Awb);
+    PREPARE_CUSTOM_ALGO(Awb);
     PREPARE_ALGO(Af);
+    PREPARE_CUSTOM_ALGO(Af);
     PREPARE_ALGO(Ahdr);
     PREPARE_ALGO(Anr);
     PREPARE_ALGO(Adhaz);
@@ -944,7 +962,7 @@ RkAiqCore::genIspAfResult(RkAiqFullParams* params)
             int algo_id = (*ae_handle)->getAlgoId();
 
             if (ae_handle) {
-                if (algo_id == 0) {
+                if ((algo_id == 0) && (af_rk->af_proc_res_com.lockae_en)) {
                     RkAiqAeHandleInt *ae_algo = dynamic_cast<RkAiqAeHandleInt*>(ae_handle->ptr());
                     Uapi_ExpSwAttr_t expSwAttr;
 
@@ -2411,14 +2429,29 @@ RkAiqCore::enableAlgo(int algoType, int id, bool enable)
         SmartLock locker (mApiMutex);
         while (mSafeEnableAlgo != true)
             mApiMutexCond.wait(mApiMutex);
-        if ((*cur_algo_hdl).ptr() &&
-                (*cur_algo_hdl).ptr() != it->second.ptr()) {
-            (*cur_algo_hdl)->setEnable(false);
-            switch_algo = true;
+        // replace current algo
+        if (id == 0 ||
+                mAlogsSharedParams.mCustomAlgoRunningMode == CUSTOM_ALGO_RUNNING_MODE_SINGLE) {
+            if ((*cur_algo_hdl).ptr() &&
+                    (*cur_algo_hdl).ptr() != it->second.ptr()) {
+                (*cur_algo_hdl)->setEnable(false);
+                switch_algo = true;
+            }
+            *cur_algo_hdl = it->second;
+            if (switch_algo && (mState >= RK_AIQ_CORE_STATE_PREPARED))
+                (*cur_algo_hdl)->prepare();
+        } else {
+            if (algoType == RK_AIQ_ALGO_TYPE_AE)
+                mCurCustomAeAlgoHdl = it->second;
+            else if (algoType == RK_AIQ_ALGO_TYPE_AWB)
+                mCurCustomAwbAlgoHdl = it->second;
+            else if (algoType == RK_AIQ_ALGO_TYPE_AF)
+                mCurCustomAfAlgoHdl = it->second;
+            else
+                LOGE_ANALYZER("only support ae/awb/af custom algos !");
+            if (mState >= RK_AIQ_CORE_STATE_PREPARED)
+                it->second->prepare();
         }
-        *cur_algo_hdl = it->second;
-        if (switch_algo && (mState >= RK_AIQ_CORE_STATE_PREPARED))
-            (*cur_algo_hdl)->prepare();
     }
 
     EXIT_ANALYZER_FUNCTION();
@@ -2450,9 +2483,20 @@ RkAiqCore::rmAlgo(int algoType, int id)
     }
 
     // if it's the current algo handle, clear it
-    if ((*cur_algo_hdl).ptr() == it->second.ptr())
-        (*cur_algo_hdl).release();
-
+    // if not single mode, cur_algo_hdr is always the rk algo
+    if (mAlogsSharedParams.mCustomAlgoRunningMode == CUSTOM_ALGO_RUNNING_MODE_SINGLE) {
+        if ((*cur_algo_hdl).ptr() == it->second.ptr())
+            (*cur_algo_hdl).release();
+    } else {
+        if (algoType == RK_AIQ_ALGO_TYPE_AE)
+            mCurCustomAeAlgoHdl.release();
+        else if (algoType == RK_AIQ_ALGO_TYPE_AWB)
+            mCurCustomAwbAlgoHdl.release();
+        else if (algoType == RK_AIQ_ALGO_TYPE_AF)
+            mCurCustomAfAlgoHdl.release();
+        else
+            LOGE_ANALYZER("only support ae/awb/af custom algos !");
+    }
     algo_map->erase(it);
 
     EXIT_ANALYZER_FUNCTION();
@@ -2484,12 +2528,42 @@ RkAiqCore::getEnabledAxlibCtx(const int algo_type)
             algo_type >= RK_AIQ_ALGO_TYPE_MAX)
         return NULL;
 
-    SmartPtr<RkAiqHandle>* algo_handle = getCurAlgoTypeHandle(algo_type);
+    if (mAlogsSharedParams.mCustomAlgoRunningMode == CUSTOM_ALGO_RUNNING_MODE_SINGLE) {
+        SmartPtr<RkAiqHandle>* algo_handle = getCurAlgoTypeHandle(algo_type);
 
-    if ((*algo_handle).ptr())
-        return (*algo_handle)->getAlgoCtx();
-    else
+        if ((*algo_handle).ptr())
+            return (*algo_handle)->getAlgoCtx();
+        else
+            return NULL;
+    } else {
+        std::map<int, SmartPtr<RkAiqHandle>>* algo_map = getAlgoTypeHandleMap(algo_type);
+        std::map<int, SmartPtr<RkAiqHandle>>::reverse_iterator rit = algo_map->rbegin();
+        if (rit !=  algo_map->rend() && rit->second->getEnable())
+            return rit->second->getAlgoCtx();
+        else
+            return NULL;
+    }
+}
+
+RkAiqAlgoContext*
+RkAiqCore::getAxlibCtx(const int algo_type, const int lib_id)
+{
+    if (algo_type <= RK_AIQ_ALGO_TYPE_NONE ||
+            algo_type >= RK_AIQ_ALGO_TYPE_MAX)
         return NULL;
+
+    std::map<int, SmartPtr<RkAiqHandle>>* algo_map = getAlgoTypeHandleMap(algo_type);
+
+    std::map<int, SmartPtr<RkAiqHandle>>::iterator it = algo_map->find(lib_id);
+
+    if (it != algo_map->end()) {
+        return it->second->getAlgoCtx();
+    }
+
+    EXIT_ANALYZER_FUNCTION();
+
+    return NULL;
+
 }
 
 void
@@ -2883,6 +2957,8 @@ RkAiqCore::convertIspstatsToAlgo(const SmartPtr<VideoBuffer> &buffer)
             mAlogsSharedParams.ispStats.aec_stats.ae_data.yuvae.ro_yuvae_sumy[i] = stats->params.yuvae.ro_yuvae_sumy[i];
     }
 
+    memcpy(mAlogsSharedParams.ispStats.aec_stats.ae_data.sihist.bins, stats->params.sihst.win_stat[0].hist_bins, SIHIST_BIN_N_MAX * sizeof(u32));
+
     if (expParams.ptr()) {
 
         mAlogsSharedParams.ispStats.aec_stats.ae_exp = expParams->data()->aecExpInfo;
@@ -3170,6 +3246,15 @@ RkAiqCore::txBufAnalyze(const SmartPtr<RkAiqTxBufInfo> &buffer)
         RKAIQCORE_CHECK_BYPASS(ret, "%s preProcess failed", #at); \
     } \
 
+#define PREPROCESS_CUSTOM_ALGO(at) \
+    if (mCurCustom##at##AlgoHdl.ptr() && mCurCustom##at##AlgoHdl->getEnable()) { \
+        /* TODO, should be called before all algos preProcess ? */ \
+        ret = mCurCustom##at##AlgoHdl->updateConfig(true); \
+        RKAIQCORE_CHECK_BYPASS(ret, "%s updateConfig failed", #at); \
+        ret = mCurCustom##at##AlgoHdl->preProcess(); \
+        RKAIQCORE_CHECK_BYPASS(ret, "%s preProcess failed", #at); \
+    } \
+
 XCamReturn
 RkAiqCore::preProcessPp()
 {
@@ -3195,8 +3280,11 @@ RkAiqCore::preProcess(enum rk_aiq_core_analyze_type_e type)
     if (type == RK_AIQ_CORE_ANALYZE_ALL || \
             type == RK_AIQ_CORE_ANALYZE_MEAS) {
         PREPROCESS_ALGO(Ae);
+        PREPROCESS_CUSTOM_ALGO(Ae);
         PREPROCESS_ALGO(Awb);
+        PREPROCESS_CUSTOM_ALGO(Awb);
         PREPROCESS_ALGO(Af);
+        PREPROCESS_CUSTOM_ALGO(Af);
         PREPROCESS_ALGO(Accm);
         PREPROCESS_ALGO(Ahdr);
         PREPROCESS_ALGO(Adpcc);
@@ -3261,6 +3349,11 @@ RkAiqCore::preProcess(enum rk_aiq_core_analyze_type_e type)
         ret = mCur##at##AlgoHdl->processing(); \
     RKAIQCORE_CHECK_BYPASS(ret, "%s processing failed", #at);
 
+#define PROCESSING_CUSTOM_ALGO(at) \
+    if (mCurCustom##at##AlgoHdl.ptr() && mCurCustom##at##AlgoHdl->getEnable()) \
+        ret = mCurCustom##at##AlgoHdl->processing(); \
+    RKAIQCORE_CHECK_BYPASS(ret, "%s processing failed", #at);
+
 XCamReturn
 RkAiqCore::processingPp()
 {
@@ -3287,8 +3380,11 @@ RkAiqCore::processing(enum rk_aiq_core_analyze_type_e type)
     if (type == RK_AIQ_CORE_ANALYZE_ALL || \
             type == RK_AIQ_CORE_ANALYZE_MEAS) {
         PROCESSING_ALGO(Ae);
+        PROCESSING_CUSTOM_ALGO(Ae);
         PROCESSING_ALGO(Awb);
+        PROCESSING_CUSTOM_ALGO(Awb);
         PROCESSING_ALGO(Af);
+        PROCESSING_CUSTOM_ALGO(Af);
         PROCESSING_ALGO(Ahdr);
         PROCESSING_ALGO(Accm);
         PROCESSING_ALGO(Adpcc);
@@ -3353,6 +3449,11 @@ RkAiqCore::processing(enum rk_aiq_core_analyze_type_e type)
         ret = mCur##at##AlgoHdl->postProcess(); \
     RKAIQCORE_CHECK_BYPASS(ret, "%s postProcess failed", #at);
 
+#define POSTPROCESS_CUSTOM_ALGO(at) \
+    if (mCurCustom##at##AlgoHdl.ptr() && mCurCustom##at##AlgoHdl->getEnable()) \
+        ret = mCurCustom##at##AlgoHdl->postProcess(); \
+    RKAIQCORE_CHECK_BYPASS(ret, "%s postProcess failed", #at);
+
 XCamReturn
 RkAiqCore::postProcessPp()
 {
@@ -3377,8 +3478,11 @@ RkAiqCore::postProcess(enum rk_aiq_core_analyze_type_e type)
     if (type == RK_AIQ_CORE_ANALYZE_ALL || \
             type == RK_AIQ_CORE_ANALYZE_MEAS) {
         POSTPROCESS_ALGO(Ae);
+        POSTPROCESS_CUSTOM_ALGO(Ae);
         POSTPROCESS_ALGO(Awb);
+        POSTPROCESS_CUSTOM_ALGO(Awb);
         POSTPROCESS_ALGO(Af);
+        POSTPROCESS_CUSTOM_ALGO(Af);
         POSTPROCESS_ALGO(Ahdr);
         POSTPROCESS_ALGO(Accm);
         POSTPROCESS_ALGO(Adpcc);
@@ -3596,6 +3700,11 @@ RkAiqCore::genCpslResult(RkAiqFullParams* params)
     LOGD_ANALYZER("cpsl mode %d, light src %d", cpsl_cfg->mode, cpsl_cfg->lght_src);
     bool cpsl_on = false;
     bool need_update = false;
+
+    if (mCurOpMode != cpsl_cfg->mode) {
+        mCurOpMode = cpsl_cfg->mode;
+        need_update = true;
+    }
 
     if (cpsl_cfg->mode == RK_AIQ_OP_MODE_MANUAL) {
         if ((mCurCpslOn != cpsl_cfg->u.m.on) ||

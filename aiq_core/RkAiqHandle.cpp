@@ -306,6 +306,7 @@ RkAiqAeHandle::prepare()
     ae_config->LinePeriodsPerField = (float)shared->snsDes.frame_length_lines;
     ae_config->PixelPeriodsPerLine = (float)shared->snsDes.line_length_pck;
     ae_config->PixelClockFreqMHZ = (float) shared->snsDes.pixel_clock_freq_mhz;
+    ae_config->nr_switch = shared->snsDes.nr_switch;
 
     // id != 0 means the thirdparty's algo
     if (mDes->id != 0) {
@@ -344,7 +345,17 @@ RkAiqAeHandle::preProcess()
         ret = des->pre_process(mPreInParam, mPreOutParam);
         RKAIQCORE_CHECK_RET(ret, "ae handle pre_process failed");
         // set result to mAiqCore
-        comb->ae_pre_res = (RkAiqAlgoPreResAe*)ae_pre_res;
+        if (shared->mCustomAlgoRunningMode == CUSTOM_ALGO_RUNNING_MODE_SINGLE) {
+            comb->ae_pre_res = (RkAiqAlgoPreResAe*)ae_pre_res;
+        } else {
+           // run after rk ae, replace rk ae result
+            if (!comb->ae_pre_res) {
+                LOGE("no rk ae pre res, failed !");
+                return ret;
+            }
+            RkAiqAlgoPreResAeInt* pre_res_ae_rk = (RkAiqAlgoPreResAeInt*)(comb->ae_pre_res);
+            pre_res_ae_rk->ae_pre_res_rk.LinearExp = ae_pre_res->ae_pre_res.LinearExp;
+        }
         EXIT_ANALYZER_FUNCTION();
     }
     return ret;
@@ -375,7 +386,28 @@ RkAiqAeHandle::processing()
     if (mDes->id != 0) {
         ret = des->processing(mProcInParam, mProcOutParam);
         RKAIQCORE_CHECK_RET(ret, "ae algo processing failed");
-        comb->ae_proc_res = (RkAiqAlgoProcResAe*)ae_proc_res;
+        if (shared->mCustomAlgoRunningMode == CUSTOM_ALGO_RUNNING_MODE_SINGLE) {
+            comb->ae_proc_res = (RkAiqAlgoProcResAe*)ae_proc_res;
+        } else {
+           // run after rk ae, replace rk ae result
+            if (!comb->ae_proc_res) {
+                LOGE("no rk ae proc res, failed !");
+                return ret;
+            }
+            RkAiqAlgoProcResAeInt* proc_res_ae_rk = (RkAiqAlgoProcResAeInt*)(comb->ae_proc_res);
+            proc_res_ae_rk->ae_proc_res_com = *ae_proc_res;
+            proc_res_ae_rk->ae_proc_res_rk.exp_set_cnt = ae_proc_res->ae_proc_res.exp_set_cnt;
+            proc_res_ae_rk->ae_proc_res_rk.exp_set_tbl[0] =
+                        ae_proc_res->ae_proc_res.exp_set_tbl[0];
+#if 0 // custom ae has no these result now
+            memcpy(proc_res_ae_rk->ae_proc_res_rk.exp_set_tbl,
+                   ae_proc_res->ae_proc_res.exp_set_tbl,
+                   sizeof(proc_res_ae_rk->ae_proc_res_rk.exp_set_tbl));
+            proc_res_ae_rk->ae_proc_res_rk.IsConverged = ae_proc_res->ae_proc_res.IsConverged;
+            proc_res_ae_rk->ae_proc_res_rk.LumaDeviation = ae_proc_res->ae_proc_res.LumaDeviation;
+            proc_res_ae_rk->ae_proc_res_rk.MeanLuma = ae_proc_res->ae_proc_res.MeanLuma;
+#endif
+        }
         EXIT_ANALYZER_FUNCTION();
     }
     return ret;

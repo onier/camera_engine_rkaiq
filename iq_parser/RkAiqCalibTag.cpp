@@ -1056,6 +1056,8 @@ uint32_t calib_sensor_dpcc_pdaf_sub_tags[] = {
     CALIB_SENSOR_DPCC_PDAF_POINT_ENABLE_TAG_ID,
     CALIB_SENSOR_DPCC_PDAF_OFFSETX_TAG_ID,
     CALIB_SENSOR_DPCC_PDAF_OFFSETY_TAG_ID,
+    CALIB_SENSOR_DPCC_PDAF_WRAPX_TAG_ID,
+    CALIB_SENSOR_DPCC_PDAF_WRAPY_TAG_ID,
     CALIB_SENSOR_DPCC_PDAF_WRAPX_NUM_TAG_ID,
     CALIB_SENSOR_DPCC_PDAF_WRAPY_NUM_TAG_ID,
     CALIB_SENSOR_DPCC_PDAF_POINT_X_TAG_ID,
@@ -4443,11 +4445,11 @@ calib_tag_info_t g_calib_tag_infos[CALIB_IQ_TAG_END] = {
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_DPCC_PDAF_WRAPX_TAG_ID]         =
-    {   "pdaf_wrapx", CALIB_TAG_TYPE_UNKNOWN, {-1, -1},
+    {   "pdaf_wrapx", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_DPCC_PDAF_WRAPY_TAG_ID]         =
-    {   "pdaf_wrapy", CALIB_TAG_TYPE_UNKNOWN, {-1, -1},
+    {   "pdaf_wrapy", CALIB_TAG_TYPE_DOUBLE, {-1, -1},
         check_tags_array_ignore, NULL
     },
     [CALIB_SENSOR_DPCC_PDAF_WRAPX_NUM_TAG_ID]         =

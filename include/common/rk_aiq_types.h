@@ -596,8 +596,9 @@ typedef enum rk_aiq_cpsls_e {
  *
  * user data types of compensation lights, applied to IR and
  * full colour light source.
+ *
+ * @on: whether IR-cut filtering the infrared, (0:filter), (1:don't filter)
  */
-
 typedef struct rk_aiq_cpsl_cfg_s {
     RKAiqOPMode_t mode;
     rk_aiq_cpsls_t lght_src;
@@ -608,7 +609,7 @@ typedef struct rk_aiq_cpsl_cfg_s {
             uint32_t sw_interval; /*!< switch interval time, unit seconds */
         } a; /*< auto mode */
         struct {
-            uint8_t on; /*!< disable 0, enable 1 */
+            uint8_t on;
             float strength_led; /*!< Range [0-100] */
             float strength_ir; /*!< Range [0-100] */
         } m; /*!< manual mode */

@@ -385,6 +385,13 @@ rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int alg
     return ctx->_analyzer->getEnabledAxlibCtx(algo_type);
 }
 
+RkAiqAlgoContext*
+rk_aiq_uapi_sysctl_getAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type, const int lib_id)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    return ctx->_analyzer->getAxlibCtx(algo_type, lib_id);
+}
+
 XCamReturn
 rk_aiq_uapi_sysctl_get3AStats(const rk_aiq_sys_ctx_t* ctx,
                               rk_aiq_isp_stats_t *stats)
@@ -453,6 +460,7 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_aldch.cpp"
 #include "rk_aiq_user_api_acp.cpp"
 #include "rk_aiq_user_api_aie.cpp"
+#include "rk_aiq_user_api_custom_ae.cpp"
 
 #define RK_AIQ_ALGO_TYPE_MODULES (RK_AIQ_ALGO_TYPE_MAX + 1)
 
