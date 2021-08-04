@@ -375,13 +375,19 @@ void SocketServer::Deinit(){
     struct timeval interval = {0, 0};
     //setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval,sizeof(struct timeval));
 
-    shutdown(client_socket, SHUT_RDWR);
+    if (client_socket >= 0)
+        shutdown(client_socket, SHUT_RDWR);
 
-    this->accept_threads_->join();
-    this->accept_threads_ = nullptr;
+    if (this->accept_threads_) {
+        this->accept_threads_->join();
+        this->accept_threads_ = nullptr;
+    }
 
     //close(client_socket); //client_socket has been closed in SocketServer::Accepted()
-    close(sockfd);
+    if (sockfd >= 0) {
+        close(sockfd);
+    }
+
     if (sns_idx == 0) {
         unlink(UNIX_DOMAIN);
     } else {
