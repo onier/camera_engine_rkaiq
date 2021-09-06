@@ -21,67 +21,67 @@
 #include <string.h>
 //#include "common.h"
 
-#define		SIGN(a)								(((a) > 0) ? (1) : (-(1)))
-//#define     MIN(a,b)                            ((a) <= (b) ? (a):(b))
-//#define		MAX(a,b)							((a) >= (b) ? (a):(b))
-#define		CLIP(a, min_v, max_v)			    (((a) < (min_v)) ? (min_v) : (((a) > (max_v)) ? (max_v) : (a)))
-#define		ABS(a)								(((a) > 0) ? (a) : (-(a)))
-//#define		ROUND_F(x)                      	(int32_t)(((float)x)+(((x) > 0) ? 0.5 : (-0.5)))
-#define		ROUND_INT(x, shf_bit)           	(int)((((x) > 0) ? 1 : -1) * ((ABS(x) + (1<<((shf_bit)-1)))>>(shf_bit)))
-#define		ROUND_UINT16(x, shf_bit)  			((uint16_t)		(MIN(x, (1 << (uint32_t)16) - 1) + (1<<(shf_bit - 1))) >> (shf_bit))
+#define     SIGN(a)                             (((a) > 0) ? (1) : (-(1)))
+#define     MIN(a,b)                            ((a) <= (b) ? (a):(b))
+#define     MAX(a,b)                            ((a) >= (b) ? (a):(b))
+#define     CLIP(a, min_v, max_v)               (((a) < (min_v)) ? (min_v) : (((a) > (max_v)) ? (max_v) : (a)))
+#define     ABS(a)                              (((a) > 0) ? (a) : (-(a)))
+#define     ROUND_F(x)                          (int32_t)(((float)x)+(((x) > 0) ? 0.5 : (-0.5)))
+#define     ROUND_INT(x, shf_bit)               (int)((((x) > 0) ? 1 : -1) * ((ABS(x) + (1<<((shf_bit)-1)))>>(shf_bit)))
+#define     ROUND_UINT16(x, shf_bit)            ((uint16_t)     (MIN(x, (1 << (uint32_t)16) - 1) + (1<<(shf_bit - 1))) >> (shf_bit))
 
 
-#define		IMG_DOWN_SCALE_X_BIT				2
-#define		IMG_DOWN_SCALE_Y_BIT				3
+#define     IMG_DOWN_SCALE_X_BIT                2
+#define     IMG_DOWN_SCALE_Y_BIT                3
 
-#define		IMG_DOWN_SCALE_X					(1 << IMG_DOWN_SCALE_X_BIT)
-#define		IMG_DOWN_SCALE_Y					(1 << IMG_DOWN_SCALE_Y_BIT)
-#define		LDIFF_DOWN_SCALE_X_BIT				3
-#define		LDIFF_DOWN_SCALE_Y_BIT				3
-#define		LDIFF_DOWN_SCALE_X					(1 << LDIFF_DOWN_SCALE_X_BIT)
-#define		LDIFF_DOWN_SCALE_Y					(1 << LDIFF_DOWN_SCALE_Y_BIT)
-
-
-#define		GAUS_FILTER_RADIUS_X				1
-#define		GAUS_FILTER_RADIUS_Y				1
-#define		SIGMA_FILTER_RADIUS_X				4
-#define		SIGMA_FILTER_RADIUS_Y				4
-
-#define		SIGMA_SCALE_DIV_FIX_BITS			6
-#define 	SIGMA_FIX_BITS						5
-#define		SIGMA_DIV_FIX_BITS					13
-#define		ALPHA_FIX_BITS						7
-#define		UV_RATIO_FIX_BITS					7
-#define		ALPHA_DIV_FIX_BITS					(7 + 7)
-#define 	RATIO_DIV_FIX_BITS					12
-#define 	YUV_SCALE_FIX_BITS					8
-#define		GAIN_WR_DIV_FIX_BITS				5
-#define 	RATIO_BITS_NUM 						7
-#define 	RATIO_BITS_R_NUM 					5
-#define		GAIN_MIN_VAL						1
+#define     IMG_DOWN_SCALE_X                    (1 << IMG_DOWN_SCALE_X_BIT)
+#define     IMG_DOWN_SCALE_Y                    (1 << IMG_DOWN_SCALE_Y_BIT)
+#define     LDIFF_DOWN_SCALE_X_BIT              3
+#define     LDIFF_DOWN_SCALE_Y_BIT              3
+#define     LDIFF_DOWN_SCALE_X                  (1 << LDIFF_DOWN_SCALE_X_BIT)
+#define     LDIFF_DOWN_SCALE_Y                  (1 << LDIFF_DOWN_SCALE_Y_BIT)
 
 
-#define		MT_VERSION 							1
-#define		ENABLE_NEON
+#define     GAUS_FILTER_RADIUS_X                1
+#define     GAUS_FILTER_RADIUS_Y                1
+#define     SIGMA_FILTER_RADIUS_X               4
+#define     SIGMA_FILTER_RADIUS_Y               4
+
+#define     SIGMA_SCALE_DIV_FIX_BITS            6
+#define     SIGMA_FIX_BITS                      5
+#define     SIGMA_DIV_FIX_BITS                  13
+#define     ALPHA_FIX_BITS                      7
+#define     UV_RATIO_FIX_BITS                   7
+#define     ALPHA_DIV_FIX_BITS                  (7 + 7)
+#define     RATIO_DIV_FIX_BITS                  12
+#define     YUV_SCALE_FIX_BITS                  8
+#define     GAIN_WR_DIV_FIX_BITS                5
+#define     RATIO_BITS_NUM                      7
+#define     RATIO_BITS_R_NUM                    5
+#define     GAIN_MIN_VAL                        1
+
+
+#define     MT_VERSION                          1
+#define     ENABLE_NEON
 #define JMJ_TEST_OUT
 void motion_detect(
-	uint8_t *pCurIn,
-	uint8_t *pPreIn,
-	int16_t *pTmpBuf,
-	uint8_t *pAlpha,
-	uint8_t *pPreAlpha,
-	uint8_t *gain_table_u8,
-	int		imgHeight,
-	int		imgWidth,
-	int		proHeight,
-	int		proWidth,
-	int     gainStride,
-	float	sigmaHScale,
-	float	sigmaLScale,
-	float	uv_ratio,
-	int 	static_ratio_r_bit,
-	int		wr_flg = 0,
-	int		wr_flg_last = 0);
+    uint8_t *pCurIn,
+    uint8_t *pPreIn,
+    int16_t *pTmpBuf,
+    uint8_t *pAlpha,
+    uint8_t *pPreAlpha,
+    uint8_t *gain_table_u8,
+    int     imgHeight,
+    int     imgWidth,
+    int     proHeight,
+    int     proWidth,
+    int     gainStride,
+    float   sigmaHScale,
+    float   sigmaLScale,
+    float   uv_ratio,
+    int     static_ratio_r_bit,
+    int     wr_flg = 0,
+    int     wr_flg_last = 0);
 
 
 #endif

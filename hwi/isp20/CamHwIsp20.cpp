@@ -4958,7 +4958,7 @@ CamHwIsp20::prepare_motion_detection(int mode)
     }
     _ds_width            = (isp_src_fmt.format.width + 3) / 4;
     _ds_heigth           = (isp_src_fmt.format.height + 7) / 8;
-    _ds_width_align      = ALIGN(_ds_width, 16);
+    _ds_width_align      = (_ds_width   + 1)   & (~1);
     _ds_heigth_align     = (_ds_heigth + 1)   & (~1);
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "set sp format: width %d %d height %d %d\n",
                     _ds_width, _ds_width_align, _ds_heigth, _ds_heigth_align);

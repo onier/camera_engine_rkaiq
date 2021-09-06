@@ -35,34 +35,34 @@ using namespace XCam;
 
 namespace RkCam {
 
-#define CLIP(a, min_v, max_v)			    (((a) < (min_v)) ? (min_v) : (((a) > (max_v)) ? (max_v) : (a)))
-#define LOG_PRINT(a, b)			\
-	if(1)					\
-		printf("%s",b);		\
-	if(0)						\
-		fprintf(a, "%s", b);
+#define CLIP(a, min_v, max_v)               (((a) < (min_v)) ? (min_v) : (((a) > (max_v)) ? (max_v) : (a)))
+#define LOG_PRINT(a, b)         \
+    if(1)                   \
+        printf("%s",b);     \
+    if(0)                       \
+        fprintf(a, "%s", b);
 
 #define ALIGN_UP(a, size)  ((a + size - 1) & (~(size - 1)))
 
 typedef struct RKAnr_Mt_Params_t
 {
-  	float	sigmaHScale[3][MAX_ISO_STEP];
-	float	sigmaLScale[3][MAX_ISO_STEP];
-	float 	light_clp[3][MAX_ISO_STEP];;
-	float 	uv_weight[3][MAX_ISO_STEP];;
-    float 	mfnr_sigma_scale[3][MAX_ISO_STEP];
-    float 	yuvnr_gain_scale[3][MAX_ISO_STEP][3];
-	float 	reserved[10][3][MAX_ISO_STEP];
+    float   sigmaHScale[3][MAX_ISO_STEP];
+    float   sigmaLScale[3][MAX_ISO_STEP];
+    float   light_clp[3][MAX_ISO_STEP];;
+    float   uv_weight[3][MAX_ISO_STEP];;
+    float   mfnr_sigma_scale[3][MAX_ISO_STEP];
+    float   yuvnr_gain_scale[3][MAX_ISO_STEP][3];
+    float   reserved[10][3][MAX_ISO_STEP];
 
 } RKAnr_Mt_Params_t;
 
 typedef struct RKAnr_Mt_Params_Select_t
 {
     int enable;
-  	float sigmaHScale;
-	float sigmaLScale;
-	float light_clp;
-	float uv_weight;
+    float sigmaHScale;
+    float sigmaLScale;
+    float light_clp;
+    float uv_weight;
     float mfnr_sigma_scale;
     float yuvnr_gain_scale[3];
     float frame_limit_y;
@@ -72,7 +72,7 @@ typedef struct RKAnr_Mt_Params_Select_t
     float gain_scale_l_uv;
     float gain_scale_h_uv;
     float motion_dn_str;
-	float gain_ratio;
+    float gain_ratio;
 
 } RKAnr_Mt_Params_Select_t;
 
@@ -100,11 +100,11 @@ class Isp20SpThread
 public:
     Isp20SpThread               ();
     virtual ~Isp20SpThread      ();
-    void set_sp_dev				(SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev, SmartPtr<V4l2SubDevice> lensdev);
-    void set_sp_img_size		(int w, int h, int w_align, int h_align);
-    void set_gain_isp			(void *buf, uint8_t* ratio);
-    void set_gain_wr			(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur, uint16_t h_st, uint16_t h_end);
-	void set_gainkg				(void *buf, uint8_t* ratio, uint8_t* ratio_next);
+    void set_sp_dev             (SmartPtr<V4l2SubDevice> ispdev, SmartPtr<V4l2Device> ispspdev, SmartPtr<V4l2SubDevice> isppdev, SmartPtr<V4l2SubDevice> snsdev, SmartPtr<V4l2SubDevice> lensdev);
+    void set_sp_img_size        (int w, int h, int w_align, int h_align);
+    void set_gain_isp           (void *buf, uint8_t* ratio);
+    void set_gain_wr            (void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur, uint16_t h_st, uint16_t h_end);
+    void set_gainkg             (void *buf, uint8_t* ratio, uint8_t* ratio_next);
     void start                  ();
     void stop                   ();
     void pause                  ();
@@ -147,11 +147,11 @@ private:
     int _img_width_align;
     int _img_height_align;
     bool _first_frame;
-	struct v4l2_event event;
-	int _working_mode;
-	bool _gray_mode;
+    struct v4l2_event event;
+    int _working_mode;
+    bool _gray_mode;
 
-	std::list<SmartPtr<V4l2BufferProxy>> _isp_buf_list;
+    std::list<SmartPtr<V4l2BufferProxy>> _isp_buf_list;
     XCam::Mutex _buf_list_mutex;
     XCam::Mutex _motion_param_mutex;
     XCam::Mutex _afmeas_param_mutex;
@@ -169,32 +169,33 @@ private:
     int _ispp_buf_num;
     bool _fd_init_flag;
 
-	int max_list_num;
-	int first_frame;
-	int frame_id_pp_upt;
-	int frame_id_isp_upt;
-	int frame_num_pp;
-	int frame_num_isp;
+    int max_list_num;
+    int first_frame;
+    int frame_id_pp_upt;
+    int frame_id_isp_upt;
+    int frame_num_pp;
+    int frame_num_isp;
 
-	int _img_width_uv;
+    int imgStride;
+    int _img_width_uv;
     int _img_height_uv;
     int gain_buf_size;
     int img_buf_size;
     int img_buf_size_uv;
 
-	int gain_kg_tile_w_align;
-	int gain_kg_tile_h_align;
+    int gain_kg_tile_w_align;
+    int gain_kg_tile_h_align;
     int ratio_stride;
-	int gain_tile_gainkg_w;
-	int gain_tile_gainkg_h;
-	int gain_tile_ispp_w;
-	int gain_tile_ispp_h;
-	int gain_tile_ispp_x;
-	int gain_tile_ispp_y;
-	int gainkg_unit;
-	int gain_tile_gainkg_size;
-	int gain_tile_gainkg_stride;
-	int gainkg_tile_num;
+    int gain_tile_gainkg_w;
+    int gain_tile_gainkg_h;
+    int gain_tile_ispp_w;
+    int gain_tile_ispp_h;
+    int gain_tile_ispp_x;
+    int gain_tile_ispp_y;
+    int gainkg_unit;
+    int gain_tile_gainkg_size;
+    int gain_tile_gainkg_stride;
+    int gainkg_tile_num;
 
     int gain_blk_isp_w;
     int gain_blk_isp_stride;
@@ -208,34 +209,34 @@ private:
 
     int gainkg_blk_isp_w;
     int gainkg_blk_isp_h;
-	uint8_t **static_ratio;
-	uint8_t *frame_detect_flg;
-	uint8_t **pImgbuf;
-	uint8_t **gain_isp_buf_bak;
-	uint8_t *pPreAlpha;
+    uint8_t **static_ratio;
+    uint8_t *frame_detect_flg;
+    uint8_t **pImgbuf;
+    uint8_t **gain_isp_buf_bak;
+    uint8_t *pPreAlpha;
 
 
-	RKAnr_Mt_Params_t 			mtParams;
-	RKAnr_Mt_Params_Select_t 	mtParamsSelect;
-	RKAnr_Mt_Params_Select_t 	**mtParamsSelect_list;
-	ANRMotionParam_t  _motion_params;
+    RKAnr_Mt_Params_t           mtParams;
+    RKAnr_Mt_Params_Select_t    mtParamsSelect;
+    RKAnr_Mt_Params_Select_t    **mtParamsSelect_list;
+    ANRMotionParam_t  _motion_params;
 
-	uint8_t static_ratio_idx_in;
-	uint8_t static_ratio_idx_out;
-	uint8_t static_ratio_num;
+    uint8_t static_ratio_idx_in;
+    uint8_t static_ratio_idx_out;
+    uint8_t static_ratio_num;
 
-	uint8_t static_ratio_l;
-	uint8_t static_ratio_l_bit;
-	uint8_t static_ratio_r_bit;
-	int16_t *pTmpBuf;
+    uint8_t static_ratio_l;
+    uint8_t static_ratio_l_bit;
+    uint8_t static_ratio_r_bit;
+    int16_t *pTmpBuf;
 
-	uint8_t *pAfTmp;
-	uint32_t sub_shp4_4[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
-	uint32_t sub_shp8_8[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
-	uint32_t high_light[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
-	uint32_t high_light2[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
-	rk_aiq_af_algo_meas_t _af_meas_params;
-	rk_aiq_lens_descriptor _lens_des;
+    uint8_t *pAfTmp;
+    uint32_t sub_shp4_4[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+    uint32_t sub_shp8_8[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+    uint32_t high_light[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+    uint32_t high_light2[RKAIQ_RAWAF_ROI_SUBWINS_NUM];
+    rk_aiq_af_algo_meas_t _af_meas_params;
+    rk_aiq_lens_descriptor _lens_des;
 };
 
 class KgProcThread

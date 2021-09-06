@@ -27,8 +27,8 @@
 namespace RkCam {
 #define DEBUG_TIMESTAMP                 1
 #define RATIO_PP_FLG                    0
-#define WRITE_FLG 						0
-#define WRITE_FLG_OTHER 				1
+#define WRITE_FLG                       0
+#define WRITE_FLG_OTHER                 1
 int write_frame_num     = 2;
 int frame_write_st      = -1;
 char name_wr_flg[100] = "/tmp/motion_detection_wr_flg";
@@ -36,29 +36,29 @@ char name_wr_other_flg[100] = "/tmp/motion_detection_wr_other_flg";
 
 static int thread_bind_cpu(int target_cpu)
 {
- cpu_set_t mask;
- int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
- int i;
+    cpu_set_t mask;
+    int cpu_num = sysconf(_SC_NPROCESSORS_CONF);
+    int i;
 
- if (target_cpu >= cpu_num)
-  return -1;
+    if (target_cpu >= cpu_num)
+        return -1;
 
- CPU_ZERO(&mask);
- CPU_SET(target_cpu, &mask);
+    CPU_ZERO(&mask);
+    CPU_SET(target_cpu, &mask);
 
- if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
-  LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "pthread_setaffinity_np");
+    if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
+        LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "pthread_setaffinity_np");
 
- if (pthread_getaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
-  LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM,"pthread_getaffinity_np");
+    if (pthread_getaffinity_np(pthread_self(), sizeof(mask), &mask) < 0)
+        LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "pthread_getaffinity_np");
 
- LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"Thread bound to cpu:");
- for (i = 0; i < CPU_SETSIZE; i++) {
- if (CPU_ISSET(i, &mask))
-  LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM," %d", i);
- }
+    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "Thread bound to cpu:");
+    for (i = 0; i < CPU_SETSIZE; i++) {
+        if (CPU_ISSET(i, &mask))
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, " %d", i);
+    }
 
- return i >= cpu_num ? -1 : i;
+    return i >= cpu_num ? -1 : i;
 }
 
 XCamReturn
@@ -105,18 +105,18 @@ Isp20SpThread::select_motion_params(RKAnr_Mt_Params_Select_t *stmtParamsSelected
     stmtParamsSelected->gain_scale_l_uv     = (_motion_params.stMotion.reserved6         [gain_l] * ratio + _motion_params.stMotion.reserved6          [gain_r] * (1 - ratio));
     stmtParamsSelected->gain_scale_h_y      = (_motion_params.stMotion.reserved5         [gain_l] * ratio + _motion_params.stMotion.reserved5          [gain_r] * (1 - ratio));
     stmtParamsSelected->gain_scale_h_uv     = (_motion_params.stMotion.reserved4         [gain_l] * ratio + _motion_params.stMotion.reserved4          [gain_r] * (1 - ratio));
-    stmtParamsSelected->motion_dn_str	    = (_motion_params.stMotion.reserved3         [gain_l] * ratio + _motion_params.stMotion.reserved3          [gain_r] * (1 - ratio));
+    stmtParamsSelected->motion_dn_str       = (_motion_params.stMotion.reserved3         [gain_l] * ratio + _motion_params.stMotion.reserved3          [gain_r] * (1 - ratio));
     if(stmtParamsSelected->mfnr_sigma_scale > 0)
         static_ratio_r_bit = static_ratio_l_bit - ceil(log2(stmtParamsSelected->mfnr_sigma_scale)) - ceil(log2(stmtParamsSelected->motion_dn_str));
     else
         LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "stmtParamsSelected->mfnr_sigma_scale %d is out of range\n", stmtParamsSelected->mfnr_sigma_scale);
 
-    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "selected:gain_r %d gain_l:%d iso %d ratio %f, %f,%f,%f,%f, %f,%f,%f, %f %f %6f %6f  %6f %6f %6f %6f r_bit %d\n",gain_r,gain_l,iso,
-        ratio, stmtParamsSelected->sigmaHScale, stmtParamsSelected->sigmaLScale ,
-        stmtParamsSelected->light_clp, stmtParamsSelected->uv_weight,stmtParamsSelected->mfnr_sigma_scale,
-        stmtParamsSelected->yuvnr_gain_scale[0],stmtParamsSelected->yuvnr_gain_scale[1],stmtParamsSelected->yuvnr_gain_scale[2], mtParamsSelect.frame_limit_y,
-        mtParamsSelect.frame_limit_uv,  stmtParamsSelected->gain_scale_l_y, stmtParamsSelected->gain_scale_l_uv, stmtParamsSelected->gain_scale_h_y, stmtParamsSelected->gain_scale_h_uv,
-        stmtParamsSelected->motion_dn_str, static_ratio_r_bit);
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "selected:gain_r %d gain_l:%d iso %d ratio %f, %f,%f,%f,%f, %f,%f,%f, %f %f %6f %6f  %6f %6f %6f %6f r_bit %d\n", gain_r, gain_l, iso,
+                    ratio, stmtParamsSelected->sigmaHScale, stmtParamsSelected->sigmaLScale,
+                    stmtParamsSelected->light_clp, stmtParamsSelected->uv_weight, stmtParamsSelected->mfnr_sigma_scale,
+                    stmtParamsSelected->yuvnr_gain_scale[0], stmtParamsSelected->yuvnr_gain_scale[1], stmtParamsSelected->yuvnr_gain_scale[2], mtParamsSelect.frame_limit_y,
+                    mtParamsSelect.frame_limit_uv,  stmtParamsSelected->gain_scale_l_y, stmtParamsSelected->gain_scale_l_uv, stmtParamsSelected->gain_scale_h_y, stmtParamsSelected->gain_scale_h_uv,
+                    stmtParamsSelected->motion_dn_str, static_ratio_r_bit);
     stmtParamsSelected->gain_ratio          = _motion_params.gain_ratio;
 
     return XCAM_RETURN_NO_ERROR;
@@ -148,7 +148,7 @@ int get_wr_flg_func(int framenum, int pp_flg)
         const char *delim   = " ";
         char buffer[16]     = {0};
         char *name          = name_wr_flg;
-        if (access(name,F_OK)==0) {
+        if (access(name, F_OK) == 0) {
             printf("%s WRITE_FLG 21\n", __func__);
             fp = open(name, O_RDONLY | O_SYNC);
             printf("%s access ! framenum %d\n", __func__, framenum);
@@ -201,9 +201,9 @@ void set_wr_flg_func(int framenum)
     char *name = name_wr_flg;
     if((frame_write_st != -1) && (framenum > frame_write_st + write_frame_num))
     {
-        if (access(name,F_OK)==0)
+        if (access(name, F_OK) == 0)
         {
-            printf("%s remove /tmp/motion_detection_wr_flg name %s frame_write_st %d write_frame_num %d framenum %d\n", __func__, name, frame_write_st, write_frame_num,framenum);
+            printf("%s remove /tmp/motion_detection_wr_flg name %s frame_write_st %d write_frame_num %d framenum %d\n", __func__, name, frame_write_st, write_frame_num, framenum);
             remove(name);
             frame_write_st              = -1;
             write_frame_num             = 0;
@@ -221,7 +221,7 @@ int get_wr_other_flg_func()
 
     int write_other_flg = 0;
     char *name          = name_wr_other_flg;
-    if (access(name,F_OK)==0)
+    if (access(name, F_OK) == 0)
     {
 
         write_other_flg                 = 1;
@@ -258,7 +258,7 @@ Isp20SpThread::start()
 {
     SmartPtr<LensHw> lensHw = _focus_dev.dynamic_cast_ptr<LensHw>();
 
-	LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s", RK_AIQ_MOTION_DETECTION_VERSION);
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s", RK_AIQ_MOTION_DETECTION_VERSION);
     init();
     subscrible_ispgain_event(true);
     if (create_stop_fds_ispsp()) {
@@ -270,11 +270,11 @@ Isp20SpThread::start()
     if (lensHw.ptr())
         lensHw->getLensModeData(_lens_des);
 
-	pthread_attr_t &attr = get_pthread_attr();
-	pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-	struct sched_param  param;
-	param.sched_priority = 99;
-	pthread_attr_setschedparam(&attr, &param);
+    pthread_attr_t &attr = get_pthread_attr();
+    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+    struct sched_param  param;
+    param.sched_priority = 99;
+    pthread_attr_setschedparam(&attr, &param);
 
     mKgThread->start();
     mWrThread->start();
@@ -284,7 +284,7 @@ Isp20SpThread::start()
     tnr_trigger.module = ISPP_MODULE_TNR;
     tnr_trigger.on = 1;
     int ret = _ispp_dev->io_control(RKISPP_CMD_TRIGGER_MODE, &tnr_trigger);
-    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "start tnr process,ret=%d",ret);
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "start tnr process,ret=%d", ret);
 }
 
 void
@@ -294,7 +294,7 @@ Isp20SpThread::stop()
     tnr_trigger.module = ISPP_MODULE_TNR;
     tnr_trigger.on = 0;
     int ret = _ispp_dev->io_control(RKISPP_CMD_TRIGGER_MODE, &tnr_trigger);
-    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "stop tnr process,ret=%d",ret);
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "stop tnr process,ret=%d", ret);
     notify_stop_fds_exit();
     Thread::stop();
     mKgThread->stop();
@@ -305,10 +305,10 @@ Isp20SpThread::stop()
     destroy_stop_fds_ispsp();
     subscrible_ispgain_event(false);
     deinit();
-    for (int i=0; i<_isp_buf_num; i++)
+    for (int i = 0; i < _isp_buf_num; i++)
         ::close(_isp_fd_array[i]);
 
-    for (int i=0; i<_ispp_buf_num; i++)
+    for (int i = 0; i < _ispp_buf_num; i++)
         ::close(_ispp_fd_array[i]);
 }
 
@@ -324,40 +324,40 @@ Isp20SpThread::resume()
 
 int
 Isp20SpThread::subscrible_ispgain_event(bool on) {
-  struct v4l2_event_subscription sub;
-  int ret = 0;
+    struct v4l2_event_subscription sub;
+    int ret = 0;
 
-  memset(&sub, 0, sizeof(sub));
-  sub.type = RKISPP_V4L2_EVENT_TNR_COMPLETE;
-  if (on)
-      ret = _ispp_dev->io_control(VIDIOC_SUBSCRIBE_EVENT, &sub);
-  else
-      ret = _ispp_dev->io_control(VIDIOC_UNSUBSCRIBE_EVENT, &sub);
-  if (ret) {
-      LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "can't subscribe TNR complete event!\n");
-  }
-  return 0;
+    memset(&sub, 0, sizeof(sub));
+    sub.type = RKISPP_V4L2_EVENT_TNR_COMPLETE;
+    if (on)
+        ret = _ispp_dev->io_control(VIDIOC_SUBSCRIBE_EVENT, &sub);
+    else
+        ret = _ispp_dev->io_control(VIDIOC_UNSUBSCRIBE_EVENT, &sub);
+    if (ret) {
+        LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "can't subscribe TNR complete event!\n");
+    }
+    return 0;
 }
 
 int
 Isp20SpThread::wait_ispgain_event(unsigned int event_type, struct v4l2_event *event) {
-  int ret;
+    int ret;
 
-  memset(event, 0, sizeof(*event));
-  do {
-    /*
-     * xioctl instead of poll.
-     * Since poll() cannot wait for input before stream on,
-     * it will return an error directly. So, use ioctl to
-     * dequeue event and block until sucess.
-     */
-    ret = _ispp_dev->io_control(VIDIOC_DQEVENT, event);
-    if (ret == 0 && event->type == event_type) {
-        return 0;
-    }
-  } while (true);
+    memset(event, 0, sizeof(*event));
+    do {
+        /*
+         * xioctl instead of poll.
+         * Since poll() cannot wait for input before stream on,
+         * it will return an error directly. So, use ioctl to
+         * dequeue event and block until sucess.
+         */
+        ret = _ispp_dev->io_control(VIDIOC_DQEVENT, event);
+        if (ret == 0 && event->type == event_type) {
+            return 0;
+        }
+    } while (true);
 
-  return -1;
+    return -1;
 }
 
 bool Isp20SpThread::init_fbcbuf_fd()
@@ -366,19 +366,19 @@ bool Isp20SpThread::init_fbcbuf_fd()
     int res = -1;
 
     memset(&ispbuf_fd, 0, sizeof(ispbuf_fd));
-    res = _isp_dev->io_control(RKISP_CMD_GET_FBCBUF_FD , &ispbuf_fd);
+    res = _isp_dev->io_control(RKISP_CMD_GET_FBCBUF_FD, &ispbuf_fd);
     if (res)
         return false;
-    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "ispbuf_num=%d",ispbuf_fd.buf_num);
-    for (uint32_t i=0; i<ispbuf_fd.buf_num; i++) {
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "ispbuf_num=%d", ispbuf_fd.buf_num);
+    for (uint32_t i = 0; i < ispbuf_fd.buf_num; i++) {
         if (ispbuf_fd.dmafd[i] < 0) {
-            LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "fbcbuf_fd[%u]:%d is illegal!",ispbuf_fd.index[i],ispbuf_fd.dmafd[i]);
+            LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "fbcbuf_fd[%u]:%d is illegal!", ispbuf_fd.index[i], ispbuf_fd.dmafd[i]);
             LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
             assert(0);
         }
         _isp_fd_array[i] = ispbuf_fd.dmafd[i];
         _isp_idx_array[i] = ispbuf_fd.index[i];
-        LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "fbcbuf_fd[%u]:%d",ispbuf_fd.index[i],ispbuf_fd.dmafd[i]);
+        LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "fbcbuf_fd[%u]:%d", ispbuf_fd.index[i], ispbuf_fd.dmafd[i]);
     }
     _isp_buf_num = ispbuf_fd.buf_num;
     return true;
@@ -390,19 +390,19 @@ bool Isp20SpThread::init_tnrbuf_fd()
     int res = -1;
 
     memset(&isppbuf_fd, 0, sizeof(isppbuf_fd));
-    res = _ispp_dev->io_control(RKISPP_CMD_GET_TNRBUF_FD , &isppbuf_fd);
+    res = _ispp_dev->io_control(RKISPP_CMD_GET_TNRBUF_FD, &isppbuf_fd);
     if (res)
         return false;
-    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "isppbuf_num=%d",isppbuf_fd.buf_num);
-    for (uint32_t i=0; i<isppbuf_fd.buf_num; i++) {
+    LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "isppbuf_num=%d", isppbuf_fd.buf_num);
+    for (uint32_t i = 0; i < isppbuf_fd.buf_num; i++) {
         if (isppbuf_fd.dmafd[i] < 0) {
-            LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "tnrbuf_fd[%u]:%d is illegal!",isppbuf_fd.index[i],isppbuf_fd.dmafd[i]);
+            LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "tnrbuf_fd[%u]:%d is illegal!", isppbuf_fd.index[i], isppbuf_fd.dmafd[i]);
             LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
             assert(0);
         }
         _ispp_fd_array[i] = isppbuf_fd.dmafd[i];
         _ispp_idx_array[i] = isppbuf_fd.index[i];
-        LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "tnrbuf_fd[%u]:%d",isppbuf_fd.index[i],isppbuf_fd.dmafd[i]);
+        LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "tnrbuf_fd[%u]:%d", isppbuf_fd.index[i], isppbuf_fd.dmafd[i]);
     }
     _ispp_buf_num = isppbuf_fd.buf_num;
     return true;
@@ -426,19 +426,19 @@ Isp20SpThread::kg_proc_loop ()
 
     wait_ispgain_event(RKISPP_V4L2_EVENT_TNR_COMPLETE, &event);
 
-	struct rkispp_tnr_inf *tnr_inf = (struct rkispp_tnr_inf *)&event.u.data;
+    struct rkispp_tnr_inf *tnr_inf = (struct rkispp_tnr_inf *)&event.u.data;
     LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "kg_loop frame_num_pp %d flg %d\n", frame_num_pp, frame_detect_flg[static_ratio_idx_out]);
     int kg_fd = -1, wr_fd = -1;
 
     if(frame_detect_flg[static_ratio_idx_out] && _calibDb->mfnr.enable && _calibDb->mfnr.motion_detect_en)
     {
 
-        for (int i=0; i<_ispp_buf_num; i++) {
+        for (int i = 0; i < _ispp_buf_num; i++) {
             if (tnr_inf->gainkg_idx == _ispp_idx_array[i]) {
                 kg_fd = _ispp_fd_array[i];
             }
             if (tnr_inf->gainwr_idx == _ispp_idx_array[i]) {
-               wr_fd = _ispp_fd_array[i];
+                wr_fd = _ispp_fd_array[i];
             }
         }
         {
@@ -452,7 +452,7 @@ Isp20SpThread::kg_proc_loop ()
             notify_yg_cmd(msg);
         }
 
-    }else {
+    } else {
         _ispp_dev->io_control(RKISPP_CMD_TRIGGER_YNRRUN, tnr_inf);
     }
 
@@ -477,10 +477,10 @@ Isp20SpThread::kg_proc_loop ()
                 uint8_t* ratio                  = static_ratio[static_ratio_idx_out];
                 uint8_t* ratio_next             = static_ratio[static_ratio_idx_out_plus1];
 
-                #if DEBUG_TIMESTAMP
+#if DEBUG_TIMESTAMP
                 struct timeval tv0, tv1, tv2, tv3;
                 gettimeofday(&tv0, NULL);
-                #endif
+#endif
                 void *gainkg_addr = mmap(NULL, tnr_inf->gainkg_size, PROT_READ | PROT_WRITE, MAP_SHARED, kg_fd, 0);
                 if (MAP_FAILED == gainkg_addr) {
                     LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "mmap gainkg_fd failed!!!(errno=%d),fd: %d, idx:%u, size: %d", errno, kg_fd, tnr_inf->gainkg_idx, tnr_inf->gainkg_size);
@@ -488,26 +488,26 @@ Isp20SpThread::kg_proc_loop ()
                     assert(0);
                 }
 
-                #if DEBUG_TIMESTAMP
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv1, NULL);
-                #endif
+#endif
                 set_gainkg(gainkg_addr,     ratio, ratio_next);
-                #if DEBUG_TIMESTAMP
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv2, NULL);
-                #endif
+#endif
                 munmap(gainkg_addr, tnr_inf->gainkg_size);
-                #if DEBUG_TIMESTAMP
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv3, NULL);
-                #endif
-                #if DEBUG_TIMESTAMP
+#endif
+#if DEBUG_TIMESTAMP
                 LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg idx %d %d fid %u %8ld %8ld %8ld %8ld  delta %8ld %8ld %8ld  \n", static_ratio_idx_out, static_ratio_idx_out_plus1, tnr_inf->frame_id,
-                    tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec,  tv1.tv_usec - tv0.tv_usec,
-                    tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec  );
-                #endif
+                                tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec,  tv1.tv_usec - tv0.tv_usec,
+                                tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec  );
+#endif
             }
             set_wr_flg_func(frame_num_pp);
             static_ratio_idx_out++;
-            static_ratio_idx_out    %=static_ratio_num;
+            static_ratio_idx_out    %= static_ratio_num;
             frame_id_pp_upt         = tnr_inf->frame_id;
             frame_num_pp++;
 
@@ -539,129 +539,129 @@ Isp20SpThread::wr_proc_loop ()
             continue;
         switch(msg->cmd)
         {
-            case MSG_CMD_WR_START:
-            {
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "MSG_CMD_WR_START received");
-                ratio_idx = msg->arg1;
-                tnr_info = (struct rkispp_tnr_inf *)msg->arg2;
-                int wr_fd = msg->arg3;
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv0, NULL);
-                #endif
-                gainwr_addr = mmap(NULL, tnr_info->gainwr_size, PROT_READ | PROT_WRITE, MAP_SHARED, wr_fd, 0);
-                if (MAP_FAILED == gainwr_addr) {
-                    LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "mmap gainwr_fd failed!!!(errno=%d),fd: %d, size: %d", errno, wr_fd, tnr_info->gainwr_size);
-                    LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
-                    assert(0);
-                }
-
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv1, NULL);
-                #endif
-                if (static_ratio[ratio_idx] == NULL) {
-                    LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "ratio_idx=%d",ratio_idx);
-                    LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
-                    assert(0);
-                }
-
-
-
-                int wr_flg                          = get_wr_flg_func(frame_num_pp, 1);
-                int wr_other_flg                    = get_wr_other_flg_func();
-                wr_flg &= wr_other_flg;
-
-                {
-                    static FILE *fd_gain_yuvnr_wr   = NULL;
-                    if(wr_flg)
-                    {
-                        if(fd_gain_yuvnr_wr == NULL)
-                            fd_gain_yuvnr_wr            = fopen("/tmp/gain_pp_out.yuv", "wb");
-                        if(fd_gain_yuvnr_wr)
-                        {
-                            fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_wr);
-                            fflush(fd_gain_yuvnr_wr);
-                        }
-
-                    }
-                    else
-                    {
-                        fd_gain_yuvnr_wr                = NULL;
-                    }
-                }
-
-
-
-                {
-                    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "send MSG_CMD_WR_START2");
-                    SmartPtr<sp_msg_t> msg = new sp_msg_t();
-                    msg->cmd = MSG_CMD_WR_START;
-                    msg->sync = false;
-                    msg->arg1 = ratio_idx;
-                    msg->arg2 = gainwr_addr;
-                    notify_yg2_cmd(msg);
-                }
-
-                uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
-                uint8_t* ratio                              = static_ratio[ratio_idx];
-
-
-                set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
-                //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
-
-                {
-                    static FILE *fd_gain_yuvnr_up_wr        = NULL;
-
-                    if(wr_flg)
-                    {
-
-                        if(fd_gain_yuvnr_up_wr==NULL)
-                            fd_gain_yuvnr_up_wr                 = fopen("/tmp/gain_pp_up_out.yuv", "wb");
-                        if(fd_gain_yuvnr_up_wr)
-                        {
-                            fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_up_wr);
-                            fflush(fd_gain_yuvnr_up_wr);
-                        }
-
-                    }
-                    else
-                    {
-                        fd_gain_yuvnr_up_wr        = NULL;
-                    }
-                }
-
-
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"set_gain_wr top done");
-                char ch;
-                read(sync_pipe_fd[0], &ch, 1);//blocked
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv2, NULL);
-                #endif
-                munmap(gainwr_addr, tnr_info->gainwr_size);
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv3, NULL);
-                #endif
-                _ispp_dev->io_control(RKISPP_CMD_TRIGGER_YNRRUN, tnr_info);
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv4, NULL);
-                #endif
-                #if DEBUG_TIMESTAMP
-        	    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr fid %u %8ld %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld \n", tnr_info->frame_id,
-        	        tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv4.tv_usec, tv1.tv_usec - tv0.tv_usec,
-        	        tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec, tv4.tv_usec - tv3.tv_usec  );
-                #endif
-                break;
+        case MSG_CMD_WR_START:
+        {
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "MSG_CMD_WR_START received");
+            ratio_idx = msg->arg1;
+            tnr_info = (struct rkispp_tnr_inf *)msg->arg2;
+            int wr_fd = msg->arg3;
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv0, NULL);
+#endif
+            gainwr_addr = mmap(NULL, tnr_info->gainwr_size, PROT_READ | PROT_WRITE, MAP_SHARED, wr_fd, 0);
+            if (MAP_FAILED == gainwr_addr) {
+                LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "mmap gainwr_fd failed!!!(errno=%d),fd: %d, size: %d", errno, wr_fd, tnr_info->gainwr_size);
+                LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
+                assert(0);
             }
-            case MSG_CMD_WR_EXIT:
-            {
-                if (msg->sync) {
-                    msg->mutex->lock();
-                    msg->cond->broadcast ();
-                    msg->mutex->unlock();
-                }
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s: wr_proc_loop exit", __FUNCTION__);
-                loop_live = false;
-                break;
+
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv1, NULL);
+#endif
+            if (static_ratio[ratio_idx] == NULL) {
+                LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "ratio_idx=%d", ratio_idx);
+                LOGE_CAMHW_SUBM(MOTIONDETECT_SUBM, "\n*** ASSERT: In File %s,line %d ***\n", __FILE__, __LINE__);
+                assert(0);
             }
+
+
+
+            int wr_flg                          = get_wr_flg_func(frame_num_pp, 1);
+            int wr_other_flg                    = get_wr_other_flg_func();
+            wr_flg &= wr_other_flg;
+
+            {
+                static FILE *fd_gain_yuvnr_wr   = NULL;
+                if(wr_flg)
+                {
+                    if(fd_gain_yuvnr_wr == NULL)
+                        fd_gain_yuvnr_wr            = fopen("/tmp/gain_pp_out.yuv", "wb");
+                    if(fd_gain_yuvnr_wr)
+                    {
+                        fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_wr);
+                        fflush(fd_gain_yuvnr_wr);
+                    }
+
+                }
+                else
+                {
+                    fd_gain_yuvnr_wr                = NULL;
+                }
+            }
+
+
+
+            {
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "send MSG_CMD_WR_START2");
+                SmartPtr<sp_msg_t> msg = new sp_msg_t();
+                msg->cmd = MSG_CMD_WR_START;
+                msg->sync = false;
+                msg->arg1 = ratio_idx;
+                msg->arg2 = gainwr_addr;
+                notify_yg2_cmd(msg);
+            }
+
+            uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
+            uint8_t* ratio                              = static_ratio[ratio_idx];
+
+
+            set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
+            //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
+
+            {
+                static FILE *fd_gain_yuvnr_up_wr        = NULL;
+
+                if(wr_flg)
+                {
+
+                    if(fd_gain_yuvnr_up_wr == NULL)
+                        fd_gain_yuvnr_up_wr                 = fopen("/tmp/gain_pp_up_out.yuv", "wb");
+                    if(fd_gain_yuvnr_up_wr)
+                    {
+                        fwrite(gainwr_addr, gain_blk_ispp_stride * gain_blk_ispp_h * 2, 1, fd_gain_yuvnr_up_wr);
+                        fflush(fd_gain_yuvnr_up_wr);
+                    }
+
+                }
+                else
+                {
+                    fd_gain_yuvnr_up_wr        = NULL;
+                }
+            }
+
+
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr top done");
+            char ch;
+            read(sync_pipe_fd[0], &ch, 1);//blocked
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv2, NULL);
+#endif
+            munmap(gainwr_addr, tnr_info->gainwr_size);
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv3, NULL);
+#endif
+            _ispp_dev->io_control(RKISPP_CMD_TRIGGER_YNRRUN, tnr_info);
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv4, NULL);
+#endif
+#if DEBUG_TIMESTAMP
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr fid %u %8ld %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld \n", tnr_info->frame_id,
+                            tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv4.tv_usec, tv1.tv_usec - tv0.tv_usec,
+                            tv2.tv_usec - tv1.tv_usec, tv3.tv_usec - tv2.tv_usec, tv4.tv_usec - tv3.tv_usec  );
+#endif
+            break;
+        }
+        case MSG_CMD_WR_EXIT:
+        {
+            if (msg->sync) {
+                msg->mutex->lock();
+                msg->cond->broadcast ();
+                msg->mutex->unlock();
+            }
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s: wr_proc_loop exit", __FUNCTION__);
+            loop_live = false;
+            break;
+        }
         }
     }
     LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s exit", __FUNCTION__);
@@ -680,8 +680,8 @@ int Isp20SpThread::get_lowpass_fv(uint32_t sequence, SmartPtr<V4l2BufferProxy> b
 
     if (meas_param.sp_meas.enable) {
         get_lpfv(sequence, image_buf, _img_width, _img_height,
-            _img_width_align, _img_height_align, pAfTmp, sub_shp4_4,
-            sub_shp8_8, high_light, high_light2, &meas_param);
+                 _img_width_align, _img_height_align, pAfTmp, sub_shp4_4,
+                 sub_shp8_8, high_light, high_light2, &meas_param);
 
         lensHw->setLowPassFv(sub_shp4_4, sub_shp8_8, high_light, high_light2, sequence);
     }
@@ -705,40 +705,40 @@ Isp20SpThread::wr_proc_loop2 ()
             continue;
         switch(msg->cmd)
         {
-            case MSG_CMD_WR_START:
-            {
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "MSG_CMD_WR_START2 received");
-                ratio_idx = msg->arg1;
-                gainwr_addr = msg->arg2;
-                uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
-                uint8_t* ratio                              = static_ratio[ratio_idx];
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv0, NULL);
-                #endif
-                //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
-                set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM,"set_gain_wr bottom done");
-                #if DEBUG_TIMESTAMP
-                gettimeofday(&tv1, NULL);
-                #endif
-                #if DEBUG_TIMESTAMP
-        	    LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr2 %8ld \n", tv1.tv_usec - tv0.tv_usec);
-                #endif
-                char ch = 0x1;//whatever
-                write(sync_pipe_fd[1], &ch, 1);//nonblock
-                break;
+        case MSG_CMD_WR_START:
+        {
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "MSG_CMD_WR_START2 received");
+            ratio_idx = msg->arg1;
+            gainwr_addr = msg->arg2;
+            uint8_t *gain_isp_buf_cur                   = gain_isp_buf_bak[static_ratio_idx_out];
+            uint8_t* ratio                              = static_ratio[ratio_idx];
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv0, NULL);
+#endif
+            //set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, 0,                    gain_blk_ispp_h / 2);
+            set_gain_wr(gainwr_addr,    ratio, gain_isp_buf_cur, gain_blk_ispp_h / 2,  gain_blk_ispp_h);
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr bottom done");
+#if DEBUG_TIMESTAMP
+            gettimeofday(&tv1, NULL);
+#endif
+#if DEBUG_TIMESTAMP
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr2 %8ld \n", tv1.tv_usec - tv0.tv_usec);
+#endif
+            char ch = 0x1;//whatever
+            write(sync_pipe_fd[1], &ch, 1);//nonblock
+            break;
+        }
+        case MSG_CMD_WR_EXIT:
+        {
+            if (msg->sync) {
+                msg->mutex->lock();
+                msg->cond->broadcast ();
+                msg->mutex->unlock();
             }
-            case MSG_CMD_WR_EXIT:
-            {
-                if (msg->sync) {
-                    msg->mutex->lock();
-                    msg->cond->broadcast ();
-                    msg->mutex->unlock();
-                }
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s: wr_proc_loop2 exit", __FUNCTION__);
-                loop_live = false;
-                break;
-            }
+            LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s: wr_proc_loop2 exit", __FUNCTION__);
+            loop_live = false;
+            break;
+        }
         }
     }
     LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "%s exit", __FUNCTION__);
@@ -786,9 +786,9 @@ Isp20SpThread::loop () {
 
     SmartPtr<V4l2BufferProxy> buf_proxy         = new V4l2BufferProxy(buf, _isp_sp_dev);
     uint8_t *image_buf                          = (uint8_t *)buf_proxy->get_v4l2_planar_userptr(0);
-	unsigned long long image_ts, ispgain_ts, mfbc_ts;
-	image_ts                                    = *(unsigned long long*)(image_buf + buf_proxy->get_v4l2_buf_planar_length(0) - 8);
-	struct isp2x_ispgain_buf *ispgain           = (struct isp2x_ispgain_buf *)buf_proxy->get_v4l2_planar_userptr(1);
+    unsigned long long image_ts, ispgain_ts, mfbc_ts;
+    image_ts                                    = *(unsigned long long*)(image_buf + buf_proxy->get_v4l2_buf_planar_length(0) - 8);
+    struct isp2x_ispgain_buf *ispgain           = (struct isp2x_ispgain_buf *)buf_proxy->get_v4l2_planar_userptr(1);
 
     select_motion_params(&mtParamsSelect, ispgain->frame_id);
 
@@ -812,11 +812,11 @@ Isp20SpThread::loop () {
         int wr_other_flg    = get_wr_other_flg_func();
         if(1)
         {
-            struct timeval tv0, tv1, tv2, tv3, tv4, tv5, tv6,tva,tvb;
+            struct timeval tv0, tv1, tv2, tv3, tv4, tv5, tv6, tva, tvb;
             gettimeofday(&tv0, NULL);
             int gain_fd = -1, mfbc_fd = -1;
 
-            for (int i=0; i<_isp_buf_num; i++) {
+            for (int i = 0; i < _isp_buf_num; i++) {
                 if (ispgain->gain_dmaidx == _isp_idx_array[i]) {
                     gain_fd = _isp_fd_array[i];
                 }
@@ -835,13 +835,13 @@ Isp20SpThread::loop () {
             uint8_t *pCurIn                     = pImgbuf[static_ratio_idx_in];
             uint8_t *pPreIn                     = pImgbuf[(static_ratio_idx_in - 1 + static_ratio_num) % static_ratio_num];
 #if DEBUG_TIMESTAMP
-gettimeofday(&tva, NULL);
+            gettimeofday(&tva, NULL);
 #endif
             //memcpy(pCurIn, image_buf, img_buf_size + img_buf_size_uv);
-	        memcpy(pCurIn, image_buf, img_buf_size);
-	        memcpy(pCurIn+img_buf_size, image_buf+ALIGN_UP(img_buf_size, 64), img_buf_size_uv);
+            memcpy(pCurIn, image_buf, img_buf_size);
+            memcpy(pCurIn + img_buf_size, image_buf + ALIGN_UP(img_buf_size, 64), img_buf_size_uv);
 #if DEBUG_TIMESTAMP
-gettimeofday(&tvb, NULL);
+            gettimeofday(&tvb, NULL);
 #endif
             {
                 static    FILE *fd_ds_wr                = NULL;
@@ -876,7 +876,7 @@ gettimeofday(&tvb, NULL);
                         fd_param_out                        = fopen("/tmp/param_out.yuv", "wb");
                     if(fd_param_out)
                     {
-                        fwrite(&mtParamsSelect,     sizeof(mtParamsSelect)-sizeof(float), 1,   fd_param_out);
+                        fwrite(&mtParamsSelect,     sizeof(mtParamsSelect) - sizeof(float), 1,   fd_param_out);
                         float gain_ratio_cur    = mtParamsSelect.gain_ratio;
                         fwrite(&gain_ratio_cur,    sizeof(float),          1,   fd_param_out);
                         float gain_ratio_last   = (*(mtParamsSelect_list[(static_ratio_idx_in + static_ratio_num - 1) % static_ratio_num])).gain_ratio;
@@ -917,44 +917,44 @@ gettimeofday(&tvb, NULL);
                 }
             }
 
-	        if(detect_flg_last == 1)
+            if(detect_flg_last == 1)
             {
-                #if DEBUG_TIMESTAMP
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv1, NULL);
-                #endif
+#endif
                 static int wr_flg_last = 0;
 
                 uint8_t *src = (uint8_t*)gain_addr;
                 uint8_t *gain_isp_buf_cur           = gain_isp_buf_bak[static_ratio_idx_in];
                 memcpy(gain_isp_buf_cur, src, gain_blk_isp_stride * gain_blk_isp_h);
-                #if 1
-                #if DEBUG_TIMESTAMP
+#if 1
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv2, NULL);
-                #endif
+#endif
                 motion_detect(pCurIn, pPreIn, pTmpBuf, static_ratio_cur, pPreAlpha, (uint8_t*)src, _img_height_align, _img_width_align, _img_height, _img_width,
-                        gain_blk_isp_stride, mtParamsSelect.sigmaHScale, mtParamsSelect.sigmaLScale,
-                        mtParamsSelect.uv_weight, static_ratio_r_bit, wr_flg && wr_other_flg, wr_flg_last);
-                #if DEBUG_TIMESTAMP
+                              gain_blk_isp_stride, mtParamsSelect.sigmaHScale, mtParamsSelect.sigmaLScale,
+                              mtParamsSelect.uv_weight, static_ratio_r_bit, wr_flg && wr_other_flg, wr_flg_last);
+#if DEBUG_TIMESTAMP
                 gettimeofday(&tv3, NULL);
-                #endif
+#endif
 
                 wr_flg_last         = wr_flg && wr_other_flg;
-                #if DEBUG_TIMESTAMP
-                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_isp fid %u frame_write_st %d time %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld %8ld %d %x\n",ispgain->frame_id,frame_write_st,
-                          tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv1.tv_usec - tv0.tv_usec, tv2.tv_usec - tv1.tv_usec,
-                          tv3.tv_usec - tv2.tv_usec, tv3.tv_usec - tv0.tv_usec, tvb.tv_usec - tva.tv_usec, static_ratio_cur[0], ratio_stride * gain_kg_tile_h_align);
-                #endif
-               // memset(static_ratio_cur, 1<<7, gain_kg_tile_h_align * ratio_stride);
+#if DEBUG_TIMESTAMP
+                LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_isp fid %u frame_write_st %d time %8ld %8ld %8ld %8ld delta %8ld %8ld %8ld %8ld %8ld %d %x\n", ispgain->frame_id, frame_write_st,
+                                tv0.tv_usec, tv1.tv_usec, tv2.tv_usec, tv3.tv_usec, tv1.tv_usec - tv0.tv_usec, tv2.tv_usec - tv1.tv_usec,
+                                tv3.tv_usec - tv2.tv_usec, tv3.tv_usec - tv0.tv_usec, tvb.tv_usec - tva.tv_usec, static_ratio_cur[0], ratio_stride * gain_kg_tile_h_align);
+#endif
+                // memset(static_ratio_cur, 1<<7, gain_kg_tile_h_align * ratio_stride);
 
-                #else
+#else
                 if(frame_num_isp & 1)
-                    memset(static_ratio_cur, 1<<7, gain_kg_tile_h_align * ratio_stride);
+                    memset(static_ratio_cur, 1 << 7, gain_kg_tile_h_align * ratio_stride);
                 else
-                    memset(static_ratio_cur, 1<<7, gain_kg_tile_h_align * ratio_stride);
+                    memset(static_ratio_cur, 1 << 7, gain_kg_tile_h_align * ratio_stride);
 
-                    for(int i = 0 ;i < gain_blk_isp_stride * gain_blk_isp_h*4/5; i++)
-                        src[i] = ROUND_INT((uint16_t)src[i] * static_ratio_cur[i], static_ratio_l_bit) ;
-                #endif
+                for(int i = 0 ; i < gain_blk_isp_stride * gain_blk_isp_h * 4 / 5; i++)
+                    src[i] = ROUND_INT((uint16_t)src[i] * static_ratio_cur[i], static_ratio_l_bit) ;
+#endif
             }
             else
                 memset(static_ratio_cur, static_ratio_l, gain_kg_tile_h_align * ratio_stride);
@@ -1021,15 +1021,15 @@ gettimeofday(&tvb, NULL);
 
             }
 
-	        munmap(gain_addr, ispgain->gain_size);
-	    }
+            munmap(gain_addr, ispgain->gain_size);
+        }
     }
 
     frame_detect_flg[static_ratio_idx_in]       = detect_flg;
     *(mtParamsSelect_list[static_ratio_idx_in]) = mtParamsSelect;
     frame_num_isp++;
     static_ratio_idx_in++;
-	static_ratio_idx_in     %= static_ratio_num;
+    static_ratio_idx_in     %= static_ratio_num;
     frame_id_isp_upt        = ispgain->frame_id;
     LOGI_CAMHW_SUBM(MOTIONDETECT_SUBM, "loop frame_num_isp %d fid %u \n", frame_num_isp, ispgain->frame_id);
 
@@ -1079,23 +1079,23 @@ void
 Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur, uint16_t h_st, uint16_t h_end)
 {
     RKAnr_Mt_Params_Select_t mtParamsSelect_cur     = *(mtParamsSelect_list[static_ratio_idx_out]);
-	uint16_t yuvnr_gain_scale_fix[3];
+    uint16_t yuvnr_gain_scale_fix[3];
     float yuvnr_gain_scale[3];
     uint8_t *src                            = (uint8_t*)buf;
 
-	yuvnr_gain_scale[0]                     = mtParamsSelect_cur.yuvnr_gain_scale[0];
-	yuvnr_gain_scale[1]                     = mtParamsSelect_cur.yuvnr_gain_scale[1];
-	yuvnr_gain_scale[2]                     = mtParamsSelect_cur.yuvnr_gain_scale[2];
+    yuvnr_gain_scale[0]                     = mtParamsSelect_cur.yuvnr_gain_scale[0];
+    yuvnr_gain_scale[1]                     = mtParamsSelect_cur.yuvnr_gain_scale[1];
+    yuvnr_gain_scale[2]                     = mtParamsSelect_cur.yuvnr_gain_scale[2];
 
 
-	yuvnr_gain_scale_fix[0]                 = ROUND_F(yuvnr_gain_scale[0]       * (1 << YUV_SCALE_FIX_BITS));
-	yuvnr_gain_scale_fix[1]                 = ROUND_F(yuvnr_gain_scale[1]       * (1 << YUV_SCALE_FIX_BITS));
-	yuvnr_gain_scale_fix[2]                 = ROUND_F(2 * yuvnr_gain_scale[2]   * (1 << YUV_SCALE_FIX_BITS));
+    yuvnr_gain_scale_fix[0]                 = ROUND_F(yuvnr_gain_scale[0]       * (1 << YUV_SCALE_FIX_BITS));
+    yuvnr_gain_scale_fix[1]                 = ROUND_F(yuvnr_gain_scale[1]       * (1 << YUV_SCALE_FIX_BITS));
+    yuvnr_gain_scale_fix[2]                 = ROUND_F(2 * yuvnr_gain_scale[2]   * (1 << YUV_SCALE_FIX_BITS));
     float coeff                             = yuvnr_gain_scale[2] * 2.0f;
     uint16_t ratio_static                   = (1 << static_ratio_l_bit) - 20;
 
-    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr frame_num_pp %d frame_write_st %d  write_frame_num %d\n ",frame_num_pp, frame_write_st, write_frame_num);
- //   printf("ratio_shf_bit %d mtParamsSelect.yuvnr_gain_scale %f %f %f\n", ratio_shf_bit, mtParamsSelect.yuvnr_gain_scale[0], mtParamsSelect.yuvnr_gain_scale[1], mtParamsSelect.yuvnr_gain_scale[2]);
+    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_wr frame_num_pp %d frame_write_st %d  write_frame_num %d\n ", frame_num_pp, frame_write_st, write_frame_num);
+//   printf("ratio_shf_bit %d mtParamsSelect.yuvnr_gain_scale %f %f %f\n", ratio_shf_bit, mtParamsSelect.yuvnr_gain_scale[0], mtParamsSelect.yuvnr_gain_scale[1], mtParamsSelect.yuvnr_gain_scale[2]);
 #ifndef ENABLE_NEON
     for(int i = h_st; i < h_end; i++)
         for(int j = 0; j < gain_blk_ispp_stride; j++)
@@ -1112,46 +1112,46 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
             int gain_isp_cur                = MAX(gain_isp_buf_cur[idx_isp], gain_isp_buf_cur[idx_isp + 1]);
 
 
-                uint16_t tmp0;
-    			uint16_t tmp1;
-                float rr[2];
+            uint16_t tmp0;
+            uint16_t tmp1;
+            float rr[2];
 
-				if(idx_gain==16)
-					idx_gain=idx_gain;
-        	    if(ratio_cur >  (1 << static_ratio_l_bit) - 20)
-        	    {
+            if(idx_gain == 16)
+                idx_gain = idx_gain;
+            if(ratio_cur >  (1 << static_ratio_l_bit) - 20)
+            {
 
-    					if ((1.0f*src[idx_gain+1])/gain_isp_cur  > 1.3f/4)
-    					{
-    	        	        rr[0] 							= coeff;
-    	        	        rr[1] 							= coeff;
-    					}
-    					else
-    					{
-    	        	        rr[0] 							= 1;
-    	        	        rr[1] 							= 1;
-    					}
-        	    }
-        	    else
-        	    {
-    	        rr[0] 							= yuvnr_gain_scale[0];
-    	        rr[1] 							= yuvnr_gain_scale[1];
+                if ((1.0f * src[idx_gain + 1]) / gain_isp_cur  > 1.3f / 4)
+                {
+                    rr[0]                           = coeff;
+                    rr[1]                           = coeff;
+                }
+                else
+                {
+                    rr[0]                           = 1;
+                    rr[1]                           = 1;
+                }
+            }
+            else
+            {
+                rr[0]                           = yuvnr_gain_scale[0];
+                rr[1]                           = yuvnr_gain_scale[1];
 
-
-
-        	    }
-
-				tmp0 							= (src[idx_gain]		* rr[0] * 256);
-				tmp1 							= (src[idx_gain+1]	    * rr[1]* 256);
-
-				tmp0 							= ROUND_INT(ROUND_F((tmp0 << static_ratio_l_bit)/ratio_cur), 8);
-				tmp1 							= ROUND_INT(ROUND_F((tmp1 << static_ratio_l_bit)/ratio_cur), 8);
-
-			src[idx_gain]     				= MIN(255, tmp0);
-				src[idx_gain + 1] 				= MIN(255, tmp1);
 
 
             }
+
+            tmp0                            = (src[idx_gain]        * rr[0] * 256);
+            tmp1                            = (src[idx_gain + 1]      * rr[1] * 256);
+
+            tmp0                            = ROUND_INT(ROUND_F((tmp0 << static_ratio_l_bit) / ratio_cur), 8);
+            tmp1                            = ROUND_INT(ROUND_F((tmp1 << static_ratio_l_bit) / ratio_cur), 8);
+
+            src[idx_gain]                   = MIN(255, tmp0);
+            src[idx_gain + 1]               = MIN(255, tmp1);
+
+
+        }
 #else
 
 
@@ -1159,137 +1159,141 @@ Isp20SpThread::set_gain_wr(void *buf, uint8_t* ratio, uint8_t* gain_isp_buf_cur,
 //    __asm__("mov %[output], %[input]\n" : [output] "=r"(test_fpscr) : [input]  "r" (test_fpscr));
     __asm__("vmrs %[output], fpscr\n" : [output] "=r"(test_fpscr) );
     static int num = 0;
-   // if((num%30)==0)
-   //     printf("test_fpscr %x\n",test_fpscr);
+    // if((num%30)==0)
+    //     printf("test_fpscr %x\n",test_fpscr);
     num++;
-	int offsetX_last    = gain_blk_ispp_w - 8;
+    int offsetX_last    = gain_blk_ispp_w - 8;
     int prefetch_num    = (ratio_stride  + 255) / 256;
-  //  for(int k = 0;k<20;k++)
+    //  for(int k = 0;k<20;k++)
 
-	for(int i = h_st; i < h_end; i++)
-		{
-			int offsetX = 0;
-			int idx_isp             = 0;
-			int idx_gain		    = 0;
-			int idx_ratio		    = 0;
-			uint8_t	*pGainIsp00		= gain_isp_buf_cur  + i * gain_blk_isp_stride;
-			uint8_t	*pSrc00		    = src               + i * gain_blk_ispp_stride * 2;
-			uint8_t	*pRatio00	    = ratio             + i * ratio_stride;
-			uint8x8x2_t				vSrc00;
-			uint8x8x2_t				vGainIsp00;
-			uint8x8x2_t				vRatio_u8;
-
-
-			for(int j = 0; j < gain_blk_ispp_stride ; j += 8)
-			{
-				offsetX			        = j;
-
-				if(j + 8 > gain_blk_ispp_stride)
-				{
-					offsetX 	        = offsetX_last;
-				}
+    for(int i = h_st; i < h_end; i++)
+    {
+        int offsetX = 0;
+        int idx_isp             = 0;
+        int idx_gain            = 0;
+        int idx_ratio           = 0;
+        uint8_t *pGainIsp00     = gain_isp_buf_cur  + i * gain_blk_isp_stride;
+        uint8_t *pSrc00         = src               + i * gain_blk_ispp_stride * 2;
+        uint8_t *pRatio00       = ratio             + i * ratio_stride;
+        uint8x8x2_t             vSrc00;
+        uint8x8x2_t             vGainIsp00;
+        uint8x8x2_t             vRatio_u8;
 
 
+        vSrc00                  = vld2_u8(pSrc00);
+        vGainIsp00              = vld2_u8(pGainIsp00);
+        vRatio_u8               = vld2_u8(pRatio00);
 
 
-				uint16x8x2_t			vSrc00_u16;
+        for(int j = 0; j < gain_blk_ispp_stride ; j += 8)
+        {
+            offsetX                 = j;
 
-
-
-
-				uint16x8_t			    vsrc_cmp_l;
-				uint16x8_t  			vsrc_cmp_r;
-				uint16x8_t				vFlag00_u16, vFlag01_u16;
-				uint16x8x2_t			vRR00;
-				uint16x4x2_t			vRR00_0;
-				uint16x4x2_t			vRR00_1;
+            if(j + 8 > gain_blk_ispp_stride)
+            {
+                offsetX             = offsetX_last;
+            }
 
 
 
-    			vSrc00				    = vld2_u8(pSrc00        + idx_isp);
-    			vGainIsp00				= vld2_u8(pGainIsp00    + idx_gain);
-    			vRatio_u8			    = vld2_u8(pRatio00      + idx_ratio);
-				vSrc00_u16.val[0]		= vmovl_u8(vSrc00.val[0]);
-				vSrc00_u16.val[1]		= vmovl_u8(vSrc00.val[1]);
+            idx_isp     += 16;
+            idx_gain    += 16;
+            idx_ratio   += 16;
 
-				vGainIsp00.val[0]		= vmax_u8(vGainIsp00.val[0],            vGainIsp00.val[1]);
-				vRatio_u8.val[0]		= vmax_u8(vRatio_u8.val[0],             vRatio_u8.val[1]);
+            uint16x8x2_t            vSrc00_u16;
 
 
 
 
-
-				vsrc_cmp_l	            = vmulq_n_u16(vmovl_u8(vSrc00.val[1]),        40);
-				vsrc_cmp_r      	    = vmulq_n_u16(vmovl_u8(vGainIsp00.val[0]),    13);
-				// (1.0f*src[idx_gain+1])/gain_isp_cur  > 13.0/40
-				vFlag00_u16				= vcgtq_u16(vsrc_cmp_r,                 vsrc_cmp_l);
-				// ratio_cur >  (1 << static_ratio_l_bit) - 20
-				vFlag01_u16			    = vcgtq_u16(vmovl_u8(vRatio_u8.val[0]), vdupq_n_u16(ratio_static));
-				vRR00.val[1]			= vbslq_u16(vFlag00_u16,                vdupq_n_u16(1 << YUV_SCALE_FIX_BITS),   vdupq_n_u16(yuvnr_gain_scale_fix[2]));
-
-				vRR00.val[0]			= vbslq_u16(vFlag01_u16,                vRR00.val[1],                           vdupq_n_u16(yuvnr_gain_scale_fix[0]));
-				vRR00.val[1]			= vbslq_u16(vFlag01_u16,                vRR00.val[1],                           vdupq_n_u16(yuvnr_gain_scale_fix[1]));
+            uint16x8_t              vsrc_cmp_l;
+            uint16x8_t              vsrc_cmp_r;
+            uint16x8_t              vFlag00_u16, vFlag01_u16;
+            uint16x8x2_t            vRR00;
+            uint16x4x2_t            vRR00_0;
+            uint16x4x2_t            vRR00_1;
 
 
-				// tmp0 				= (src[idx_gain]     * rr) << static_ratio_l_bit;
-				vSrc00_u16.val[0]		= vmulq_u16(vSrc00_u16.val[0],          vRR00.val[0]);
-				vSrc00_u16.val[1]		= vmulq_u16(vSrc00_u16.val[1],          vRR00.val[1]);
+            vSrc00_u16.val[0]       = vmovl_u8(vSrc00.val[0]);
+            vSrc00_u16.val[1]       = vmovl_u8(vSrc00.val[1]);
 
-
-                float32x4x2_t			vSrc_l_f32, vSrc_h_f32;
-                //0 1 low 2 3 high
-                vSrc_l_f32.val[0]       = vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vSrc00_u16.val[0])));
-                vSrc_l_f32.val[1]       = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vSrc00_u16.val[0])));
-                vSrc_h_f32.val[0]       = vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vSrc00_u16.val[1])));
-                vSrc_h_f32.val[1]       = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vSrc00_u16.val[1])));
-
-				///////////////////////////////////////////////////////////////////////////////////////////////
-				// tmp0 				= (tmp0 << static_ratio_l_bit)/ratio_cur;
-				// reciprocal
-				float32x4x2_t				vRatio_f32_4;
-				vRatio_f32_4.val[0]		= vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vmovl_u8(vRatio_u8.val[0]))));
-				vRatio_f32_4.val[1]	    = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vmovl_u8(vRatio_u8.val[0]))));
+            vGainIsp00.val[0]       = vmax_u8(vGainIsp00.val[0],            vGainIsp00.val[1]);
+            vRatio_u8.val[0]        = vmax_u8(vRatio_u8.val[0],             vRatio_u8.val[1]);
 
 
 
-				float32x4x2_t				reciprocal_vRatio;
-				reciprocal_vRatio.val[0]= vrecpeq_f32(vRatio_f32_4.val[0]);
-				reciprocal_vRatio.val[1]= vrecpeq_f32(vRatio_f32_4.val[1]);
-
-				reciprocal_vRatio.val[0]= vmulq_f32(vrecpsq_f32(vRatio_f32_4.val[0], reciprocal_vRatio.val[0]), reciprocal_vRatio.val[0]);
-				reciprocal_vRatio.val[1]= vmulq_f32(vrecpsq_f32(vRatio_f32_4.val[1], reciprocal_vRatio.val[1]), reciprocal_vRatio.val[1]);
 
 
+            vsrc_cmp_l              = vmulq_n_u16(vmovl_u8(vSrc00.val[1]),        40);
+            vsrc_cmp_r              = vmulq_n_u16(vmovl_u8(vGainIsp00.val[0]),    13);
+            // (1.0f*src[idx_gain+1])/gain_isp_cur  > 13.0/40
+            vFlag00_u16             = vcgtq_u16(vsrc_cmp_r,                 vsrc_cmp_l);
+            // ratio_cur >  (1 << static_ratio_l_bit) - 20
+            vFlag01_u16             = vcgtq_u16(vmovl_u8(vRatio_u8.val[0]), vdupq_n_u16(ratio_static));
+            vRR00.val[1]            = vbslq_u16(vFlag00_u16,                vdupq_n_u16(1 << YUV_SCALE_FIX_BITS),   vdupq_n_u16(yuvnr_gain_scale_fix[2]));
 
-				// multiply ,1 for rounding
-				uint32x4_t				vOut00_lo, vOut00_hi, vOut01_lo, vOut01_hi;
-				vOut00_lo	            = vcvtq_n_u32_f32(vmulq_f32(vSrc_l_f32.val[0], reciprocal_vRatio.val[0]), 1);
-				vOut00_hi	            = vcvtq_n_u32_f32(vmulq_f32(vSrc_h_f32.val[0], reciprocal_vRatio.val[0]), 1);
-
-				vOut01_lo	            = vcvtq_n_u32_f32(vmulq_f32(vSrc_l_f32.val[1], reciprocal_vRatio.val[1]), 1);
-				vOut01_hi	            = vcvtq_n_u32_f32(vmulq_f32(vSrc_h_f32.val[1], reciprocal_vRatio.val[1]), 1);
-
-    			uint16x8_t              vOut_lo, vOut_hi;
-				uint8x8x2_t				vOut00;
-                vOut_lo                 = vcombine_u16(vmovn_u32(vOut00_lo), vmovn_u32(vOut01_lo));
-                vOut_hi                 = vcombine_u16(vmovn_u32(vOut00_hi), vmovn_u32(vOut01_hi));
-				vOut00.val[0]		    = vqrshrn_n_u16(vOut_lo, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM+ 1);
-				vOut00.val[1]			= vqrshrn_n_u16(vOut_hi, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM+ 1);
-
-				vst2_u8(pSrc00 + idx_isp, vOut00);
-
-				idx_isp     +=16;
-				idx_gain    +=16;
-				idx_ratio   +=16;
+            vRR00.val[0]            = vbslq_u16(vFlag01_u16,                vRR00.val[1],                           vdupq_n_u16(yuvnr_gain_scale_fix[0]));
+            vRR00.val[1]            = vbslq_u16(vFlag01_u16,                vRR00.val[1],                           vdupq_n_u16(yuvnr_gain_scale_fix[1]));
 
 
+            // tmp0                 = (src[idx_gain]     * rr) << static_ratio_l_bit;
+            vSrc00_u16.val[0]       = vmulq_u16(vSrc00_u16.val[0],          vRR00.val[0]);
+            vSrc00_u16.val[1]       = vmulq_u16(vSrc00_u16.val[1],          vRR00.val[1]);
 
-		}
-		}
+
+            float32x4x2_t           vSrc_l_f32, vSrc_h_f32;
+            //0 1 low 2 3 high
+            vSrc_l_f32.val[0]       = vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vSrc00_u16.val[0])));
+            vSrc_l_f32.val[1]       = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vSrc00_u16.val[0])));
+            vSrc_h_f32.val[0]       = vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vSrc00_u16.val[1])));
+            vSrc_h_f32.val[1]       = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vSrc00_u16.val[1])));
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            // tmp0                 = (tmp0 << static_ratio_l_bit)/ratio_cur;
+            // reciprocal
+            float32x4x2_t               vRatio_f32_4;
+            vRatio_f32_4.val[0]     = vcvtq_f32_u32(vmovl_u16(vget_low_u16   (vmovl_u8(vRatio_u8.val[0]))));
+            vRatio_f32_4.val[1]     = vcvtq_f32_u32(vmovl_u16(vget_high_u16  (vmovl_u8(vRatio_u8.val[0]))));
+
+
+
+            float32x4x2_t               reciprocal_vRatio;
+            reciprocal_vRatio.val[0] = vrecpeq_f32(vRatio_f32_4.val[0]);
+            reciprocal_vRatio.val[1] = vrecpeq_f32(vRatio_f32_4.val[1]);
+
+            reciprocal_vRatio.val[0] = vmulq_f32(vrecpsq_f32(vRatio_f32_4.val[0], reciprocal_vRatio.val[0]), reciprocal_vRatio.val[0]);
+            reciprocal_vRatio.val[1] = vmulq_f32(vrecpsq_f32(vRatio_f32_4.val[1], reciprocal_vRatio.val[1]), reciprocal_vRatio.val[1]);
+
+
+            vSrc00                  = vld2_u8(pSrc00        + idx_isp);
+            vGainIsp00              = vld2_u8(pGainIsp00    + idx_gain);
+            vRatio_u8               = vld2_u8(pRatio00      + idx_ratio);
+
+            // multiply ,1 for rounding
+            uint32x4_t              vOut00_lo, vOut00_hi, vOut01_lo, vOut01_hi;
+            vOut00_lo               = vcvtq_n_u32_f32(vmulq_f32(vSrc_l_f32.val[0], reciprocal_vRatio.val[0]), 1);
+            vOut00_hi               = vcvtq_n_u32_f32(vmulq_f32(vSrc_h_f32.val[0], reciprocal_vRatio.val[0]), 1);
+
+            vOut01_lo               = vcvtq_n_u32_f32(vmulq_f32(vSrc_l_f32.val[1], reciprocal_vRatio.val[1]), 1);
+            vOut01_hi               = vcvtq_n_u32_f32(vmulq_f32(vSrc_h_f32.val[1], reciprocal_vRatio.val[1]), 1);
+
+            uint16x8_t              vOut_lo, vOut_hi;
+            uint8x8x2_t             vOut00;
+            vOut_lo                 = vcombine_u16(vmovn_u32(vOut00_lo), vmovn_u32(vOut01_lo));
+            vOut_hi                 = vcombine_u16(vmovn_u32(vOut00_hi), vmovn_u32(vOut01_hi));
+            vOut00.val[0]           = vqrshrn_n_u16(vOut_lo, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM + 1);
+            vOut00.val[1]           = vqrshrn_n_u16(vOut_hi, YUV_SCALE_FIX_BITS - RATIO_BITS_NUM + 1);
+
+            vst2_u8(pSrc00 + idx_isp - 16, vOut00);
+
+
+
+
+        }
+    }
 
 #endif
 
-     //   printf("buf[0] %d\n",src[0]);
+    //   printf("buf[0] %d\n",src[0]);
 
 
 
@@ -1312,7 +1316,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     int tile_size                           = (gain_tile_ispp_y * gain_tile_ispp_x * 8);
     int dst_stride                          = 2;
 
-    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg frame_num_pp %d frame_write_st %d  write_frame_num %d\n ",frame_num_pp, frame_write_st, write_frame_num);
+    LOG1_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg frame_num_pp %d frame_write_st %d  write_frame_num %d\n ", frame_num_pp, frame_write_st, write_frame_num);
 
     int wr_flg                              = get_wr_flg_func(frame_num_pp, 1);
     int wr_other_flg                        = get_wr_other_flg_func();
@@ -1328,57 +1332,57 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     uint8_t *gain_isp_buf_cur                       = gain_isp_buf_bak[static_ratio_idx_out];
     RKAnr_Mt_Params_Select_t mtParamsSelect_cur     = *(mtParamsSelect_list[static_ratio_idx_out]);
     RKAnr_Mt_Params_Select_t mtParamsSelect_last    = *(mtParamsSelect_list[(static_ratio_idx_out + static_ratio_num - 1) % static_ratio_num]);
-	float gain_ratio_cur                            = mtParamsSelect_cur.gain_ratio;
-	float gain_ratio_last                           = mtParamsSelect_last.gain_ratio;
+    float gain_ratio_cur                            = mtParamsSelect_cur.gain_ratio;
+    float gain_ratio_last                           = mtParamsSelect_last.gain_ratio;
     uint8_t ratio_shf_bit                           = static_ratio_l_bit;
     uint8_t ratio_shf_bit1                          = static_ratio_l_bit - 1;
 
     int8_t gain_ratio_shf_bits                     = (int8_t)(log2(gain_ratio_cur / gain_ratio_last) / 2);
     uint8_t gain_ratio_shf_bits_abs                 = abs(gain_ratio_shf_bits);
-    #if 0
-    static int framenum1=0;
+#if 0
+    static int framenum1 = 0;
 
     if(wr_flg)
     {
-        if(framenum1 ==0)
+        if(framenum1 == 0)
         {
             gain_ratio_cur = 1;
             gain_ratio_last = 1;
         }
-        else if(framenum1 ==1)
+        else if(framenum1 == 1)
         {
 
             gain_ratio_cur = 1;
             gain_ratio_last = 16;
         }
-        else if(framenum1 ==2)
+        else if(framenum1 == 2)
         {
 
             gain_ratio_cur = 1;
-            gain_ratio_last = 1.0/16;
+            gain_ratio_last = 1.0 / 16;
         }
-        else if(framenum1 ==3)
+        else if(framenum1 == 3)
         {
 
             gain_ratio_cur = 16;
             gain_ratio_last = 1;
         }
-        else if(framenum1 ==4)
+        else if(framenum1 == 4)
         {
 
             gain_ratio_cur = 16;
-            gain_ratio_last = 1.0/16;
+            gain_ratio_last = 1.0 / 16;
         }
-        else if(framenum1 ==5)
+        else if(framenum1 == 5)
         {
 
-            gain_ratio_cur = 1.0/16;
+            gain_ratio_cur = 1.0 / 16;
             gain_ratio_last = 1;
         }
-        else if(framenum1 ==6)
+        else if(framenum1 == 6)
         {
 
-            gain_ratio_cur = 1.0/16;
+            gain_ratio_cur = 1.0 / 16;
             gain_ratio_last = 16;
         }
         framenum1++;
@@ -1386,7 +1390,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     }
     else
         framenum1 = 0;
-    #endif
+#endif
 
     if(gain_ratio_last == -1)
     {
@@ -1400,7 +1404,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     }
     if(wr_flg)
     {
-        LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg frame_num_pp %d frame_write_st %d  write_frame_num %d gain_ratio %f %f gain_ratio_shf_bits %d %f\n ",frame_num_pp, frame_write_st, write_frame_num,gain_ratio_cur, gain_ratio_last, gain_ratio_shf_bits,log2(gain_ratio_cur / gain_ratio_last) / 2);
+        LOGD_CAMHW_SUBM(MOTIONDETECT_SUBM, "set_gain_kg frame_num_pp %d frame_write_st %d  write_frame_num %d gain_ratio %f %f gain_ratio_shf_bits %d %f\n ", frame_num_pp, frame_write_st, write_frame_num, gain_ratio_cur, gain_ratio_last, gain_ratio_shf_bits, log2(gain_ratio_cur / gain_ratio_last) / 2);
 
         ratio_in                = (uint8_t*)malloc(ratio_stride      * gain_kg_tile_h_align      *    sizeof(ratio_in[0]));
         ratio_out               = (uint8_t*)malloc(ratio_stride      * gain_kg_tile_h_align      *    sizeof(ratio_in[0]));
@@ -1419,7 +1423,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
     float gain_scale_l_y            = mtParamsSelect_cur.gain_scale_l_y;
     int frame_limit_div_y           = 256 / sqrt(mtParamsSelect_cur.frame_limit_y);
     int frame_limit_div_uv          = 256 / sqrt(mtParamsSelect_cur.frame_limit_uv);
-	uint8_t gain_min_val 			= 1;
+    uint8_t gain_min_val            = 1;
     uint16_t ratio_r[4];
     ratio_r[0] =  (1 << 8) * gain_scale_l_y;
     ratio_r[1] =  (1 << 8) * gain_scale_l_y;
@@ -1432,25 +1436,25 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
 
 
-		uint8_t block_h_cur = MIN(gain_blk_ispp_h - i * gain_tile_ispp_y, gain_tile_ispp_y);
-        for(int j = 0; j < gain_tile_gainkg_w; j+=gainkg_tile_num)
+        uint8_t block_h_cur = MIN(gain_blk_ispp_h - i * gain_tile_ispp_y, gain_tile_ispp_y);
+        for(int j = 0; j < gain_tile_gainkg_w; j += gainkg_tile_num)
         {
-         //   for(int tile_idx = 0; tile_idx < gainkg_tile_num; tile_idx++)
+            //   for(int tile_idx = 0; tile_idx < gainkg_tile_num; tile_idx++)
             {
                 int tile_off        = i * gain_tile_gainkg_stride + j * gain_tile_gainkg_size;
                 int tile_i_ispp     = i * gain_tile_ispp_y;
                 int tile_j_ispp     = j * gain_tile_ispp_x;
-                if((j%2)==1)//i != 0)
+                if((j % 2) == 1) //i != 0)
                 {
                     for(int len = 0; len < 2 ; len++)
                     {
-                    //    prefetch_4x(src      + tile_off + gain_tile_gainkg_size + len * 256);
+                        //    prefetch_4x(src      + tile_off + gain_tile_gainkg_size + len * 256);
                     }
 
                 }
 #ifndef ENABLE_NEON
                 for(uint16_t y = 0; y < gain_tile_ispp_y; y++)
-				{
+                {
                     for(int x = 0; x < gain_tile_ispp_x; x++)
                     {
 
@@ -1488,12 +1492,12 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                             test_buff_ori[2][idx_ispp]  = src[idx_gain + 4];
                             test_buff_ori[3][idx_ispp]  = src[idx_gain + 6];
                         }
-						if(idx_ispp==0x1c200)
-							idx_gain=idx_gain;
-                            src[idx_gain + 0]               = MIN(255,ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 2]               = MIN(255,ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 4]               = MIN(255,ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 6]               = MIN(255,ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
+                        if(idx_ispp == 0x1c200)
+                            idx_gain = idx_gain;
+                        src[idx_gain + 0]               = MIN(255, ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 2]               = MIN(255, ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 4]               = MIN(255, ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 6]               = MIN(255, ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
 #if 1
 
                         src[idx_gain + 0]               = MAX(gain_isp_cur_y,   src[idx_gain + 0]);
@@ -1514,19 +1518,19 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
 
 
-                            for(int idx = 0; idx < 4; idx++)
-                            {
-                                if(ratio_nxt > 120)
-                                    ratio_nxt_scale[idx]    = ratio_nxt;
-                                else
-                                    ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
+                        for(int idx = 0; idx < 4; idx++)
+                        {
+                            if(ratio_nxt > 120)
+                                ratio_nxt_scale[idx]    = ratio_nxt;
+                            else
+                                ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
 
-                            }
+                        }
 
-                            src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
 
                         src[idx_gain + 0]               = MAX(gain_min_val,    src[idx_gain + 0]);
                         src[idx_gain + 2]               = MAX(gain_min_val,    src[idx_gain + 2]);
@@ -1564,12 +1568,12 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                             test_buff_ori[0][idx_ispp]  = src[idx_gain + 0];
                             test_buff_ori[1][idx_ispp]  = src[idx_gain + 2];
                             test_buff_ori[2][idx_ispp]  = src[idx_gain + 4];
-                                test_buff_ori[3][idx_ispp]  = src[idx_gain + 6];
-                            }
-                            src[idx_gain + 0]               = MIN(255,ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 2]               = MIN(255,ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 4]               = MIN(255,ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
-                            src[idx_gain + 6]               = MIN(255,ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
+                            test_buff_ori[3][idx_ispp]  = src[idx_gain + 6];
+                        }
+                        src[idx_gain + 0]               = MIN(255, ROUND_F((float)(src[idx_gain + 0]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 2]               = MIN(255, ROUND_F((float)(src[idx_gain + 2]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 4]               = MIN(255, ROUND_F((float)(src[idx_gain + 4]    << ratio_shf_bit) / ratio_cur));
+                        src[idx_gain + 6]               = MIN(255, ROUND_F((float)(src[idx_gain + 6]    << ratio_shf_bit) / ratio_cur));
 #if 1
                         src[idx_gain + 0]               = MAX(gain_isp_cur_y,   src[idx_gain + 0]);
                         src[idx_gain + 2]               = MAX(gain_isp_cur_uv,  src[idx_gain + 2]);
@@ -1589,22 +1593,22 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                             test_buff_mid[1][idx_ispp]  = src[idx_gain + 2];
                             test_buff_mid[2][idx_ispp]  = src[idx_gain + 4];
                             test_buff_mid[3][idx_ispp]  = src[idx_gain + 6];
-                            }
+                        }
 
 
-                            for(int idx = 0; idx < 4; idx++)
-                            {
-                                if(ratio_nxt > 120)
-                                    ratio_nxt_scale[idx]    = ratio_nxt;
-                                else
-                                    ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
+                        for(int idx = 0; idx < 4; idx++)
+                        {
+                            if(ratio_nxt > 120)
+                                ratio_nxt_scale[idx]    = ratio_nxt;
+                            else
+                                ratio_nxt_scale[idx]    = ((uint32_t)ratio_nxt * ratio_r[idx] + (1 << 7)) >> 8;
 
-                            }
+                        }
 
-                            src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
-                            src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 0]               = (src[idx_gain + 0] * ratio_nxt_scale[0] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 2]               = (src[idx_gain + 2] * ratio_nxt_scale[1] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 4]               = (src[idx_gain + 4] * ratio_nxt_scale[2] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
+                        src[idx_gain + 6]               = (src[idx_gain + 6] * ratio_nxt_scale[3] + (1 << (ratio_shf_bit - 1))) >> ratio_shf_bit;
 
 
                         src[idx_gain + 0]               = MAX(gain_min_val,    src[idx_gain + 0]);
@@ -1634,50 +1638,54 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
 
                 uint16_t                    ratio0, ratio1, ratio2, ratio3;
-				uint16_t 					ratio_nxt0, ratio_nxt1, ratio_nxt2, ratio_nxt3;
+                uint16_t                    ratio_nxt0, ratio_nxt1, ratio_nxt2, ratio_nxt3;
 
                 uint8x8x2_t                 ratio_u8, ratio_nxt_u8;
-                    uint16x4_t                  ratio_u16;
-                    uint16x4_t                  ratio_r_u16;
-                    uint16x4_t                  ratio_nxt_u16;
-                    uint16x4_t                  ratio_nxt1_u16;
-                    uint16x8_t                  ratio_nxt_u16x8;
-                    uint32x4_t                  ratio_nxt_mul0_u32;
-                    uint16x4_t                  ratio_nxt0_u16;
-                    uint16x4_t                  ratio_nxt_flg_u16;
-                    uint8x8x2_t                 vSrc0, vSrc;
-                    uint8x8x2_t                 vGainIsp00;
-                    uint16x8_t                  frame_limit_reg = vcombine_u16(vdup_n_u16(frame_limit_div_y), vdup_n_u16(frame_limit_div_uv));
-					//	int16x8_t frame_limit_reg1=frame_limit_reg;
+                uint16x4_t                  ratio_u16;
+                uint16x4_t                  ratio_r_u16;
+                uint16x4_t                  ratio_nxt_u16;
+                uint16x4_t                  ratio_nxt1_u16;
+                uint16x8_t                  ratio_nxt_u16x8;
+                uint32x4_t                  ratio_nxt_mul0_u32;
+                uint16x4_t                  ratio_nxt0_u16;
+                uint16x4_t                  ratio_nxt_flg_u16;
+                uint8x8x2_t                 vSrc0, vSrc;
+                uint8x8x2_t                 vGainIsp00;
+                uint16x8_t                  frame_limit_reg = vcombine_u16(vdup_n_u16(frame_limit_div_y), vdup_n_u16(frame_limit_div_uv));
+                //  int16x8_t frame_limit_reg1=frame_limit_reg;
 
 //frame_limit_reg=                    vqrdmulhq_s16(frame_limit_reg, frame_limit_reg1);
-
-	                ratio_r_u16         	        = vld1_u16(ratio_r);
+                ratio_u8                        = vld2_u8(ratio_addr);
+                ratio_nxt_u8                    = vld2_u8(ratio_next_addr);
+                vSrc0                           = vld2_u8(pSrc00);
+                ratio_r_u16                     = vld1_u16(ratio_r);
 
                 for(uint16_t y = 0; y < gain_tile_ispp_y; y++)
-				{
+                {
 
 
 
                     vGainIsp00                  = vld2_u8(pGainIsp00);
 
-	                ratio_u8				    = vld2_u8(ratio_addr);
-	                ratio_nxt_u8        	    = vld2_u8(ratio_next_addr);
-                    vSrc0                       = vld2_u8(pSrc00);
+                    ratio_addr                  += ratio_stride;
+                    ratio_next_addr             += ratio_stride;
+                    pSrc00                      += gain_tile_ispp_x * gainkg_unit;
+                    pGainIsp00                  += gain_blk_isp_stride;
 
 
-		            ratio_u8.val[0]		        = vmax_u8(ratio_u8.val[0],      ratio_u8.val[1]);
+
+                    ratio_u8.val[0]             = vmax_u8(ratio_u8.val[0],      ratio_u8.val[1]);
                     ratio_u16                   = vget_low_u16(vmovl_u8(ratio_u8.val[0]));
 
-		            ratio_nxt_u8.val[0]		    = vmax_u8(ratio_nxt_u8.val[0],  ratio_nxt_u8.val[1]);
-                        ratio_nxt_u16               = vget_low_u16(vmovl_u8(ratio_nxt_u8.val[0]));
+                    ratio_nxt_u8.val[0]         = vmax_u8(ratio_nxt_u8.val[0],  ratio_nxt_u8.val[1]);
+                    ratio_nxt_u16               = vget_low_u16(vmovl_u8(ratio_nxt_u8.val[0]));
 
-                    float32x4_t				    ratio_f32;
-    				float32x4_t				    reciprocal_ratio;
+                    float32x4_t                 ratio_f32;
+                    float32x4_t                 reciprocal_ratio;
 
-		            ratio_f32			        = vcvtq_f32_u32(vmovl_u16(ratio_u16));
-    				reciprocal_ratio	        = vrecpeq_f32(ratio_f32);
-    				reciprocal_ratio	        = vmulq_f32(vrecpsq_f32(ratio_f32, reciprocal_ratio), reciprocal_ratio);
+                    ratio_f32                   = vcvtq_f32_u32(vmovl_u16(ratio_u16));
+                    reciprocal_ratio            = vrecpeq_f32(ratio_f32);
+                    reciprocal_ratio            = vmulq_f32(vrecpsq_f32(ratio_f32, reciprocal_ratio), reciprocal_ratio);
 
 
                     uint16x8x2_t                vSrc_u16;
@@ -1689,23 +1697,23 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                     vSrc_u16.val[1]             = vmovl_u8(vSrc0.val[1]);
 
                     //+1 is for float rounding
-					// 2 bblock is a tile, vSrc_u16 val 0 is block 0 of each tile, 1 is block of each tile
+                    // 2 bblock is a tile, vSrc_u16 val 0 is block 0 of each tile, 1 is block of each tile
                     vSrc_f32.val[0]             = vcvtq_f32_u32(vshll_n_u16(vget_low_u16   (vSrc_u16.val[0]), RATIO_BITS_NUM + 1));
                     vSrc_f32.val[1]             = vcvtq_f32_u32(vshll_n_u16(vget_high_u16  (vSrc_u16.val[0]), RATIO_BITS_NUM + 1));
                     vSrc_f32.val[2]             = vcvtq_f32_u32(vshll_n_u16(vget_low_u16   (vSrc_u16.val[1]), RATIO_BITS_NUM + 1));
                     vSrc_f32.val[3]             = vcvtq_f32_u32(vshll_n_u16(vget_high_u16  (vSrc_u16.val[1]), RATIO_BITS_NUM + 1));
 
                     // one ratio for two low & high data
-    				vSrc_u32.val[0]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[0], vgetq_lane_f32(reciprocal_ratio, 0)));
-    				vSrc_u32.val[1]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[1], vgetq_lane_f32(reciprocal_ratio, 2)));
-    				vSrc_u32.val[2]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[2], vgetq_lane_f32(reciprocal_ratio, 1)));
-    				vSrc_u32.val[3]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[3], vgetq_lane_f32(reciprocal_ratio, 3)));
+                    vSrc_u32.val[0]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[0], vgetq_lane_f32(reciprocal_ratio, 0)));
+                    vSrc_u32.val[1]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[1], vgetq_lane_f32(reciprocal_ratio, 2)));
+                    vSrc_u32.val[2]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[2], vgetq_lane_f32(reciprocal_ratio, 1)));
+                    vSrc_u32.val[3]             = vcvtq_u32_f32(vmulq_n_f32(vSrc_f32.val[3], vgetq_lane_f32(reciprocal_ratio, 3)));
 
                     //+1 is for float rounding
                     vSrc_u16.val[0]             = vcombine_u16(vmovn_u32(vSrc_u32.val[0]), vmovn_u32(vSrc_u32.val[1]));
                     vSrc_u16.val[1]             = vcombine_u16(vmovn_u32(vSrc_u32.val[2]), vmovn_u32(vSrc_u32.val[3]));
-    				vSrc.val[0]		            = vqrshrn_n_u16(vSrc_u16.val[0],  1);
-    				vSrc.val[1]			        = vqrshrn_n_u16(vSrc_u16.val[1],  1);
+                    vSrc.val[0]                 = vqrshrn_n_u16(vSrc_u16.val[0],  1);
+                    vSrc.val[1]                 = vqrshrn_n_u16(vSrc_u16.val[1],  1);
 
 
                     //
@@ -1718,8 +1726,8 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                     // gain_isp_cur                = MIN(gain_isp_buf_cur[idx_isp], gain_isp_buf_cur[idx_isp + 1]);
                     vGainIsp00.val[0]           = vmin_u8(vGainIsp00.val[0], vGainIsp00.val[1]);
                     uint8x8_t flag_h;
-		            flag_h			            = vcgt_u8(vdup_n_u8(block_h_cur), vdup_n_u8(y));
-		            vGainIsp00.val[0]			= vbsl_u8(flag_h,                   vGainIsp00.val[0],        vdup_n_u8(GAIN_MIN_VAL));
+                    flag_h                      = vcgt_u8(vdup_n_u8(block_h_cur), vdup_n_u8(y));
+                    vGainIsp00.val[0]           = vbsl_u8(flag_h,                   vGainIsp00.val[0],        vdup_n_u8(GAIN_MIN_VAL));
 
 
                     vMaxGainIsp00               = vmovl_u8(vGainIsp00.val[0]);
@@ -1733,7 +1741,7 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
 
                     // y0, y1, y2, y3 uv0, uv1, uv2, uv3
-                    tmpVacc00_u16               = vmulq_u16(vMaxGainIsp00,		frame_limit_reg);
+                    tmpVacc00_u16               = vmulq_u16(vMaxGainIsp00,      frame_limit_reg);
                     tmpVacc00_u8.val[0]         = vqrshrn_n_u16(tmpVacc00_u16,  8);
                     uint16x4_t                  vGain_isp_cur_y, vGain_isp_cur_uv;
                     tmpVacc00_u8.val[0]         = vmax_u8(tmpVacc00_u8.val[0], vdup_n_u8(GAIN_MIN_VAL));
@@ -1744,31 +1752,29 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
                     tmpVacc00_u8                = vzip_u8(tmpVacc00_u8.val[0], tmpVacc00_u8.val[1]);
                     // vSrc 0 y uv y uv y uv y uv equal to 0 4 0 4 2 6 2 6 1 5 1 5 3 7 3 7
 
-                    vSrc.val[0]                 = vmax_u8(vSrc.val[0],							tmpVacc00_u8.val[0]);
-                    vSrc.val[1]                 = vmax_u8(vSrc.val[1],							tmpVacc00_u8.val[1]);
+                    vSrc.val[0]                 = vmax_u8(vSrc.val[0],                          tmpVacc00_u8.val[0]);
+                    vSrc.val[1]                 = vmax_u8(vSrc.val[1],                          tmpVacc00_u8.val[1]);
 
-                        ratio_nxt1_u16              = vshl_n_u16(ratio_nxt_u16, 4);
+                    ratio_nxt1_u16              = vshl_n_u16(ratio_nxt_u16, 4);
 
-                        ratio_nxt_flg_u16           = vcge_u16(ratio_nxt_u16, vdup_n_u16(121));
-                        ratio_nxt_mul0_u32          = vmull_lane_u16(ratio_nxt_u16, ratio_r_u16, 0);
-                        ratio_nxt1_u16              = vrshrn_n_u32(ratio_nxt_mul0_u32, 8);
-                        ratio_nxt_u16               = vbsl_u16(ratio_nxt_flg_u16, ratio_nxt_u16, ratio_nxt1_u16);
-						tmpVacc00_u16               = vmulq_u16(vmovl_u8(vSrc.val[0]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 0)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 2))));
-                        tmpVacc01_u16               = vmulq_u16(vmovl_u8(vSrc.val[1]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 1)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 3))));
+                    ratio_nxt_flg_u16           = vcge_u16(ratio_nxt_u16, vdup_n_u16(121));
+                    ratio_nxt_mul0_u32          = vmull_lane_u16(ratio_nxt_u16, ratio_r_u16, 0);
+                    ratio_nxt1_u16              = vrshrn_n_u32(ratio_nxt_mul0_u32, 8);
+                    ratio_nxt_u16               = vbsl_u16(ratio_nxt_flg_u16, ratio_nxt_u16, ratio_nxt1_u16);
+                    tmpVacc00_u16               = vmulq_u16(vmovl_u8(vSrc.val[0]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 0)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 2))));
+                    tmpVacc01_u16               = vmulq_u16(vmovl_u8(vSrc.val[1]), vcombine_u16(vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 1)), vdup_n_u16(vget_lane_u16(ratio_nxt_u16, 3))));
 
 
+                    ratio_u8                    = vld2_u8(ratio_addr);
+                    ratio_nxt_u8                = vld2_u8(ratio_next_addr);
+                    vSrc0                       = vld2_u8(pSrc00);
 
-					vSrc.val[0]					= vrshrn_n_u16(tmpVacc00_u16, RATIO_BITS_NUM);
-                    vSrc.val[1]					= vrshrn_n_u16(tmpVacc01_u16, RATIO_BITS_NUM);
+                    vSrc.val[0]                 = vrshrn_n_u16(tmpVacc00_u16, RATIO_BITS_NUM);
+                    vSrc.val[1]                 = vrshrn_n_u16(tmpVacc01_u16, RATIO_BITS_NUM);
                     vSrc.val[0]                 = vmax_u8(vSrc.val[0], vdup_n_u8(GAIN_MIN_VAL));
                     vSrc.val[1]                 = vmax_u8(vSrc.val[1], vdup_n_u8(GAIN_MIN_VAL));
 
-                    ratio_addr                  += ratio_stride;
-                    ratio_next_addr             += ratio_stride;
-                    pSrc00                      += gain_tile_ispp_x * gainkg_unit;
-                    pGainIsp00                  += gain_blk_isp_stride;
-
-		            vst2_u8(pSrc00_st, vSrc);
+                    vst2_u8(pSrc00_st, vSrc);
                     pSrc00_st                   += gain_tile_ispp_x * gainkg_unit;
                 }
 
@@ -1815,13 +1821,13 @@ Isp20SpThread::set_gainkg(void *buf, uint8_t* ratio, uint8_t* ratio_next)
 
 
 
-             if(fd_ratio_nxt_wr == NULL)
-                 fd_ratio_nxt_wr            = fopen("/tmp/ratio_nxt_out.yuv", "wb");
-             if(fd_ratio_nxt_wr)
-             {
-                 fwrite(ratio_next, ratio_stride * gain_kg_tile_h_align, 1,    fd_ratio_nxt_wr);
-                 fflush(fd_ratio_nxt_wr);
-             }
+            if(fd_ratio_nxt_wr == NULL)
+                fd_ratio_nxt_wr            = fopen("/tmp/ratio_nxt_out.yuv", "wb");
+            if(fd_ratio_nxt_wr)
+            {
+                fwrite(ratio_next, ratio_stride * gain_kg_tile_h_align, 1,    fd_ratio_nxt_wr);
+                fflush(fd_ratio_nxt_wr);
+            }
 
             if(fd_gainkg_out == NULL)
                 fd_gainkg_out               = fopen("/tmp/gainkg_out.yuv", "wb");
@@ -1946,9 +1952,9 @@ Isp20SpThread::init()
     frame_id_isp_upt                    = -1;
     frame_num_pp                        = 0;
     frame_num_isp                       = 0;
+    imgStride                   = (_img_width + 15) & 0xfff0;
 
-    gain_buf_size                       = _img_height * _img_width;
-    img_buf_size                        = _img_height_align * _img_width_align;
+    img_buf_size                        = _img_height_align * imgStride;
     img_buf_size_uv                     = img_buf_size / 2;
 
 
@@ -1977,9 +1983,8 @@ Isp20SpThread::init()
     gain_blk_ispp_mem_size              = gain_blk_ispp_stride * gain_blk_ispp_h;
 
 
-    ratio_stride                        = ((gain_blk_isp_w + 7) / 8) * 8;
+    ratio_stride                        = ((gain_blk_isp_w + 15) / 16) * 16;
 
-    gain_kg_tile_w_align                = ((gain_blk_isp_w + 7) / 8) * 8;
     gain_kg_tile_h_align                = (gain_blk_isp_h + 15) & 0xfff0;
 
     static_ratio_l_bit                  = RATIO_BITS_NUM;
@@ -1996,27 +2001,27 @@ Isp20SpThread::init()
     mtParamsSelect_list                 = (RKAnr_Mt_Params_Select_t**)  malloc(static_ratio_num * sizeof(RKAnr_Mt_Params_Select_t*));
     for(int i = 0; i < static_ratio_num; i++)
     {
-        static_ratio[i]                 = (uint8_t*)malloc(ratio_stride      * (gain_kg_tile_h_align + 16)      *    sizeof(static_ratio[i][0]));
+        static_ratio[i]                 = (uint8_t*)malloc(ratio_stride      * gain_kg_tile_h_align      *    sizeof(static_ratio[i][0]));
         memset(static_ratio[i], static_ratio_l, ratio_stride     * gain_kg_tile_h_align);
     }
 
 
     for(int i = 0; i < static_ratio_num; i++)
-        pImgbuf[i]                      = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv + 16)    *   sizeof(pImgbuf[i][0]));
+        pImgbuf[i]                      = (uint8_t*)malloc((img_buf_size  + img_buf_size_uv)    *   sizeof(pImgbuf[i][0]));
 
     for(int i = 0; i < static_ratio_num; i++)
-        gain_isp_buf_bak[i]             = (uint8_t*)malloc(gain_blk_isp_stride  * (gain_kg_tile_h_align + 16) * sizeof(gain_isp_buf_bak[i][0]));
+        gain_isp_buf_bak[i]             = (uint8_t*)malloc(gain_blk_isp_mem_size * sizeof(gain_isp_buf_bak[i][0]));
     for(int i = 0; i < static_ratio_num; i++)
     {
         mtParamsSelect_list[i]          = (RKAnr_Mt_Params_Select_t *)malloc(static_ratio_num   *   sizeof(mtParamsSelect_list[0][0]));
         (*(mtParamsSelect_list[i])).gain_ratio = -1;
     }
 
-	pPreAlpha							= (uint8_t*)malloc(ratio_stride         * (gain_kg_tile_h_align + 16)      * sizeof(pPreAlpha[0]));
+    pPreAlpha                           = (uint8_t*)malloc(ratio_stride         * gain_kg_tile_h_align      * sizeof(pPreAlpha[0]));
     memset(pPreAlpha, 0, ratio_stride         * gain_kg_tile_h_align      * sizeof(pPreAlpha[0]));
 
 
-    pTmpBuf                             = (int16_t*)malloc(gain_blk_isp_w       * gain_blk_isp_h * 6        *    sizeof(pTmpBuf[0]));
+    pTmpBuf                             = (int16_t*)malloc(gain_blk_isp_stride       * gain_blk_isp_h * 6        *    sizeof(pTmpBuf[0]));
 
     frame_detect_flg                    = (uint8_t*)malloc(static_ratio_num * sizeof(frame_detect_flg[0]));
     for(int i = 0; i < static_ratio_num; i++)
@@ -2068,8 +2073,8 @@ Isp20SpThread::deinit()
         free(mtParamsSelect_list);
     if(pTmpBuf)
         free(pTmpBuf);
-	if(pPreAlpha)
-		free(pPreAlpha);
+    if(pPreAlpha)
+        free(pPreAlpha);
 
     if(pAfTmp)
         free(pAfTmp);
