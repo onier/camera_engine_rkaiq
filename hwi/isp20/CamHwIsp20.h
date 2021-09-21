@@ -108,6 +108,10 @@ typedef struct {
     char mipi_id1[DEV_PATH_LEN];
     char mipi_id2[DEV_PATH_LEN];
     char mipi_id3[DEV_PATH_LEN];
+    char dvp_id0[DEV_PATH_LEN];
+    char dvp_id1[DEV_PATH_LEN];
+    char dvp_id2[DEV_PATH_LEN];
+    char dvp_id3[DEV_PATH_LEN];
     char mipi_dphy_rx_path[DEV_PATH_LEN];
     char mipi_csi2_sd_path[DEV_PATH_LEN];
     char lvds_sd_path[DEV_PATH_LEN];

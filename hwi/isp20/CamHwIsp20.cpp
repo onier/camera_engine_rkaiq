@@ -563,6 +563,38 @@ get_cif_subdevs(struct media_device *device, const char *devpath, rk_aiq_cif_inf
         }
     }
 
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id0", strlen("stream_cif_dvp_id0"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id0, entity_name, sizeof(cif_info[index].dvp_id0));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id1", strlen("stream_cif_dvp_id1"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id1, entity_name, sizeof(cif_info[index].dvp_id1));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id2", strlen("stream_cif_dvp_id2"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id2, entity_name, sizeof(cif_info[index].dvp_id2));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id3", strlen("stream_cif_dvp_id3"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id3, entity_name, sizeof(cif_info[index].dvp_id3));
+        }
+    }
+
     entity = media_get_entity_by_name(device, "rkcif-mipi-luma", strlen("rkisp-mipi-luma"));
     if(entity) {
         entity_name = media_entity_get_devname (entity);
@@ -1097,9 +1129,12 @@ CamHwIsp20::init(const char* sns_ent_name)
         if (_linked_to_isp)
             _mipi_tx_devs[0] = new V4l2Device (s_info->isp_info->rawwr2_path);//rkisp_rawwr2
         else {
-            if (s_info->dvp_itf)
-                _mipi_tx_devs[0] = new V4l2Device (s_info->cif_info->stream_cif_path);
-            else
+            if (s_info->dvp_itf) {
+                if (strlen(s_info->cif_info->stream_cif_path))
+                    _mipi_tx_devs[0] = new V4l2Device (s_info->cif_info->stream_cif_path);
+                else
+                    _mipi_tx_devs[0] = new V4l2Device (s_info->cif_info->dvp_id0);
+            } else
                 _mipi_tx_devs[0] = new V4l2Device (s_info->cif_info->mipi_id0);
         }
         _mipi_tx_devs[0]->open();
