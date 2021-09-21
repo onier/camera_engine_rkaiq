@@ -606,6 +606,38 @@ get_cif_subdevs(struct media_device *device, const char *devpath, rk_aiq_cif_inf
         }
     }
 
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id0", strlen("stream_cif_dvp_id0"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id0, entity_name, sizeof(cif_info[index].dvp_id0));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id1", strlen("stream_cif_dvp_id1"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id1, entity_name, sizeof(cif_info[index].dvp_id1));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id2", strlen("stream_cif_dvp_id2"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id2, entity_name, sizeof(cif_info[index].dvp_id2));
+        }
+    }
+
+    entity = media_get_entity_by_name(device, "stream_cif_dvp_id3", strlen("stream_cif_dvp_id3"));
+    if(entity) {
+        entity_name = media_entity_get_devname (entity);
+        if(entity_name) {
+            strncpy(cif_info[index].dvp_id3, entity_name, sizeof(cif_info[index].dvp_id3));
+        }
+    }
+
     entity = media_get_entity_by_name(device, "rkcif-mipi-luma", strlen("rkisp-mipi-luma"));
     if(entity) {
         entity_name = media_entity_get_devname (entity);
