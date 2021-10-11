@@ -1086,6 +1086,10 @@ CamHwIsp20::getBindedSnsEntNmByVd(const char* vd)
     for(iter = CamHwIsp20::mSensorHwInfos.begin(); \
             iter != CamHwIsp20::mSensorHwInfos.end(); iter++) {
         SmartPtr<rk_sensor_full_info_t> s_full_info = iter->second;
+
+        if (s_full_info->isp_info == NULL || s_full_info->ispp_info == NULL)
+            continue;
+
         if (strstr(s_full_info->ispp_info->pp_m_bypass_path, vd) ||
                 strstr(s_full_info->ispp_info->pp_scale0_path, vd) ||
                 strstr(s_full_info->ispp_info->pp_scale1_path, vd) ||
