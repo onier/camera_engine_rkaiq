@@ -2174,14 +2174,15 @@ XCamReturn CamHwIsp20::stop()
         LOGE_CAMHW_SUBM(ISP20HW_SUBM, "stop isp core dev err: %d\n", ret);
     }
 
+    if (mIspParamStream.ptr())
+        mIspParamStream->stop();
+
     if (!mNoReadBack) {
         ret = hdr_mipi_stop();
         if (ret < 0) {
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "hdr mipi stop err: %d\n", ret);
         }
     }
-    if (mIspParamStream.ptr())
-        mIspParamStream->stop();
 
     if (mTnrStreamProcUnit.ptr())
         mTnrStreamProcUnit->stop();

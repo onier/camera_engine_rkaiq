@@ -74,6 +74,7 @@ void calibdbV2_ctx_delete(CamCalibDbV2Context_t* calib_ctx) {
 namespace RkCam {
 
 std::map<std::string, CamCalibDbProj_t *> RkAiqCalibDbV2::mCalibDbsMap;
+std::mutex RkAiqCalibDbV2::calib_mutex;
 
 CamCalibDbV2Context_t *RkAiqCalibDbV2::CalibV2Alloc() {
     CamCalibDbV2Context_t *calibv2 = calibdbV2_ctx_new();
@@ -310,6 +311,7 @@ cJSON *RkAiqCalibDbV2::calib2cjson(const CamCalibDbV2Context_t *calib) {
 CamCalibDbProj_t *RkAiqCalibDbV2::createCalibDbProj(const char *jsfile) {
     std::map<std::string, CamCalibDbProj_t *>::iterator it;
     std::string str(jsfile);
+    const std::lock_guard<std::mutex> lock(RkAiqCalibDbV2::calib_mutex);
 
     it = mCalibDbsMap.find(str);
     if (it != mCalibDbsMap.end()) {
