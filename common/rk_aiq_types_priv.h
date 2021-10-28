@@ -250,6 +250,7 @@ typedef struct {
 
 typedef struct {
     int  model_idx;
+    bool valid;
     char media_dev_path[DEV_PATH_LEN];
     char pp_input_image_path[DEV_PATH_LEN];
     char pp_m_bypass_path[DEV_PATH_LEN];

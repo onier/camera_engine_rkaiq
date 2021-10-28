@@ -223,7 +223,7 @@
 								"DySetpoint":	{
 									"ExpLevel":	[0, 0.04, 0.1, 0.2, 0.4, 0.64],
 									"ExpLevel_len":	6,
-									"DySetpoint":	[1.03724e-08, 1.03724e-08, 1.03724e-08, 1.03724e-08, 1.03724e-08, 1.03724e-08],
+									"DySetpoint":	[50, 50, 50, 50, 50, 50],
 									"DySetpoint_len":	6
 								},
 								"BackLightCtrl":	{
