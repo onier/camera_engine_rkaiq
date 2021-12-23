@@ -125,27 +125,80 @@ rk_aiq_user_api_af_Tracking(const rk_aiq_sys_ctx_t* sys_ctx)
 }
 
 XCamReturn
-rk_aiq_user_api_af_SetZoomPos(const rk_aiq_sys_ctx_t* sys_ctx, int zoom_pos)
+rk_aiq_user_api_af_SetZoomIndex(const rk_aiq_sys_ctx_t* sys_ctx, int index)
 {
     RKAIQ_API_SMART_LOCK(sys_ctx);
+    CalibDb_Af_ZoomFocusTbl_t *zoomfocus_tbl = &sys_ctx->_calibDb->af.zoomfocus_tbl;
+    int tbl_len = sys_ctx->_calibDb->af.zoomfocus_tbl.tbl_len;
     RkAiqAfHandleInt* algo_handle =
         algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
 
+    if (index < 0)
+        index = 0;
+    else if (index >= tbl_len)
+        index = tbl_len - 1;
+
     if (algo_handle) {
-        return algo_handle->setZoomPos(zoom_pos);
+        return algo_handle->setZoomIndex(index);
     }
 
     return XCAM_RETURN_NO_ERROR;
 }
 
 XCamReturn
-rk_aiq_user_api_af_GetZoomPos(const rk_aiq_sys_ctx_t* sys_ctx, int* zoom_pos)
+rk_aiq_user_api_af_EndZoomChg(const rk_aiq_sys_ctx_t* sys_ctx)
 {
     RKAIQ_API_SMART_LOCK(sys_ctx);
-    XCamReturn ret = XCAM_RETURN_NO_ERROR;
-    ret = sys_ctx->_camHw->getZoomPosition(*zoom_pos);
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
 
-    return ret;
+    if (algo_handle) {
+        return algo_handle->endZoomChg();
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+rk_aiq_user_api_af_GetZoomIndex(const rk_aiq_sys_ctx_t* sys_ctx, int *index)
+{
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->getZoomIndex(index);
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+rk_aiq_user_api_af_StartZoomCalib(const rk_aiq_sys_ctx_t* sys_ctx)
+{
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->startZoomCalib();
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+rk_aiq_user_api_af_resetZoom(const rk_aiq_sys_ctx_t* sys_ctx)
+{
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->resetZoom();
+    }
+
+    return XCAM_RETURN_NO_ERROR;
 }
 
 XCamReturn
@@ -183,6 +236,19 @@ rk_aiq_user_api_af_GetSearchPath(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_sec_
 }
 
 XCamReturn
+rk_aiq_user_api_af_GetSearchResult(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_result_t* result)
+{
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->GetSearchResult(result);
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
 rk_aiq_user_api_af_GetZoomRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_zoomrange* range)
 {
     RKAIQ_API_SMART_LOCK(sys_ctx);
@@ -190,12 +256,30 @@ rk_aiq_user_api_af_GetZoomRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_zoomr
     CalibDb_Af_ZoomFocusTbl_t *zoomfocus_tbl = &sys_ctx->_calibDb->af.zoomfocus_tbl;
     int tbl_len = sys_ctx->_calibDb->af.zoomfocus_tbl.tbl_len;
 
-    range->min_fl = zoomfocus_tbl->focal_length[0];
-    range->max_fl = zoomfocus_tbl->focal_length[tbl_len - 1];
-    range->min_pos = zoomfocus_tbl->zoom_pos[0];
-    range->max_pos = zoomfocus_tbl->zoom_pos[tbl_len - 1];
+    if (tbl_len > 0) {
+        range->min_fl = zoomfocus_tbl->focal_length[0];
+        range->max_fl = zoomfocus_tbl->focal_length[tbl_len - 1];
+        range->min_pos = 0;
+        range->max_pos = tbl_len - 1;
+    } else {
+        ret = XCAM_RETURN_ERROR_FAILED;
+    }
 
     return ret;
+}
+
+XCamReturn
+rk_aiq_user_api_af_GetFocusRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_focusrange* range)
+{
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+    RkAiqAfHandleInt* algo_handle =
+        algoHandle<RkAiqAfHandleInt>(sys_ctx, RK_AIQ_ALGO_TYPE_AF);
+
+    if (algo_handle) {
+        return algo_handle->GetFocusRange(range);
+    }
+
+    return XCAM_RETURN_NO_ERROR;
 }
 
 XCamReturn

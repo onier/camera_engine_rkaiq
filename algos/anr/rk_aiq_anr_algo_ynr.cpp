@@ -3,7 +3,7 @@
 
 RKAIQ_BEGIN_DECLARE
 
-ANRresult_t ynr_get_mode_cell_idx_by_name(CalibDb_YNR_t *pCalibdb, char *name, int *mode_idx)
+ANRresult_t ynr_get_mode_cell_idx_by_name(CalibDb_YNR_2_t *pCalibdb, char *name, int *mode_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -23,13 +23,18 @@ ANRresult_t ynr_get_mode_cell_idx_by_name(CalibDb_YNR_t *pCalibdb, char *name, i
 		return ANR_RET_NULL_POINTER;
 	}
 
-	for(i=0; i<CALIBDB_NR_SHARP_SETTING_LEVEL; i++){
+	if(pCalibdb->mode_num < 1){
+		LOGE_ANR("%s(%d): mfnr mode cell num is zero\n", __FUNCTION__, __LINE__);
+		return ANR_RET_NULL_POINTER;
+	}
+
+	for(i=0; i<pCalibdb->mode_num; i++){
 		if(strncmp(name, pCalibdb->mode_cell[i].name, sizeof(pCalibdb->mode_cell[i].name)) == 0){
 			break;
 		}
 	}
 
-	if(i<CALIBDB_MAX_MODE_NUM){
+	if(i<pCalibdb->mode_num){
 		*mode_idx = i;
 		res = ANR_RET_SUCCESS;
 	}else{
@@ -43,7 +48,7 @@ ANRresult_t ynr_get_mode_cell_idx_by_name(CalibDb_YNR_t *pCalibdb, char *name, i
 }
 
 
-ANRresult_t ynr_get_setting_idx_by_name(CalibDb_YNR_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
+ANRresult_t ynr_get_setting_idx_by_name(CalibDb_YNR_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -82,7 +87,7 @@ ANRresult_t ynr_get_setting_idx_by_name(CalibDb_YNR_t *pCalibdb, char *name, int
 
 }
 
-ANRresult_t ynr_config_setting_param(RKAnr_Ynr_Params_s *pParams, CalibDb_YNR_t *pCalibdb, char* param_mode, char* snr_name)
+ANRresult_t ynr_config_setting_param(RKAnr_Ynr_Params_s *pParams, CalibDb_YNR_2_t *pCalibdb, char* param_mode, char* snr_name)
 {
 	ANRresult_t res = ANR_RET_SUCCESS;
 	int mode_idx = 0;
@@ -113,7 +118,7 @@ ANRresult_t ynr_config_setting_param(RKAnr_Ynr_Params_s *pParams, CalibDb_YNR_t 
 	return res;
 
 }
-ANRresult_t init_ynr_params(RKAnr_Ynr_Params_s *pYnrParams, CalibDb_YNR_t* pYnrCalib, int mode_idx, int setting_idx)
+ANRresult_t init_ynr_params(RKAnr_Ynr_Params_s *pYnrParams, CalibDb_YNR_2_t* pYnrCalib, int mode_idx, int setting_idx)
 {
     ANRresult_t res = ANR_RET_SUCCESS;
     int i = 0;
@@ -362,7 +367,11 @@ ANRresult_t select_ynr_params_by_ISO(RKAnr_Ynr_Params_t *stYnrParam, RKAnr_Ynr_P
     }
 #endif
 
-    isoValue = pExpInfo->arIso[pExpInfo->hdr_mode];
+	if(pExpInfo->mfnr_mode_3to1){
+		isoValue = pExpInfo->preIso[pExpInfo->hdr_mode];
+	}else{
+   		isoValue = pExpInfo->arIso[pExpInfo->hdr_mode];
+	}
 
     int iso_div = 50;
     int lowIso = 50;

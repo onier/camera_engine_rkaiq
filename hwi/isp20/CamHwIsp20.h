@@ -33,7 +33,7 @@ namespace RkCam {
 #define MAX_MEDIA_INDEX               16
 #define DEV_PATH_LEN                  64
 #define SENSOR_ATTACHED_FLASH_MAX_NUM 2
-#define MAX_CIF_NUM               2
+#define MAX_CAM_NUM                   4
 
 #define ISP_TX_BUF_NUM 4
 #define VIPCAP_TX_BUF_NUM 4
@@ -41,6 +41,8 @@ namespace RkCam {
 typedef struct {
     int  model_idx: 3;
     int  linked_sensor: 3;
+    bool linked_dvp;
+    bool valid;
     char media_dev_path[DEV_PATH_LEN];
     char isp_dev_path[DEV_PATH_LEN];
     char csi_dev_path[DEV_PATH_LEN];
@@ -59,6 +61,7 @@ typedef struct {
     char input_params_path[DEV_PATH_LEN];
     char mipi_luma_path[DEV_PATH_LEN];
     char mipi_dphy_rx_path[DEV_PATH_LEN];
+    char linked_vicap[DEV_PATH_LEN];
 } rk_aiq_isp_t;
 
 typedef struct {
@@ -93,8 +96,8 @@ typedef struct {
 } rk_aiq_hw_ver_t;
 
 typedef struct {
-    rk_aiq_isp_t isp_info[2];
-    rk_aiq_ispp_t ispp_info[2];
+    rk_aiq_isp_t isp_info[MAX_CAM_NUM];
+    rk_aiq_ispp_t ispp_info[MAX_CAM_NUM];
     rk_aiq_hw_ver_t hw_ver_info;
 } rk_aiq_isp_hw_info_t;
 
@@ -105,14 +108,21 @@ typedef struct {
     char mipi_id1[DEV_PATH_LEN];
     char mipi_id2[DEV_PATH_LEN];
     char mipi_id3[DEV_PATH_LEN];
+    char dvp_id0[DEV_PATH_LEN];
+    char dvp_id1[DEV_PATH_LEN];
+    char dvp_id2[DEV_PATH_LEN];
+    char dvp_id3[DEV_PATH_LEN];
     char mipi_dphy_rx_path[DEV_PATH_LEN];
     char mipi_csi2_sd_path[DEV_PATH_LEN];
     char lvds_sd_path[DEV_PATH_LEN];
     char mipi_luma_path[DEV_PATH_LEN];
+    char stream_cif_path[DEV_PATH_LEN];
+    char dvp_sof_sd_path[DEV_PATH_LEN];
+    char model_str[DEV_PATH_LEN];
 } rk_aiq_cif_info_t;
 
 typedef struct {
-    rk_aiq_cif_info_t cif_info[MAX_CIF_NUM];
+    rk_aiq_cif_info_t cif_info[MAX_CAM_NUM];
     rk_aiq_hw_ver_t hw_ver_info;
 } rk_aiq_cif_hw_info_t;
 
@@ -144,11 +154,12 @@ typedef struct {
     rk_aiq_cif_info_t *cif_info;
     rk_aiq_ispp_t *ispp_info;
     bool linked_to_isp;
+    bool dvp_itf;
     struct rkmodule_inf mod_info;
 } rk_sensor_full_info_t;
 
 class CamHwIsp20
-    : public CamHwBase, public Isp20Params, public V4l2Device 
+    : public CamHwBase, public Isp20Params, public V4l2Device
     , public isp_drv_share_mem_ops_t {
 public:
     explicit CamHwIsp20();
@@ -162,18 +173,22 @@ public:
     virtual XCamReturn stop();
     virtual XCamReturn pause();
     virtual XCamReturn resume();
+    virtual XCamReturn poll_event_ready (uint32_t sequence, int type);
+    virtual XCamReturn poll_event_failed (int64_t timestamp, const char *msg);
     virtual XCamReturn swWorkingModeDyn(int mode);
     virtual XCamReturn getSensorModeData(const char* sns_ent_name,
                                          rk_aiq_exposure_sensor_descriptor& sns_des);
     XCamReturn setIspParamsSync(int frameId);
     XCamReturn setIsppParamsSync(int frameId);
-    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams);
+    virtual XCamReturn setIspMeasParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispMeasParams);
+    virtual XCamReturn setIspOtherParams(SmartPtr<RkAiqIspOtherParamsProxy>& ispOtherParams);
     virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar);
     virtual XCamReturn setIrisParams(SmartPtr<RkAiqIrisParamsProxy>& irisPar, CalibDb_IrisType_t irisType);
-    virtual XCamReturn setHdrProcessCount(int frame_id, int count);
+    virtual XCamReturn setHdrProcessCount(rk_aiq_luma_params_t luma_params);
     virtual XCamReturn setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params);
     virtual XCamReturn setCpslParams(SmartPtr<RkAiqCpslParamsProxy>& cpsl_params);
-    virtual XCamReturn setIsppParams(SmartPtr<RkAiqIsppParamsProxy>& isppParams);
+    virtual XCamReturn setIsppMeasParams(SmartPtr<RkAiqIsppMeasParamsProxy>& isppParams);
+    virtual XCamReturn setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherParams);
     static rk_aiq_static_info_t* getStaticCamHwInfo(const char* sns_ent_name, uint16_t index = 0);
     static XCamReturn clearStaticCamHwInfo();
     static void findAttachedSubdevs(struct media_device *device, uint32_t count, rk_sensor_full_info_t *s_info);
@@ -182,13 +197,12 @@ public:
     static XCamReturn selectIqFile(const char* sns_ent_name, char* iqfile_name);
     static const char* getBindedSnsEntNmByVd(const char* vd);
     XCamReturn setExpDelayInfo(int mode);
-    XCamReturn getEffectiveIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams, int frame_id);
+    XCamReturn getEffectiveIspParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispParams, int frame_id);
     XCamReturn setModuleCtl(rk_aiq_module_id_t moduleId, bool en);
     XCamReturn getModuleCtl(rk_aiq_module_id_t moduleId, bool& en);
     XCamReturn notify_capture_raw();
     XCamReturn capture_raw_ctl(capture_raw_t type, int count = 0, const char* capture_dir = nullptr, char* output_dir = nullptr);
-    void setDhazState(float& on);
-    bool getDhazState();
+    uint64_t getIspModuleEnState();
     void setHdrGlobalTmoMode(int frame_id, bool mode);
     XCamReturn setSharpFbcRotation(rk_aiq_rotation_t rot) {
         _sharp_fbc_rotation = rot;
@@ -206,6 +220,7 @@ public:
     XCamReturn FocusCorrection();
     XCamReturn ZoomCorrection();
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops);
+    XCamReturn getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& ExpParams);
 protected:
     XCAM_DEAD_COPY(CamHwIsp20);
     enum cam_hw_state_e {
@@ -227,7 +242,10 @@ protected:
     int _state;
     volatile bool _is_exit;
     bool _linked_to_isp;
-    SmartPtr<RkAiqIspParamsProxy> _last_aiq_results;
+    SmartPtr<RkAiqIspMeasParamsProxy> _lastAiqIspMeasResult;
+    SmartPtr<RkAiqIspOtherParamsProxy> _lastAiqIspOtherResult;
+    SmartPtr<RkAiqIsppMeasParamsProxy> _lastAiqIsppMeasResult;
+    SmartPtr<RkAiqIsppOtherParamsProxy> _lastAiqIsppOtherResult;
     struct isp2x_isp_params_cfg _full_active_isp_params;
     struct rkispp_params_cfg _full_active_ispp_params;
     uint32_t _ispp_module_init_ens;
@@ -236,9 +254,11 @@ protected:
     SmartPtr<V4l2SubDevice> _ispp_sd;
     SmartPtr<V4l2SubDevice> _cif_csi2_sd;
     char sns_name[32];
-    std::list<SmartPtr<RkAiqIspParamsProxy>> _pending_ispparams_queue;
-    std::list<SmartPtr<RkAiqIsppParamsProxy>> _pending_isppParams_queue;
-    std::map<int, SmartPtr<RkAiqIspParamsProxy>> _effecting_ispparm_map;
+    std::list<SmartPtr<RkAiqIspMeasParamsProxy>> _pending_isp_meas_params_queue;
+    std::list<SmartPtr<RkAiqIspOtherParamsProxy>> _pending_isp_other_params_queue;
+    std::list<SmartPtr<RkAiqIsppMeasParamsProxy>> _pending_ispp_meas_params_queue;
+    std::list<SmartPtr<RkAiqIsppOtherParamsProxy>> _pending_ispp_other_params_queue;
+    std::map<int, SmartPtr<RkAiqIspMeasParamsProxy>> _effectingIspMeasParmMap;
     static std::map<std::string, SmartPtr<rk_aiq_static_info_t>> mCamHwInfos;
     static rk_aiq_isp_hw_info_t mIspHwInfos;
     static rk_aiq_cif_hw_info_t mCifHwInfos;
@@ -249,9 +269,11 @@ protected:
                               struct rkispp_params_cfg* full_params);
     XCamReturn overrideExpRatioToAiqResults(const sint32_t frameId,
                                             int module_id,
-                                            SmartPtr<RkAiqIspParamsProxy>& aiq_results);
+                                            SmartPtr<RkAiqIspMeasParamsProxy>& aiq_results,
+                                            SmartPtr<RkAiqIspOtherParamsProxy>& aiq_other_results);
     void dump_isp_config(struct isp2x_isp_params_cfg* isp_params,
-                         SmartPtr<RkAiqIspParamsProxy> aiq_results);
+                         SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
+                         SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results);
     void dumpRawnrFixValue(struct isp2x_rawnr_cfg * pRawnrCfg );
     void dumpTnrFixValue(struct rkispp_tnr_config  * pTnrCfg);
     void dumpUvnrFixValue(struct rkispp_nr_config  * pNrCfg);
@@ -282,10 +304,10 @@ protected:
     static void allocMemResource(void *ops_ctx, void *config, void **mem_ctx);
     static void releaseMemResource(void *mem_ctx);
     static void* getFreeItem(void *mem_ctx);
-    void prepare_motion_detection();
+    void prepare_motion_detection(int mode);
     uint32_t _isp_module_ens;
     bool mNormalNoReadBack;
-    bool mIsDhazOn;
+    uint64_t ispModuleEns;
     rk_aiq_rotation_t _sharp_fbc_rotation;
 
     rk_aiq_ldch_share_mem_info_t ldch_mem_info_array[ISP2X_LDCH_BUF_NUM];
@@ -304,6 +326,8 @@ protected:
     uint32_t _ds_heigth;
     uint32_t _ds_width_align;
     uint32_t _ds_heigth_align;
+    uint32_t _exp_delay;
+    rk_aiq_lens_descriptor _lens_des;
 };
 
 };

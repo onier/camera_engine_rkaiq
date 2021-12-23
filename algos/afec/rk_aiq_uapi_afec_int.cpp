@@ -32,7 +32,7 @@ rk_aiq_uapi_afec_SetAttrib(RkAiqAlgoContext *ctx,
             attr.en, attr.bypass, attr.correct_level, attr.direction);
 
     if (fec_contex->fec_en != attr.en && \
-        (fec_contex->eState == FEC_STATE_INITIALIZED || \
+        (fec_contex->eState == FEC_STATE_STOPPED || \
          fec_contex->eState == FEC_STATE_RUNNING)) {
         LOGE_AFEC("failed, Fec en(%d-%d) don't support switch at running time!\n",
                   fec_contex->fec_en, attr.en);
@@ -54,8 +54,11 @@ rk_aiq_uapi_afec_SetAttrib(RkAiqAlgoContext *ctx,
         attrPtr->mode = fec_contex->user_config.mode;
         attrPtr->bypass = fec_contex->user_config.bypass;
         attrPtr->correct_level = fec_contex->user_config.correct_level;
+        fec_contex->isAttribUpdated = true;
+#if GENMESH_ONLINE
         fec_contex->afecReadMeshThread->clear_attr();
         fec_contex->afecReadMeshThread->push_attr(attrPtr);
+#endif
     }
 
     return XCAM_RETURN_NO_ERROR;

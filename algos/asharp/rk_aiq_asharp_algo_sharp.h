@@ -13,13 +13,13 @@
 
 RKAIQ_BEGIN_DECLARE
 
-AsharpResult_t sharp_get_mode_cell_idx_by_name_v1(CalibDb_Sharp_t *pCalibdb, char *name, int *mode_idx);
+AsharpResult_t sharp_get_mode_cell_idx_by_name_v1(CalibDb_Sharp_2_t *pCalibdb, char *name, int *mode_idx);
 
-AsharpResult_t sharp_get_setting_idx_by_name_v1(CalibDb_Sharp_t *pCalibdb, char *name, int mode_idx, int *setting_idx);
+AsharpResult_t sharp_get_setting_idx_by_name_v1(CalibDb_Sharp_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx);
 
-AsharpResult_t sharp_config_setting_param_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb_Sharp_t *pCalibdb, char *param_mode, char* snr_name);
+AsharpResult_t sharp_config_setting_param_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb_Sharp_2_t *pCalibdb, char *param_mode, char* snr_name);
 
-AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb_Sharp_t *pCalibdb, int mode_idx, int setting_idx);
+AsharpResult_t init_sharp_params_v1(RKAsharp_Sharp_HW_Params_t *pParams, CalibDb_Sharp_2_t *pCalibdb, int mode_idx, int setting_idx);
 
 AsharpResult_t select_rk_sharpen_hw_params_by_ISO(RKAsharp_Sharp_HW_Params_t *strksharpenParams, RKAsharp_Sharp_HW_Params_Select_t *strksharpenParamsSelected, AsharpExpInfo_t *pExpInfo);
 

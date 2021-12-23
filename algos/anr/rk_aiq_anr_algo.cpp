@@ -61,9 +61,13 @@ ANRresult_t ANRInit(ANRContext_t **ppANRCtx, CamCalibDbContext_t *pCalibDb)
     memset(pANRCtx, 0x00, sizeof(ANRContext_t));
 
     //gain state init
+    pANRCtx->stGainState.gain_stat_full_last = -1;
     pANRCtx->stGainState.gainState = -1;
-    pANRCtx->stGainState.gain_th0 = 32.0;
-    pANRCtx->stGainState.gain_th1 = 128.0;
+    pANRCtx->stGainState.gainState_last = -1;
+    pANRCtx->stGainState.gain_th0[0]    = 2.0;
+    pANRCtx->stGainState.gain_th1[0]    = 4.0;
+    pANRCtx->stGainState.gain_th0[1]    = 32.0;
+    pANRCtx->stGainState.gain_th1[1]    = 64.0;
 	
 	pANRCtx->fLuma_SF_Strength = 1.0;
 	pANRCtx->fLuma_TF_Strength = 1.0;
@@ -107,7 +111,7 @@ ANRresult_t ANRInit(ANRContext_t **ppANRCtx, CamCalibDbContext_t *pCalibDb)
 #endif
 
 #if ANR_USE_XML_FILE
-	pANRCtx->stExpInfo.snr_mode = 1;
+	pANRCtx->stExpInfo.snr_mode = 0;
 	pANRCtx->eParamMode = ANR_PARAM_MODE_NORMAL;
 	ANRConfigSettingParam(pANRCtx, pANRCtx->eParamMode, pANRCtx->stExpInfo.snr_mode);
 #endif
@@ -246,6 +250,12 @@ ANRresult_t ANRProcess(ANRContext_t *pANRCtx, ANRExpInfo_t *pExpInfo)
     ANRGainRatioProcess(&pANRCtx->stGainState, pExpInfo);
 
     ANRParamModeProcess(pANRCtx, pExpInfo, &mode);   
+	pExpInfo->mfnr_mode_3to1 = pANRCtx->stMfnrCalib.mode_3to1;
+	if(pExpInfo->mfnr_mode_3to1){
+		pExpInfo->snr_mode = pExpInfo->pre_snr_mode;
+	}else{
+		pExpInfo->snr_mode = pExpInfo->cur_snr_mode;
+	}
 	
     if(pANRCtx->eMode == ANR_OP_MODE_AUTO) {
 
@@ -395,7 +405,8 @@ ANRresult_t ANRGetProcResult(ANRContext_t *pANRCtx, ANRProcResult_t* pANRResult)
 	}else{
 		LOGE_ANR("%s(%d): not support param mode!\n", __FUNCTION__, __LINE__);
 	}
-	pANRResult->stMotion = pANRCtx->stMfnrCalib.mode_cell[mode_idx].motion;
+	pANRResult->stMotionParam.stMotion = pANRCtx->stMfnrCalib.mode_cell[mode_idx].motion;
+	pANRResult->stMotionParam.gain_ratio = pANRCtx->stGainState.ratio;
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ANR_RET_SUCCESS;
 }
@@ -403,9 +414,6 @@ ANRresult_t ANRGetProcResult(ANRContext_t *pANRCtx, ANRProcResult_t* pANRResult)
 ANRresult_t ANRGainRatioProcess(ANRGainState_t *pGainState, ANRExpInfo_t *pExpInfo)
 {
     LOGI_ANR("%s(%d): enter!\n", __FUNCTION__, __LINE__);
-
-    float th;
-    float ratio;
 
     if(pGainState == NULL) {
         LOGE_ANR("%s(%d): null pointer\n", __FUNCTION__, __LINE__);
@@ -417,50 +425,91 @@ ANRresult_t ANRGainRatioProcess(ANRGainState_t *pGainState, ANRExpInfo_t *pExpIn
         return ANR_RET_INVALID_PARM;
     }
 
-    int gain_stat = pGainState->gainState;
-    float gain_th0 = pGainState->gain_th0;
-    float gain_th1 = pGainState->gain_th1;
     float gain_cur = pExpInfo->arAGain[pExpInfo->hdr_mode] * pExpInfo->arDGain[pExpInfo->hdr_mode];
-
+    float th[2];
+    float gain_th0[2];
+    float gain_th1[2];
+    for(int i = 0; i < 2; i++){
+        gain_th0[i]     = pGainState->gain_th0[i];
+        gain_th1[i]     = pGainState->gain_th1[i];
+        th[i]           = pow(2.0, (log2(gain_th0[i])+log2(gain_th1[i])) / 2);
+    }
+	
     pGainState->gain_cur = gain_cur;
 
-    if(gain_stat == -1)
-    {
-        th = (gain_th0 + gain_th1) / 2;
-        if(gain_cur > th)
-            gain_stat = 1;
+
+	int gain_stat_full = -1;
+	int gain_stat_full_last = pGainState->gain_stat_full_last;
+	int gain_stat_last = pGainState->gainState_last;
+	int gain_stat_cur  = -1;
+    	int gain_stat  = -1;
+        if(gain_cur <= gain_th0[0])
+    	{
+            gain_stat_full = 0;
+            gain_stat_cur = 0;
+    	}
+        else if(gain_cur <= gain_th1[0] && gain_cur >= gain_th0[0])
+            gain_stat_full = 1;
+        else if(gain_cur <= gain_th0[1] && gain_cur >= gain_th1[0])
+        {
+            gain_stat_full = 2;
+            gain_stat_cur = 1;
+      	 }
+        else if(gain_cur <= gain_th1[1] && gain_cur >= gain_th0[1])
+            gain_stat_full = 3;
+        else if(gain_cur >= gain_th1[1])
+    	{
+            gain_stat_full = 4;
+            gain_stat_cur = 2;
+    	}
+       if(gain_stat_last == -1 || (abs(gain_stat_full - gain_stat_full_last) >= 2 && gain_stat_cur == -1))
+       {
+            if(gain_cur <= th[0])
+                gain_stat_cur = 0;
+            else if(gain_cur <= th[1])
+                gain_stat_cur = 1;
+            else
+                gain_stat_cur = 2;
+        }
+
+        if (gain_stat_cur != -1)
+    	 {
+	        gain_stat_last      = gain_stat_cur;
+	        gain_stat_full_last = gain_stat_full;
+	        gain_stat       = gain_stat_cur;
+    	 }
         else
-            gain_stat = 0;
-    }
-    else if(gain_stat == 0)
-    {
-        if(gain_cur > gain_th1)
-            gain_stat = 1;
-    }
-    else if(gain_stat == 1)
-    {
-        if(gain_cur < gain_th0)
-            gain_stat = 0;
-    }
-    else {
-        LOGE_ANR("%s:%d invalid stat\n", __FUNCTION__, __LINE__);
-        return ANR_RET_INVALID_PARM;
-    }
+            gain_stat       = gain_stat_last;
+            
+        if (gain_stat ==0)
+            pGainState->ratio = 16;
+        else if (gain_stat == 1)
+            pGainState->ratio = 1;
+        else
+            pGainState->ratio = 1.0/16.0;
+        
 
 
-    if(gain_stat == 0)
-        pGainState->ratio = 1;
-    else
-        pGainState->ratio = 1.0 / 16;
 
-	pGainState->gainState = gain_stat;
-    LOGD_ANR("%s:%d gain_cur:%f th: %f %f ratio:%f gain_state:%d \n",
+
+
+    LOGD_ANR("%s:%d gain_cur:%f gain th %f %fd %f %f ratio:%f gain_state:%d %d full    %d %d\n",
              __FUNCTION__, __LINE__,
-             gain_cur,
-             gain_th0,
-             gain_th1,
+             gain_cur, 
+             gain_th0[0],gain_th0[1],
+             gain_th1[0],gain_th1[1],
              pGainState->ratio,
-             pGainState->gainState);
+             pGainState->gainState_last,
+             pGainState->gainState,
+             pGainState->gain_stat_full_last,
+             gain_stat_full);
+
+	pGainState->gain_stat_full_last 	= gain_stat_full_last;
+	pGainState->gainState 		= gain_stat;
+	pGainState->gainState_last 	= gain_stat_last;
+
+
+    
 
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
 
@@ -499,7 +548,7 @@ ANRresult_t ANRConfigSettingParam(ANRContext_t *pANRCtx, ANRParamMode_t eParamMo
 		sprintf(snr_name, "%s", "LSNR");
 	}else{
 		LOGE_ANR("%s(%d): not support snr mode!\n", __FUNCTION__, __LINE__);
-		sprintf(snr_name, "%s", "HSNR");
+		sprintf(snr_name, "%s", "LSNR");
 	}
 	
 	pANRCtx->stAuto.bayernrEn = pANRCtx->stBayernrCalib.enable;

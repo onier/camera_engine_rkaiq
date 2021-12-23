@@ -80,6 +80,8 @@ typedef enum RkAiqAlgoType_e {
     RK_AIQ_ALGO_TYPE_AFEC,
     RK_AIQ_ALGO_TYPE_ACGC,
     RK_AIQ_ALGO_TYPE_ASD,
+    RK_AIQ_ALGO_TYPE_ADEGAMMA,
+    RK_AIQ_ALGO_TYPE_AFD,
     RK_AIQ_ALGO_TYPE_MAX
 } RkAiqAlgoType_t;
 
@@ -118,6 +120,7 @@ typedef struct _RkAiqAlgoCom {
             int sns_op_width;
             int sns_op_height;
             int conf_type;
+            int ae_algo_id;
         } prepare; //for prepare function
 
         struct {

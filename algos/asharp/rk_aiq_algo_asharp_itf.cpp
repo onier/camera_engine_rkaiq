@@ -164,26 +164,55 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
               || pAsharpProcParams->hdr_mode == RK_AIQ_ISP_HDR_MODE_3_LINE_HDR ) {
         stExpInfo.hdr_mode = 2;
     }
-	stExpInfo.snr_mode = 0;		
+	stExpInfo.snr_mode = 0;
 
 #if 1
-    RkAiqAlgoPreResAeInt* pAEPreRes =
-        (RkAiqAlgoPreResAeInt*)(pAsharpProcParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
+    RKAiqAecExpInfo_t *preExp = NULL;
+    RKAiqAecExpInfo_t *curExp = NULL;
 
-    if(pAEPreRes != NULL) {
-	stExpInfo.snr_mode = pAEPreRes->ae_pre_res_rk.CISFeature.SNR;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        preExp = pAsharpProcParams->asharp_proc_com.com_ext.u.proc.curExp;
+        curExp = pAsharpProcParams->asharp_proc_com.com_ext.u.proc.curExp;
+    } else {
+        preExp = pAsharpProcParams->rk_com.u.proc.curExp;
+        curExp = pAsharpProcParams->rk_com.u.proc.curExp;
+    }
+
+    if(preExp != NULL && curExp != NULL) {
+        stExpInfo.cur_snr_mode = curExp->CISFeature.SNR;
+        stExpInfo.pre_snr_mode = preExp->CISFeature.SNR;
         if(pAsharpProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
             stExpInfo.hdr_mode = 0;
-            stExpInfo.arAGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain;
-            stExpInfo.arDGain[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.digital_gain;
-            stExpInfo.arTime[0] = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.integration_time;
-            stExpInfo.arIso[0] = stExpInfo.arAGain[0] * 50;
+            stExpInfo.arAGain[0] = curExp->LinearExp.exp_real_params.analog_gain;
+            stExpInfo.arDGain[0] = curExp->LinearExp.exp_real_params.digital_gain;
+            stExpInfo.arTime[0] = curExp->LinearExp.exp_real_params.integration_time;
+			stExpInfo.arDcgMode[0] = curExp->LinearExp.exp_real_params.dcg_mode;
+            stExpInfo.arIso[0] = stExpInfo.arAGain[0] * stExpInfo.arDGain[0] * 50;
+
+			stExpInfo.preAGain[0] = preExp->LinearExp.exp_real_params.analog_gain;
+            stExpInfo.preDGain[0] = preExp->LinearExp.exp_real_params.digital_gain;
+            stExpInfo.preTime[0] = preExp->LinearExp.exp_real_params.integration_time;
+			stExpInfo.preDcgMode[0] = preExp->LinearExp.exp_real_params.dcg_mode;
+            stExpInfo.preIso[0] = stExpInfo.preAGain[0] * stExpInfo.preDGain[0] * 50;
+            LOGD_ANR("asharp: %s-%d, preExp(%f, %f), curExp(%f, %f)\n",
+                    __FUNCTION__, __LINE__,
+                    preExp->LinearExp.exp_real_params.analog_gain,
+                    preExp->LinearExp.exp_real_params.integration_time,
+                    curExp->LinearExp.exp_real_params.analog_gain,
+                    curExp->LinearExp.exp_real_params.integration_time);
         } else {
             for(int i = 0; i < 3; i++) {
-                stExpInfo.arAGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.analog_gain;
-                stExpInfo.arDGain[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.digital_gain;
-                stExpInfo.arTime[i] = pAEPreRes->ae_pre_res_rk.HdrExp[i].exp_real_params.integration_time;
+                stExpInfo.arAGain[i] = curExp->HdrExp[i].exp_real_params.analog_gain;
+                stExpInfo.arDGain[i] = curExp->HdrExp[i].exp_real_params.digital_gain;
+                stExpInfo.arTime[i] = curExp->HdrExp[i].exp_real_params.integration_time;
+				stExpInfo.arDcgMode[i] = curExp->HdrExp[i].exp_real_params.dcg_mode;
                 stExpInfo.arIso[i] = stExpInfo.arAGain[i] * stExpInfo.arDGain[i] * 50;
+
+				stExpInfo.preAGain[0] = preExp->HdrExp[i].exp_real_params.analog_gain;
+            	stExpInfo.preDGain[0] = preExp->HdrExp[i].exp_real_params.digital_gain;
+            	stExpInfo.preTime[0] = preExp->HdrExp[i].exp_real_params.integration_time;
+				stExpInfo.preDcgMode[i] = preExp->HdrExp[i].exp_real_params.dcg_mode;
+            	stExpInfo.preIso[0] = stExpInfo.preAGain[0] * stExpInfo.preDGain[0] * 50;
 
                 LOGD_ASHARP("%s:%d index:%d again:%f dgain:%f time:%f iso:%d hdr_mode:%d\n",
                             __FUNCTION__, __LINE__,
@@ -198,6 +227,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     } else {
         LOGE_ASHARP("%s:%d pAEPreRes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
+
 #endif
 
     AsharpResult_t ret = AsharpProcess(pAsharpCtx, &stExpInfo);

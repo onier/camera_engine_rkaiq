@@ -4,4 +4,4 @@
 cmake -G "Unix Makefiles" \
     -DCMAKE_BUILD_TYPE=debug \
     -DRKPLATFORM=OFF \
-    ../../  && make
+    ../../  && make -j20

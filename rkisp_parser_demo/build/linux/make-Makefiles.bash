@@ -4,4 +4,5 @@
 cmake -G "Unix Makefiles" \
     -DCMAKE_BUILD_TYPE=debug \
     -DRKPLATFORM=OFF \
+	-DARCH=m64 \
     ../../  && make

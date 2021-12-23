@@ -4,7 +4,7 @@
 
 RKAIQ_BEGIN_DECLARE
 
-ANRresult_t bayernr_get_mode_cell_idx_by_name(CalibDb_BayerNr_t *pCalibdb, char *name, int *mode_idx)
+ANRresult_t bayernr_get_mode_cell_idx_by_name(CalibDb_BayerNr_2_t *pCalibdb, char *name, int *mode_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -24,13 +24,18 @@ ANRresult_t bayernr_get_mode_cell_idx_by_name(CalibDb_BayerNr_t *pCalibdb, char 
 		return ANR_RET_NULL_POINTER;
 	}
 
-	for(i=0; i<CALIBDB_NR_SHARP_SETTING_LEVEL; i++){
+	if(pCalibdb->mode_num < 1){
+		LOGE_ANR("%s(%d): bayerne mode cell is zero\n", __FUNCTION__, __LINE__);
+		return ANR_RET_NULL_POINTER;
+	}
+
+	for(i=0; i<pCalibdb->mode_num; i++){
 		if(strncmp(name, pCalibdb->mode_cell[i].name, sizeof(pCalibdb->mode_cell[i].name)) == 0){
 			break;
 		}
 	}
 
-	if(i<CALIBDB_MAX_MODE_NUM){
+	if(i<pCalibdb->mode_num){
 		*mode_idx = i;
 		res = ANR_RET_SUCCESS;
 	}else{
@@ -43,7 +48,7 @@ ANRresult_t bayernr_get_mode_cell_idx_by_name(CalibDb_BayerNr_t *pCalibdb, char 
 
 }
 
-ANRresult_t bayernr_get_setting_idx_by_name(CalibDb_BayerNr_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
+ANRresult_t bayernr_get_setting_idx_by_name(CalibDb_BayerNr_2_t *pCalibdb, char *name, int mode_idx, int *setting_idx)
 {
 	int i = 0;
 	ANRresult_t res = ANR_RET_SUCCESS;
@@ -82,7 +87,7 @@ ANRresult_t bayernr_get_setting_idx_by_name(CalibDb_BayerNr_t *pCalibdb, char *n
 
 }
 
-ANRresult_t bayernr_config_setting_param(RKAnr_Bayernr_Params_t *pParams, CalibDb_BayerNr_t *pCalibdb, char* param_mode, char * snr_name)
+ANRresult_t bayernr_config_setting_param(RKAnr_Bayernr_Params_t *pParams, CalibDb_BayerNr_2_t *pCalibdb, char* param_mode, char * snr_name)
 {
 	ANRresult_t res = ANR_RET_SUCCESS;
 	int mode_idx = 0;
@@ -103,7 +108,7 @@ ANRresult_t bayernr_config_setting_param(RKAnr_Bayernr_Params_t *pParams, CalibD
 	return res;
 
 }
-ANRresult_t init_bayernr_params(RKAnr_Bayernr_Params_t *pParams, CalibDb_BayerNr_t *pCalibdb, int mode_idx, int setting_idx)
+ANRresult_t init_bayernr_params(RKAnr_Bayernr_Params_t *pParams, CalibDb_BayerNr_2_t *pCalibdb, int mode_idx, int setting_idx)
 {
     ANRresult_t res = ANR_RET_SUCCESS;
     int i = 0;
@@ -703,7 +708,7 @@ ANRresult_t bayernr_fix_printf(RKAnr_Bayernr_Fix_t * pRawnrCfg)
              pRawnrCfg->filtpar2);
 
     //(0x0014 - 0x0001c)
-    LOGD_ANR("dgain0-2:%d %d %d \n",
+    LOGD_ANR("bayernr (0x0014 - 0x0001c)dgain0-2:%d %d %d \n",
              pRawnrCfg->dgain0,
              pRawnrCfg->dgain1,
              pRawnrCfg->dgain2);

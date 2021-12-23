@@ -87,25 +87,29 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 
     LOGI_AGIC("%s: (enter)\n", __FUNCTION__ );
 
-    RkAiqAlgoPreResAeInt* pAEPreRes =
-        (RkAiqAlgoPreResAeInt*)(pAgicProcParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
+    RKAiqAecExpInfo_t* pAERes = NULL;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        pAERes = pAgicProcParams->agic_proc_com.com_ext.u.proc.curExp;
+    } else {
+        pAERes = pAgicProcParams->rk_com.u.proc.curExp;
+    }
 
-    if(pAEPreRes != NULL) {
+    if(pAERes != NULL) {
         if(pAgicProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            iso = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain * 50;
+            iso = pAERes->LinearExp.exp_real_params.analog_gain * 50;
             LOGD_AGIC("%s:NORMAL:iso=%d,again=%f\n", __FUNCTION__, iso,
-                      pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain);
+                      pAERes->LinearExp.exp_real_params.analog_gain);
         } else if(RK_AIQ_HDR_GET_WORKING_MODE(pAgicProcParams->hdr_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2) {
-            iso = pAEPreRes->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain * 50;
+            iso = pAERes->HdrExp[1].exp_real_params.analog_gain * 50;
             LOGD_AGIC("%s:HDR2:iso=%d,again=%f\n", __FUNCTION__, iso,
-                      pAEPreRes->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain);
+                      pAERes->HdrExp[1].exp_real_params.analog_gain);
         } else if(RK_AIQ_HDR_GET_WORKING_MODE(pAgicProcParams->hdr_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3) {
-            iso = pAEPreRes->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain * 50;
+            iso = pAERes->HdrExp[2].exp_real_params.analog_gain * 50;
             LOGD_AGIC("%s:HDR3:iso=%d,again=%f\n", __FUNCTION__, iso,
-                      pAEPreRes->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain);
+                      pAERes->HdrExp[2].exp_real_params.analog_gain);
         }
     } else {
-        LOGE_AGIC("%s: pAEPreRes is NULL, so use default instead \n", __FUNCTION__);
+        LOGE_AGIC("%s: pAERes is NULL, so use default instead \n", __FUNCTION__);
     }
 
     AgicProcess(pAgicCtx, iso);

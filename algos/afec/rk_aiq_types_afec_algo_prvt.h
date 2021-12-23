@@ -90,6 +90,8 @@ typedef struct FECContext_s {
     isp_drv_share_mem_ops_t *share_mem_ops;
     rk_aiq_fec_share_mem_info_t *fec_mem_info;
     void* share_mem_ctx;
+    int working_mode;
+    bool hasGenMeshInit;
 } FECContext_t;
 
 typedef struct FECContext_s* FECHandle_t;

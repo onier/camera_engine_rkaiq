@@ -275,13 +275,13 @@
  * - fix TMO,dehaze bugs
  * - isp driver v0.1.9
  * v1.0x23.0
- * - calib db: v1.4.2 magic code: 1089142 
+ * - calib db: v1.4.2 magic code: 1089142
  * - update rkisp2x_tuner v1.0x3.0
  * - isp driver v1.0x2.0
  * - uAPI changes
  *   - add rk_aiq_uapi_sysctl_setCrop/rk_aiq_uapi_sysctl_getCrop
  *   - add rk_aiq_uapi_sysctl_preInit
- * - fix ldch/fec memleak of aiq v1.3.0 
+ * - fix ldch/fec memleak of aiq v1.3.0
  * - Open merge and tmo when mode is linear
  * - rk_aiq_uapi_sysctl_preInit
  * v1.0x23.1
@@ -313,10 +313,10 @@
  * - fix aie gray_mode error of v1.023.3
  * - gen_mesh: v3.0.2
  * v1.0x45.1
- * - calib db: v1.4.4 magic code: 1123951 
+ * - calib db: v1.4.4 magic code: 1123951
  * - isp driver v1.0x4.1
  * - support socket IPC for toolserver
- * - support 3dnr motion detection and process 
+ * - support 3dnr motion detection and process
  * v1.0x45.2
  * - isp driver v1.0x4.1
  * - fix stable bugs of 3ndr motion detection
@@ -329,10 +329,60 @@
  * - motion detection stable issues
  * - system stuck issues when enable fec
  * - dump raw issues
+ * v1.0x56.1
+ * - isp driver v1.0x5.1
+ * - ensure isp/pp params are syncronized with frame
+ * - support vicap dvp interface
+ * - support dynamic lsc&nr iq cell
+ * v1.0x56.3
+ * - update motion detection algo from jimmy
+ * v1.0x66.0
+ * - fix some api bugs
+ *   - fix rk_aiq_uapi_getBrightness uapi bug
+     - fix ahdr api bug
+     - Fix adehaze enable bug
+     - NR & Sharp: modify api for get strength
+ *   - API updateIq may be stucked, fix it
+ * - motion detection: v1.4.0
+ * - uvnr: use last frame in default
+ * v1.0x67.0
+ * - AE
+ *   - fix bug in antiflicker limit
+ *   - Fix bug in longFrameMode,which luma is different between LongFrameMode
+ *     and linear
+ * - AWB:
+ *   - fix bug in awb when number of LS > 7
+ *   - fix bug in extralight mode
+ *   - lsc and ccm support at most 14 light sources
+ * - AF
+ *   - lots of optimizations
+ * - add custom AE algo demo
+ * - Tuning tool: v1.7.0
+ * v1.0x67.1
+ * - add AFD(Anti Flikering Detection) algo
+ * - add AWDR algo
+ * - fix some crash bugs of motion detection
+ * v1.0x67.3
+ * - AE
+ *   - custom_ae & third_ae_algo modify
+ *   - fix noise around light source when hdr2 fps>25
+ * - AWB
+ *   - fix bug that fail to select hdr frame when hdrFrameChooseMode=manual
+ * - AF
+ *   - fix ae is locked switch day/night and hdr/normal mode
+ *   - fix custom af can not control ae on/off
+ * - Tuning tool: v1.7.2
+ * - gen_mesh: v4.0.6
+ * - FIX: gic paras are not set to kernel
+ * - FIX: dpcc: pdaf sensor PD correction
+ * - FIX: ldch: mapping error in mode switch
+ * - FIX: fmt not initialized and not configed in some case
+ * - FIX: blc hwi bug
+ * - FIX: cpsl: config not updated when mode(auto/manual) change
  */
 
-#define RK_AIQ_VERSION_REAL_V "v1.0x45.4"
-#define RK_AIQ_RELEASE_DATE "2020-01-28"
+#define RK_AIQ_VERSION_REAL_V "v1.0x67.3"
+#define RK_AIQ_RELEASE_DATE "2020-08-24"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

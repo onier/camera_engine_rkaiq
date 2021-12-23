@@ -28,6 +28,7 @@ namespace RkCam {
 using namespace XCam;
 
 typedef struct ispHwEvt_s {
+    virtual ~ispHwEvt_s() {};
     int evt_code;
     union {
 
@@ -65,9 +66,18 @@ class IspEvtsListener {
 public:
     IspEvtsListener() {};
     virtual ~IspEvtsListener() {};
-    virtual XCamReturn ispEvtsCb(ispHwEvt_t* evt) = 0;
+    virtual XCamReturn ispEvtsCb(SmartPtr<ispHwEvt_t> evt) = 0;
 private:
     XCAM_DEAD_COPY (IspEvtsListener);
+};
+
+class IspTxBufListener {
+public:
+    IspTxBufListener () {};
+    virtual ~IspTxBufListener () {};
+    virtual XCamReturn ispTxBufCb(SmartPtr<VideoBuffer>& ispTxBuf) = 0;
+private:
+    XCAM_DEAD_COPY (IspTxBufListener);
 };
 
 class ICamHw {
@@ -86,17 +96,20 @@ public:
     virtual XCamReturn swWorkingModeDyn(int mode) = 0;
     virtual XCamReturn getSensorModeData(const char* sns_ent_name,
                                          rk_aiq_exposure_sensor_descriptor& sns_des) = 0;
-    virtual XCamReturn setIspParams(SmartPtr<RkAiqIspParamsProxy>& ispParams) = 0;
-    virtual XCamReturn setHdrProcessCount(int frame_id, int count) = 0;
+    virtual XCamReturn setIspMeasParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispMeasParams) = 0;
+    virtual XCamReturn setIspOtherParams(SmartPtr<RkAiqIspOtherParamsProxy>& ispOtherParams) = 0;
+    virtual XCamReturn setHdrProcessCount(rk_aiq_luma_params_t luma_params) = 0;
     virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar) = 0;
     virtual XCamReturn setIrisParams(SmartPtr<RkAiqIrisParamsProxy>& irisPar, CalibDb_IrisType_t irisType) = 0;
     virtual XCamReturn setFocusParams(SmartPtr<RkAiqFocusParamsProxy>& focus_params) = 0;
     virtual XCamReturn setCpslParams(SmartPtr<RkAiqCpslParamsProxy>& cpsl_params) = 0;
-    virtual XCamReturn setIsppParams(SmartPtr<RkAiqIsppParamsProxy>& isppParams) = 0;
+    virtual XCamReturn setIsppMeasParams(SmartPtr<RkAiqIsppMeasParamsProxy>& isppParams) = 0;
+    virtual XCamReturn setIsppOtherParams(SmartPtr<RkAiqIsppOtherParamsProxy>& isppOtherParams) = 0;
     virtual XCamReturn setIsppStatsListener(IsppStatsListener* isppStatsListener) = 0;
     virtual XCamReturn setIspLumaListener(IspLumaListener* lumaListener) = 0;
     virtual XCamReturn setIspStatsListener(IspStatsListener* statsListener) = 0;
     virtual XCamReturn setEvtsListener(IspEvtsListener* evtListener) = 0;
+    virtual XCamReturn setIspTxBufListener(IspTxBufListener* txBufListener) = 0;
     virtual XCamReturn setModuleCtl(rk_aiq_module_id_t mId, bool mod_en) = 0;
     virtual XCamReturn getModuleCtl(rk_aiq_module_id_t mId, bool& mod_en) = 0;
     virtual XCamReturn notify_capture_raw() = 0;
@@ -117,6 +130,11 @@ public:
     virtual XCamReturn FocusCorrection() = 0;
     virtual XCamReturn ZoomCorrection() = 0;
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops) = 0;
+    virtual XCamReturn getEffectiveIspParams(SmartPtr<RkAiqIspMeasParamsProxy>& ispParams, int frame_id) = 0;
+    virtual XCamReturn setIspParamsSync(int frameId) = 0;
+    virtual XCamReturn setIsppParamsSync(int frameId) = 0;
+    virtual uint64_t getIspModuleEnState() = 0;
+    virtual XCamReturn getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& ExpParams) = 0;
 private:
     XCAM_DEAD_COPY (ICamHw);
 };

@@ -114,25 +114,28 @@ processing
     if (pAdebayerProcParams->rk_com.u.proc.is_bw_sensor) {
         pAdebayerCtx->config.enable = 0;
     } else {
-        RkAiqAlgoPreResAeInt* pAEPreRes =
-            (RkAiqAlgoPreResAeInt*)(pAdebayerProcParams->rk_com.u.proc.pre_res_comb->ae_pre_res);
-
-        if(pAEPreRes != NULL) {
+        RKAiqAecExpInfo_t *curExp = NULL;
+        if (inparams->u.prepare.ae_algo_id != 0) {
+            curExp = pAdebayerProcParams->adebayer_proc_com.com_ext.u.proc.curExp;
+        } else {
+            curExp = pAdebayerProcParams->rk_com.u.proc.curExp;
+        }
+        if(curExp != NULL) {
             if(pAdebayerProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-                iso = pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain * 50;
+                iso = curExp->LinearExp.exp_real_params.analog_gain * 50;
                 LOGD_ADEBAYER("%s:NORMAL:iso=%d,again=%f\n", __FUNCTION__, iso,
-                              pAEPreRes->ae_pre_res_rk.LinearExp.exp_real_params.analog_gain);
+                              curExp->LinearExp.exp_real_params.analog_gain);
             } else if(RK_AIQ_HDR_GET_WORKING_MODE(pAdebayerProcParams->hdr_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2) {
-                iso = pAEPreRes->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain * 50;
+                iso = curExp->HdrExp[1].exp_real_params.analog_gain * 50;
                 LOGD_ADEBAYER("%s:HDR2:iso=%d,again=%f\n", __FUNCTION__, iso,
-                              pAEPreRes->ae_pre_res_rk.HdrExp[1].exp_real_params.analog_gain);
+                              curExp->HdrExp[1].exp_real_params.analog_gain);
             } else if(RK_AIQ_HDR_GET_WORKING_MODE(pAdebayerProcParams->hdr_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3) {
-                iso = pAEPreRes->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain * 50;
+                iso = curExp->HdrExp[2].exp_real_params.analog_gain * 50;
                 LOGD_ADEBAYER("%s:HDR3:iso=%d,again=%f\n", __FUNCTION__, iso,
-                              pAEPreRes->ae_pre_res_rk.HdrExp[2].exp_real_params.analog_gain);
+                              curExp->HdrExp[2].exp_real_params.analog_gain);
             }
         } else {
-            LOGE_ADEBAYER("%s: pAEPreRes is NULL, so use default instead \n", __FUNCTION__);
+            LOGE_ADEBAYER("%s: curExp is NULL, so use default instead \n", __FUNCTION__);
         }
 
         AdebayerProcess(pAdebayerCtx, iso);

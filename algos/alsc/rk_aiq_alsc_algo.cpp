@@ -579,7 +579,98 @@ static XCamReturn UpdateLscCalibPara(alsc_handle_t  hAlsc)
     }
 #endif
     LOGI_ALSC("%s: alsc illunum:%d", __FUNCTION__, calib_lsc->aLscCof.illuNum[hAlsc->alscRest.caseIndex]);
+    // 1) malloc get and reorder para
+    pLscTableProfileVig_t pLscTableProfileVig;
+    pLscTableProfileVigIll_t pLscTableProfileVigIll;
+    pLscTableProfileVigIllRes_t pLscTableProfileVigIllRes;
 
+    //release before malloc
+    if(hAlsc->pLscTableAll){
+        for(int c=0;c<USED_FOR_CASE_MAX;c++){
+            pLscTableProfileVigIllRes = hAlsc->pLscTableAll[c];
+            //for (int k = 0; k < hAlsc->calibLsc->aLscCof.lscResNum; k++) {
+            for (int k = 0; k < hAlsc->_lscResNum_backup; k++) {
+                pLscTableProfileVigIll = pLscTableProfileVigIllRes[k];
+                //for(int i = 0; i < hAlsc->calibLsc->aLscCof.illuNum_backup[c]; i++) {
+                for(int i = 0; i < hAlsc->_illuNum_backup[c]; i++) {
+                    pLscTableProfileVig = pLscTableProfileVigIll[i];
+                    //LOGE_ALSC("c k i  %d,%d,%d,pLscTableProfileVig = %0x",c,k,i,pLscTableProfileVig);
+                    if(pLscTableProfileVig){
+                        free(pLscTableProfileVig);
+                        pLscTableProfileVig = NULL;
+                     }
+                }
+                //LOGE_ALSC("c k   %d,%d,pLscTableProfileVigIll = %0x",c,k,pLscTableProfileVigIll);
+                if(pLscTableProfileVigIll){
+                    free(pLscTableProfileVigIll);
+                    pLscTableProfileVigIll = NULL;
+                }
+            }
+            if(pLscTableProfileVigIllRes){
+                free(pLscTableProfileVigIllRes);
+                pLscTableProfileVigIllRes = NULL;
+            }
+            //LOGE_ALSC("c  %d ,pLscTableProfileVigIllRes = %0x",c,pLscTableProfileVigIllRes);
+        }
+        free(hAlsc->pLscTableAll);
+        hAlsc->pLscTableAll = NULL;
+    }
+
+    //malloc
+    hAlsc->pLscTableAll = (pLscTableProfileVigIllResUC_t)malloc(sizeof(pLscTableProfileVigIllRes_t) * USED_FOR_CASE_MAX);
+    memset(hAlsc->pLscTableAll, 0, sizeof(pLscTableProfileVigIllRes_t) * USED_FOR_CASE_MAX);
+    for(int c=0;c<USED_FOR_CASE_MAX;c++){
+        pLscTableProfileVigIllRes = (pLscTableProfileVigIllRes_t)malloc(sizeof(pLscTableProfileVigIll_t)*calib_lsc->aLscCof.lscResNum);
+        memset(pLscTableProfileVigIllRes,0, sizeof(pLscTableProfileVigIll_t)*calib_lsc->aLscCof.lscResNum);
+
+        //when switch iqfile, the num(of pointers) would be changed, when free these pointer, wrong num will cause out of range
+        hAlsc->_lscResNum_backup = calib_lsc->aLscCof.lscResNum;
+
+        hAlsc->pLscTableAll[c] = pLscTableProfileVigIllRes;
+        for (int k = 0; k < calib_lsc->aLscCof.lscResNum; k++) {
+            pLscTableProfileVigIll = (pLscTableProfileVigIll_t)malloc(sizeof(pLscTableProfileVig_t)*calib_lsc->aLscCof.illuNum[c]);
+            memset(pLscTableProfileVigIll, 0, sizeof(pLscTableProfileVig_t)*calib_lsc->aLscCof.illuNum[c]);
+
+            //when switch iqfile, the num(of pointers) would be changed, when free these pointer, wrong num will cause out of range
+            hAlsc->_illuNum_backup[c] = calib_lsc->aLscCof.illuNum[c];
+
+            pLscTableProfileVigIllRes[k] = pLscTableProfileVigIll;
+            for(int i = 0; i < calib_lsc->aLscCof.illuNum[c]; i++) {
+                pLscTableProfileVig = (pLscTableProfileVig_t)malloc(sizeof(pLscTableProfile_t)*calib_lsc->aLscCof.illAll[c][i].tableUsedNO);
+                memset(pLscTableProfileVig, 0, sizeof(pLscTableProfile_t)*calib_lsc->aLscCof.illAll[c][i].tableUsedNO);
+                pLscTableProfileVigIll[i] = pLscTableProfileVig;
+                for (int j = 0; j < calib_lsc->aLscCof.illAll[c][i].tableUsedNO; j++) {
+                   char name[LSC_PROFILE_NAME + LSC_RESOLUTION_NAME];
+                   sprintf(name, "%s_%s", calib_lsc->aLscCof.lscResName[k],
+                           calib_lsc->aLscCof.illAll[c][i].tableUsed[j]);
+                   const CalibDb_LscTableProfile_t* pLscTableProfile = NULL;
+                   // get a lsc-profile from database
+                   ret = CamCalibDbGetLscProfileByName(calib_lsc, name, &pLscTableProfile);
+                   RETURN_RESULT_IF_DIFFERENT(ret, XCAM_RETURN_NO_ERROR);
+                   // store lsc-profile in pointer array
+                   hAlsc->pLscTableAll[c][k][i][j] = pLscTableProfile;//use the same memory
+                   //LOGE_ALSC("hAlsc->pLscTableAll2[%d][%d][%d][%d] = %0x, pLscTableProfileVig[%d] = %0x",c,k,i,j,hAlsc->pLscTableAll[c][k][i][j],j,pLscTableProfileVig[j]);
+                   LOGD_ALSC("LSC name  %s r[1:2]:%d,%d \n", name,
+                             hAlsc->pLscTableAll[c][k][i][j]->LscMatrix[0].uCoeff[1],
+                             hAlsc->pLscTableAll[c][k][i][j]->LscMatrix[0].uCoeff[2]);
+                }
+                // order lsc-profiles by vignetting
+                ret = AwbOrderLscProfilesByVignetting(hAlsc->pLscTableAll[c][k][i],
+                                                    calib_lsc->aLscCof.illAll[c][i].tableUsedNO);
+                //RETURN_RESULT_IF_DIFFERENT(ret, XCAM_RETURN_NO_ERROR);
+
+                //LOGE_ALSC("c k i  %d,%d,%d,pLscTableProfileVig = %0x",c,k,i,pLscTableProfileVig);
+            }
+
+            //LOGE_ALSC("c k   %d,%d,pLscTableProfileVigIll = %0x",c,k,pLscTableProfileVigIll);
+        }
+
+        //LOGE_ALSC("c  %d ,pLscTableProfileVigIllRes = %0x",c,pLscTableProfileVigIllRes);
+    }
+    //LOGE_ALSC("pLscTableAll2 = %0x",hAlsc->pLscTableAll2);
+
+
+#if 0
     // 1) gtet and reorder para
     //const CalibDb_Lsc_t *pAlscProfile = calib->lsc;
     for(int c=0;c<USED_FOR_CASE_MAX;c++){
@@ -608,6 +699,7 @@ static XCamReturn UpdateLscCalibPara(alsc_handle_t  hAlsc)
 
         }
     }
+  #endif
     hAlsc->mCurAtt.byPass = !(calib_lsc->enable);
     ClearList(&hAlsc->alscRest.dominateIlluList);
     LOGI_ALSC("%s: (exit)\n", __FUNCTION__);
@@ -649,6 +741,42 @@ XCamReturn AlscRelease(alsc_handle_t hAlsc)
     LOGI_ALSC("%s: (enter)\n", __FUNCTION__);
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    pLscTableProfileVig_t pLscTableProfileVig;
+    pLscTableProfileVigIll_t pLscTableProfileVigIll;
+    pLscTableProfileVigIllRes_t pLscTableProfileVigIllRes;
+    if(hAlsc->pLscTableAll){
+        for(int c=0;c<USED_FOR_CASE_MAX;c++){
+            pLscTableProfileVigIllRes = hAlsc->pLscTableAll[c];
+            for (int k = 0; k < hAlsc->calibLsc->aLscCof.lscResNum; k++) {
+                pLscTableProfileVigIll = pLscTableProfileVigIllRes[k];
+                for(int i = 0; i < hAlsc->calibLsc->aLscCof.illuNum[c]; i++) {
+                    pLscTableProfileVig = pLscTableProfileVigIll[i];
+                    for (int j = 0; j < hAlsc->calibLsc->aLscCof.illAll[c][i].tableUsedNO; j++) {
+                       //free
+                    }
+                    //LOGE_ALSC("c k i  %d,%d,%d,pLscTableProfileVig = %0x",c,k,i,pLscTableProfileVig);
+                    if(pLscTableProfileVig){
+                        free(pLscTableProfileVig);
+                        pLscTableProfileVig = NULL;
+                     }
+                }
+                //LOGE_ALSC("c k   %d,%d,pLscTableProfileVigIll = %0x",c,k,pLscTableProfileVigIll);
+                if(pLscTableProfileVigIll){
+                    free(pLscTableProfileVigIll);
+                    pLscTableProfileVigIll = NULL;
+                }
+            }
+            if(pLscTableProfileVigIllRes){
+                free(pLscTableProfileVigIllRes);
+                pLscTableProfileVigIllRes = NULL;
+            }
+            //LOGE_ALSC("c  %d ,pLscTableProfileVigIllRes = %0x",c,pLscTableProfileVigIllRes);
+        }
+        free(hAlsc->pLscTableAll);
+        hAlsc->pLscTableAll = NULL;
+    }
+    //LOGE_ALSC("pLscTableAll2 = %0x",hAlsc->pLscTableAll2);
+
     ClearList(&hAlsc->alscRest.dominateIlluList);
     free(hAlsc);
 

@@ -23,6 +23,8 @@
 #include "adehaze/rk_aiq_types_adehaze_algo_int.h"
 #include "RkAiqCalibDbTypes.h"
 
+#define DEHAZEBIGMODE     (2560)
+
 
 typedef struct AdehazeHandle_s {
     rk_aiq_dehaze_cfg_t adhaz_config;
@@ -33,6 +35,8 @@ typedef struct AdehazeHandle_s {
     int Dehaze_Scene_mode;
     adehaze_sw_t AdehazeAtrr;
     int prepare_type;
+    uint32_t width;
+    uint32_t height;
 } AdehazeHandle_t;
 
 

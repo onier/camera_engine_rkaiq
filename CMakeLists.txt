@@ -28,7 +28,11 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 #set RK_SIMULATOR_HW
 #set(RK_SIMULATOR_HW true)
 
+if(NOT RK_SIMULATOR_HW)
 set(GENMESH_ONLINE true)
+set(MOTION_DETECT true)
+endif()
+
 # ----------------------------------------------------------------------------
 # SET THE COMPILER PATH
 # ----------------------------------------------------------------------------
@@ -87,8 +91,10 @@ include/algos/adehaze
 include/algos/adpcc
 include/algos/ae
 include/algos/af
+include/algos/afd
 include/algos/afec
 include/algos/agamma
+include/algos/adegamma
 include/algos/agic
 include/algos/ahdr
 include/algos/aie
@@ -237,6 +243,10 @@ if(GENMESH_ONLINE)
     add_compile_options(-DGENMESH_ONLINE)
 endif()
 
+if(MOTION_DETECT)
+    set (MOTION_DETECT_LIBS rkaiq_tnr_md)
+endif()
+
 # set output binary path
 if(WIN32)
     SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/exe)
@@ -290,12 +300,12 @@ set_target_properties(rkaiq PROPERTIES CXX_VISIBILITY_PRESET default)
 #
 link_directories("${LIBRARY_OUTPUT_PATH}")
 
-target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_tnr_md rkaiq_asd rkaiq_ahdr
+target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkaiq_ahdr
 	rkaiq_acp rkaiq_asharp rkaiq_adhaz rkaiq_a3dlut rkaiq_ablc rkaiq_accm rkaiq_acgc
-	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_agic rkaiq_aie rkaiq_aldch
-	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}
-	${OPENCV_3RDPARTY_LIBS} ${GENMESH_LIBS} ${LINK_ASAN} pthread)
-	
+	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_adegamma rkaiq_agic rkaiq_aie rkaiq_aldch
+	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr rkaiq_afd ${OPENCV_LIBS}
+	${OPENCV_3RDPARTY_LIBS} ${GENMESH_LIBS} ${LINK_ASAN} pthread ${MOTION_DETECT_LIBS})
+
 set (VERSIONFILEPATH ${PROJECT_SOURCE_DIR}/)
 execute_process(COMMAND sh
 	${PROJECT_SOURCE_DIR}/tools/check-version-with-tuningtools.sh

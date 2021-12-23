@@ -45,10 +45,19 @@ typedef struct illu_node_s {
     unsigned int value;
 } illu_node_t;
 
+typedef const CalibDb_LscTableProfile_t* pLscTableProfile_t;
+typedef pLscTableProfile_t*  pLscTableProfileVig_t;
+typedef pLscTableProfileVig_t*  pLscTableProfileVigIll_t;
+typedef pLscTableProfileVigIll_t*  pLscTableProfileVigIllRes_t;
+typedef pLscTableProfileVigIllRes_t*  pLscTableProfileVigIllResUC_t;
 
 typedef struct alsc_context_s {
     const CalibDb_Lsc_t *calibLsc;//profile para
-    const CalibDb_LscTableProfile_t *pLscTableAll[USED_FOR_CASE_MAX][LSC_RESOLUTIONS_NUM_MAX][LSC_ILLUMINATION_MAX][LSC_PROFILES_NUM_MAX];// reorder para //to do, change to pointer
+
+    int _lscResNum_backup;
+    int _illuNum_backup[USED_FOR_CASE_MAX];
+
+    pLscTableProfileVigIllResUC_t pLscTableAll;// reorder para , const CalibDb_LscTableProfile_t *pLscTableAll[USED_FOR_CASE_MAX][LSC_RESOLUTIONS_NUM_MAX][LSC_ILLUMINATION_MAX][LSC_PROFILES_NUM_MAX];
     CalibDb_ResolutionName_t  curResName;
     alsc_sw_info_t alscSwInfo;
     alsc_rest_t alscRest;

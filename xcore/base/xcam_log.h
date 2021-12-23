@@ -63,6 +63,8 @@ typedef enum {
     XCORE_LOG_MODULE_XCORE,
     XCORE_LOG_MODULE_ANALYZER,
     XCORE_LOG_MODULE_CAMHW,
+    XCORE_LOG_MODULE_ADEGAMMA,
+    XCORE_LOG_MODULE_AFD,
     XCORE_LOG_MODULE_MAX,
 } xcore_log_modules_t;
 
@@ -153,6 +155,21 @@ char* timeString();
 #define LOGV_AEC(...) LOGV_AEC_SUBM(0xff, ##__VA_ARGS__)
 #define LOGI_AEC(...) LOGI_AEC_SUBM(0xff, ##__VA_ARGS__)
 #define LOG1_AEC(...) LOG1_AEC_SUBM(0xff, ##__VA_ARGS__)
+
+// define afd module logs
+#define LOGD_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_DEBUG(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+#define LOGE_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_ERROR(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+#define LOGW_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_WARNING(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+#define LOGV_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_VERBOSE(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+#define LOGI_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_INFO(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+#define LOG1_AFD_SUBM(sub_modules, ...) XCAM_MODULE_LOG_LOW1(XCORE_LOG_MODULE_AFD, sub_modules, ##__VA_ARGS__)
+
+#define LOGD_AFD(...) LOGD_AFD_SUBM(0xff, ##__VA_ARGS__)
+#define LOGE_AFD(...) LOGE_AFD_SUBM(0xff, ##__VA_ARGS__)
+#define LOGW_AFD(...) LOGW_AFD_SUBM(0xff, ##__VA_ARGS__)
+#define LOGV_AFD(...) LOGV_AFD_SUBM(0xff, ##__VA_ARGS__)
+#define LOGI_AFD(...) LOGI_AFD_SUBM(0xff, ##__VA_ARGS__)
+#define LOG1_AFD(...) LOG1_AFD_SUBM(0xff, ##__VA_ARGS__)
 
 // define awb module logs
 #define LOGD_AWB_SUBM(sub_modules, ...) XCAM_MODULE_LOG_DEBUG(XCORE_LOG_MODULE_AWB, sub_modules, ##__VA_ARGS__)
@@ -279,6 +296,14 @@ char* timeString();
 #define LOGV_ADEHAZE(...) XCAM_MODULE_LOG_VERBOSE(XCORE_LOG_MODULE_ADEHAZE, 0xff, ##__VA_ARGS__)
 #define LOGI_ADEHAZE(...) XCAM_MODULE_LOG_INFO(XCORE_LOG_MODULE_ADEHAZE, 0xff, ##__VA_ARGS__)
 #define LOG1_ADEHAZE(...) XCAM_MODULE_LOG_LOW1(XCORE_LOG_MODULE_ADEHAZE, 0xff, ##__VA_ARGS__)
+
+// define ADEGAMMA module logs
+#define LOGD_ADEGAMMA(...) XCAM_MODULE_LOG_DEBUG(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
+#define LOGE_ADEGAMMA(...) XCAM_MODULE_LOG_ERROR(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
+#define LOGW_ADEGAMMA(...) XCAM_MODULE_LOG_WARNING(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
+#define LOGV_ADEGAMMA(...) XCAM_MODULE_LOG_VERBOSE(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
+#define LOGI_ADEGAMMA(...) XCAM_MODULE_LOG_INFO(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
+#define LOG1_ADEGAMMA(...) XCAM_MODULE_LOG_LOW1(XCORE_LOG_MODULE_ADEGAMMA, 0xff, ##__VA_ARGS__)
 
 // define ADEBAYER module logs
 #define LOGD_ADEBAYER(...) XCAM_MODULE_LOG_DEBUG(XCORE_LOG_MODULE_ADEBAYER, 0xff, ##__VA_ARGS__)

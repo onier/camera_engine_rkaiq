@@ -73,13 +73,20 @@ typedef struct rk_aiq_wb_mwb_attrib_s {
 typedef enum rk_aiq_wb_awb_alg_method_s {
     RK_AIQ_AWB_ALG_TYPE_INVAILD = 0,
     RK_AIQ_AWB_ALG_TYPE_GLOABL = 1,
-    //add more
+    RK_AIQ_AWB_ALG_TYPE_GRAYWORD = 2,
 } rk_aiq_wb_awb_alg_method_t;
 
 typedef enum hdr_frame_choose_mode_e {
     hdr_frame_choose_mode_manual = 0,
     hdr_frame_choose_mode_auto
 } hdr_frame_choose_mode_t;
+
+typedef struct rk_aiq_wb_awb_damp_s {
+    float dFStep;
+    float dFMin;
+    float dFMax;
+    float LvVarTh;
+}rk_aiq_wb_awb_damp_t;
 
 typedef struct rk_aiq_wb_awb_attrib_s {
     rk_aiq_wb_awb_alg_method_t algMethod;
@@ -95,6 +102,9 @@ typedef struct rk_aiq_wb_awb_attrib_s {
     hdr_frame_choose_mode_t hdrFrameChooseMode;
     unsigned char   hdrFrameChoose;
     CalibDb_StatWindow_t measeureWindow;
+    CalibDb_Awb_gain_offset_cfg_t wbGainOffset;
+    rk_aiq_wb_awb_damp_t dampFactor;
+    float convergedVarTh;
 } rk_aiq_wb_awb_attrib_t;
 
 typedef enum rk_aiq_wb_op_mode_s {
@@ -114,6 +124,7 @@ typedef struct rk_aiq_wb_querry_info_s {
     rk_aiq_wb_gain_t gain;
     rk_aiq_wb_cct_t cctGloabl;
     bool awbConverged;
+    uint32_t LVValue;
 } rk_aiq_wb_querry_info_t;
 
 typedef enum rk_aiq_wb_lock_state_s {

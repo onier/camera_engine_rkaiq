@@ -34,6 +34,7 @@ Thread::Thread (const char *name)
     if (name)
         _name = strndup (name, XCAM_MAX_STR_SIZE);
 
+    pthread_attr_init(&_pthread_attr);
     XCAM_LOG_DEBUG ("Thread(%s) construction", XCAM_STR(_name));
 }
 
@@ -43,6 +44,7 @@ Thread::~Thread ()
 
     if (_name)
         xcam_free (_name);
+	pthread_attr_destroy(&_pthread_attr);
 }
 
 int
@@ -109,8 +111,9 @@ bool Thread::start ()
     if (_started)
         return true;
 
-    if (pthread_create (&_thread_id, NULL, (void * (*)(void*))thread_func, this) != 0)
+    if (pthread_create (&_thread_id, &_pthread_attr, (void * (*)(void*))thread_func, this) != 0)
         return false;
+
     _started = true;
     _stopped = false;
 
@@ -154,6 +157,11 @@ bool Thread::is_running ()
 {
     SmartLock locker(_mutex);
     return _started;
+}
+
+pthread_attr_t& Thread::get_pthread_attr()
+{
+	return _pthread_attr;
 }
 
 };
