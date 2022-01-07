@@ -114,7 +114,12 @@ processing
     if (pAdebayerProcParams->rk_com.u.proc.is_bw_sensor) {
         pAdebayerCtx->config.enable = 0;
     } else {
-        RKAiqAecExpInfo_t *curExp = pAdebayerProcParams->rk_com.u.proc.curExp;
+        RKAiqAecExpInfo_t *curExp = NULL;
+        if (inparams->u.prepare.ae_algo_id != 0) {
+            curExp = pAdebayerProcParams->adebayer_proc_com.com_ext.u.proc.curExp;
+        } else {
+            curExp = pAdebayerProcParams->rk_com.u.proc.curExp;
+        }
         if(curExp != NULL) {
             if(pAdebayerProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
                 iso = curExp->LinearExp.exp_real_params.analog_gain * 50;

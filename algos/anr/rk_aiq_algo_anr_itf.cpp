@@ -165,8 +165,16 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 	stExpInfo.snr_mode = 0;
 
 #if 1
-    RKAiqAecExpInfo_t *preExp = pAnrProcParams->rk_com.u.proc.preExp;
-    RKAiqAecExpInfo_t *curExp = pAnrProcParams->rk_com.u.proc.curExp;
+    RKAiqAecExpInfo_t *preExp = NULL;
+    RKAiqAecExpInfo_t *curExp = NULL;
+
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        preExp = pAnrProcParams->anr_proc_com.com_ext.u.proc.curExp;
+        curExp = pAnrProcParams->anr_proc_com.com_ext.u.proc.curExp;
+    } else {
+        preExp = pAnrProcParams->rk_com.u.proc.curExp;
+        curExp = pAnrProcParams->rk_com.u.proc.curExp;
+    }
 
     if(preExp != NULL && curExp != NULL) {
         stExpInfo.cur_snr_mode = curExp->CISFeature.SNR;

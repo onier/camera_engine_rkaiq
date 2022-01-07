@@ -57,6 +57,13 @@ typedef struct RKAiqAfInfoWrapper_s {
     int64_t sofTime;
     int32_t focusCode;
     int32_t zoomCode;
+    uint32_t lowPassId;
+    int32_t lowPassFv4_4[RKAIQ_RAWAF_SUMDATA_NUM];
+    int32_t lowPassFv8_8[RKAIQ_RAWAF_SUMDATA_NUM];
+    int32_t lowPassHighLht[RKAIQ_RAWAF_SUMDATA_NUM];
+    int32_t lowPassHighLht2[RKAIQ_RAWAF_SUMDATA_NUM];
+    bool zoomCorrection;
+    bool focusCorrection;
 } RKAiqAfInfoWrapper_t;
 
 typedef struct RkAiqPirisInfoWrapper_s {

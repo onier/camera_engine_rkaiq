@@ -218,10 +218,25 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
  *
  * \param[in] ctx             context
  * \param[in] algo_type       algo type defined by RkAiqAlgoDesComm.type
- * \return return 0 if success
+ * \return return NULL if failed
  */
-const RkAiqAlgoContext*
+RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type);
+
+/*!
+ * \brief get algo lib context
+ * The returned algo context will be used as the first param of algo private APIs.
+ * For those customer's algo lib, this interface should be called after
+ * \ref rk_aiq_uapi_sysctl_regLib, or will return NULL.
+ *
+ * \param[in] ctx             context
+ * \param[in] algo_type       algo type defined by RkAiqAlgoDesComm.type
+ * \param[in] lib_id          0 for system integrated algos;\n
+ *                            returned by call \ref rk_aiq_uapi_sysctl_regLib for customer algos
+ * \return return NULL if failed
+ */
+RkAiqAlgoContext*
+rk_aiq_uapi_sysctl_getAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type, const int lib_id);
 
 /*!
  * \brief get 3a stats
@@ -406,6 +421,35 @@ rk_aiq_uapi_sysctl_getCrop(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_rect_t *rect)
 
 XCamReturn
 rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile);
+
+/*!
+ * \brief get current used calibDb struct point
+ *
+ * \param[in] ctx             context
+ * \return current used calibDb struct point
+ */
+
+CamCalibDbContext_t*
+rk_aiq_uapi_sysctl_getCurCalib(const rk_aiq_sys_ctx_t* ctx);
+
+/*!
+ * \brief update calibdb dynamically
+ *
+ * \param[in] ctx             context
+ * \param[out] calib          original calib point could be got by
+ *                            API rk_aiq_uapi_sysctl_getCurCalib
+ */
+
+XCamReturn
+rk_aiq_uapi_sysctl_upateCalib(const rk_aiq_sys_ctx_t* ctx, CamCalibDbContext_t* calib);
+
+/*!
+ * \brief get describtion of sensor
+ *
+ * \param[out] sensorDes
+ */
+XCamReturn
+rk_aiq_uapi_sysctl_getSensorDiscrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_exposure_sensor_descriptor *sensorDes);
 
 RKAIQ_END_DECLARE
 

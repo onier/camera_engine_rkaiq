@@ -378,11 +378,18 @@ rk_aiq_uapi_sysctl_getAxlibStatus(const rk_aiq_sys_ctx_t* ctx,
     return ctx->_analyzer->getAxlibStatus(algo_type, lib_id);
 }
 
-const RkAiqAlgoContext*
+RkAiqAlgoContext*
 rk_aiq_uapi_sysctl_getEnabledAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 {
     RKAIQ_API_SMART_LOCK(ctx);
     return ctx->_analyzer->getEnabledAxlibCtx(algo_type);
+}
+
+RkAiqAlgoContext*
+rk_aiq_uapi_sysctl_getAxlibCtx(const rk_aiq_sys_ctx_t* ctx, const int algo_type, const int lib_id)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    return ctx->_analyzer->getAxlibCtx(algo_type, lib_id);
 }
 
 XCamReturn
@@ -453,6 +460,7 @@ algoHandle(const rk_aiq_sys_ctx_t* ctx, const int algo_type)
 #include "rk_aiq_user_api_aldch.cpp"
 #include "rk_aiq_user_api_acp.cpp"
 #include "rk_aiq_user_api_aie.cpp"
+#include "rk_aiq_user_api_custom_ae.cpp"
 
 #define RK_AIQ_ALGO_TYPE_MODULES (RK_AIQ_ALGO_TYPE_MAX + 1)
 
@@ -798,5 +806,46 @@ rk_aiq_uapi_sysctl_updateIq(const rk_aiq_sys_ctx_t* sys_ctx, char* iqfile)
         ret = XCAM_RETURN_ERROR_FAILED;
     }
 
+    const_cast<rk_aiq_sys_ctx_t*>(sys_ctx)->_calibDb = newCalibDb;
+
     return ret;
 }
+
+XCamReturn
+rk_aiq_uapi_sysctl_getSensorDiscrib(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_exposure_sensor_descriptor *sensorDes)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ret = sys_ctx->_rkAiqManager->getSensorDiscrib(sensorDes);
+
+    return ret;
+}
+
+CamCalibDbContext_t*
+rk_aiq_uapi_sysctl_getCurCalib(const rk_aiq_sys_ctx_t* ctx)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    return  ctx->_calibDb;
+}
+
+XCamReturn
+rk_aiq_uapi_sysctl_upateCalib(const rk_aiq_sys_ctx_t* ctx, CamCalibDbContext_t* calib)
+{
+    RKAIQ_API_SMART_LOCK(ctx);
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if (calib != ctx->_calibDb)
+        LOGW("new calibdb is not equal with the current one\n");
+
+    ret = ctx->_rkAiqManager->updateCalibDb(calib);
+
+    if (ret) {
+        LOGE("failed to update iqfile\n");
+        ret = XCAM_RETURN_ERROR_FAILED;
+    }
+    LOGD("update calibdb success\n");
+
+    return ret;
+}
+

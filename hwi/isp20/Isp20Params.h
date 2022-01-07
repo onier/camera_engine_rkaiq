@@ -112,6 +112,8 @@ private:
                                        const rk_aiq_lut3d_cfg_t& lut3d_cfg);
     void convertAiqCpToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
                                    const rk_aiq_acp_params_t& lut3d_cfg);
+    void convertAiqWdrToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+                                    const rk_aiq_isp_wdr_t& wdr_cfg);
     void convertAiqIeToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
                                    const rk_aiq_isp_ie_t& ie_cfg);
     void convertAiqRawnrToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,

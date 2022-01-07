@@ -42,6 +42,8 @@
 #define RKAIQ_ISP_CP_ID            (1 << 19)
 #define RKAIQ_ISP_LDCH_ID          (1 << 20)
 #define RKAIQ_ISP_DEGAMMA_ID       (1 << 21)
+#define RKAIQ_ISP_WDR_ID            (1 << 22)
+
 
 typedef struct {
     uint32_t update_mask;
@@ -191,8 +193,10 @@ typedef struct rk_aiq_share_mem_config_s {
 struct rk_aiq_vbuf_info {
     uint32_t frame_id;
     uint32_t timestamp;
-    uint32_t exp_time;
-    uint32_t exp_gain;
+    float    exp_time;
+    float    exp_gain;
+    uint32_t exp_time_reg;
+    uint32_t exp_gain_reg;
     uint32_t data_fd;
     uint8_t *data_addr;
     uint32_t data_length;
@@ -206,5 +210,21 @@ struct rk_aiq_vbuf {
     uint32_t frame_height;
     struct rk_aiq_vbuf_info buf_info[3];/*index: 0-short,1-medium,2-long*/
 };
+
+typedef struct rk_aiq_tx_info_s {
+    uint32_t            width;
+    uint32_t            height;
+    uint8_t             bpp;
+    uint8_t             bayer_fmt;
+    uint32_t            stridePerLine;
+    uint32_t            bytesPerLine;
+    bool                storage_type;
+    uint32_t            id;
+    //get from AE
+    bool                IsAeConverged;
+    bool                envChange;
+    void                *data_addr;
+    RKAiqAecExpInfo_t   *aecExpInfo;
+} rk_aiq_tx_info_t;
 
 #endif

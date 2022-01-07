@@ -30,7 +30,7 @@ namespace RkCam {
 class Isp20Evt
     : public ispHwEvt_t {
 public:
-    explicit Isp20Evt(ICamHw *camHw, SmartPtr<SensorHw> sensor) {
+    explicit Isp20Evt(ICamHw *camHw, SmartPtr<BaseSensorHw> sensor) {
         mSensor = sensor;
         mCamHw = camHw;
     };
@@ -51,7 +51,7 @@ public:
 
 private:
     // XCAM_DEAD_COPY(Isp20Evt);
-    SmartPtr<SensorHw> mSensor;
+    SmartPtr<BaseSensorHw> mSensor;
     ICamHw *mCamHw;
 };
 

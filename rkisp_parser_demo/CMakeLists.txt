@@ -87,9 +87,11 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 #
 link_directories("${LIBRARY_OUTPUT_PATH}" "${RK_AIQ_LIB_DIR}")
+
 #add executable file
 ADD_EXECUTABLE(rkisp_parser ${DIR_SRCS})
 target_link_libraries(rkisp_parser ${RK_AIQ_LIB} ${LINK_ASAN})
+set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static -pthread -static-libstdc++")
 if(ARCH STREQUAL "m32")
 message("arch m32")
 set_target_properties(rkisp_parser PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

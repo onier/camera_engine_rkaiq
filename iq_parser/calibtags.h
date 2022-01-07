@@ -274,6 +274,7 @@
 #define CALIB_SENSOR_AEC_ANTIFLICKER_FREQ                        "Frequency"
 #define CALIB_SENSOR_AEC_ANTIFLICKER_FREQ_50HZ                   "FLICKER_50HZ"
 #define CALIB_SENSOR_AEC_ANTIFLICKER_FREQ_60HZ                   "FLICKER_60HZ"
+#define CALIB_SENSOR_AEC_ANTIFLICKER_FREQ_AUTO                   "FLICKER_AUTO"
 #define CALIB_SENSOR_AEC_ANTIFLICKER_MODE                        "Mode"
 #define CALIB_SENSOR_AEC_ANTIFLICKER_MODE_AUTO                   "AUTO"
 #define CALIB_SENSOR_AEC_ANTIFLICKER_MODE_NORMAL                 "NORMAL"

@@ -588,9 +588,11 @@ static XCamReturn UpdateLscCalibPara(alsc_handle_t  hAlsc)
     if(hAlsc->pLscTableAll){
         for(int c=0;c<USED_FOR_CASE_MAX;c++){
             pLscTableProfileVigIllRes = hAlsc->pLscTableAll[c];
-            for (int k = 0; k < hAlsc->calibLsc->aLscCof.lscResNum; k++) {
+            //for (int k = 0; k < hAlsc->calibLsc->aLscCof.lscResNum; k++) {
+            for (int k = 0; k < hAlsc->_lscResNum_backup; k++) {
                 pLscTableProfileVigIll = pLscTableProfileVigIllRes[k];
-                for(int i = 0; i < hAlsc->calibLsc->aLscCof.illuNum[c]; i++) {
+                //for(int i = 0; i < hAlsc->calibLsc->aLscCof.illuNum_backup[c]; i++) {
+                for(int i = 0; i < hAlsc->_illuNum_backup[c]; i++) {
                     pLscTableProfileVig = pLscTableProfileVigIll[i];
                     //LOGE_ALSC("c k i  %d,%d,%d,pLscTableProfileVig = %0x",c,k,i,pLscTableProfileVig);
                     if(pLscTableProfileVig){
@@ -620,10 +622,18 @@ static XCamReturn UpdateLscCalibPara(alsc_handle_t  hAlsc)
     for(int c=0;c<USED_FOR_CASE_MAX;c++){
         pLscTableProfileVigIllRes = (pLscTableProfileVigIllRes_t)malloc(sizeof(pLscTableProfileVigIll_t)*calib_lsc->aLscCof.lscResNum);
         memset(pLscTableProfileVigIllRes,0, sizeof(pLscTableProfileVigIll_t)*calib_lsc->aLscCof.lscResNum);
+
+        //when switch iqfile, the num(of pointers) would be changed, when free these pointer, wrong num will cause out of range
+        hAlsc->_lscResNum_backup = calib_lsc->aLscCof.lscResNum;
+
         hAlsc->pLscTableAll[c] = pLscTableProfileVigIllRes;
         for (int k = 0; k < calib_lsc->aLscCof.lscResNum; k++) {
             pLscTableProfileVigIll = (pLscTableProfileVigIll_t)malloc(sizeof(pLscTableProfileVig_t)*calib_lsc->aLscCof.illuNum[c]);
             memset(pLscTableProfileVigIll, 0, sizeof(pLscTableProfileVig_t)*calib_lsc->aLscCof.illuNum[c]);
+
+            //when switch iqfile, the num(of pointers) would be changed, when free these pointer, wrong num will cause out of range
+            hAlsc->_illuNum_backup[c] = calib_lsc->aLscCof.illuNum[c];
+
             pLscTableProfileVigIllRes[k] = pLscTableProfileVigIll;
             for(int i = 0; i < calib_lsc->aLscCof.illuNum[c]; i++) {
                 pLscTableProfileVig = (pLscTableProfileVig_t)malloc(sizeof(pLscTableProfile_t)*calib_lsc->aLscCof.illAll[c][i].tableUsedNO);

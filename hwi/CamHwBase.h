@@ -70,6 +70,7 @@ public:
     virtual XCamReturn setIspLumaListener(IspLumaListener* lumaListener);
     virtual XCamReturn setIspStatsListener(IspStatsListener* statsListener);
     virtual XCamReturn setEvtsListener(IspEvtsListener* evtListener);
+    virtual XCamReturn setIspTxBufListener(IspTxBufListener* txBufListener);
     virtual XCamReturn setHdrProcessCount(rk_aiq_luma_params_t luma_params) {
         return XCAM_RETURN_ERROR_FAILED;
     };
@@ -132,6 +133,9 @@ public:
     uint64_t getIspModuleEnState() {
         return true;
     };
+    virtual XCamReturn getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& ExpParams) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    };
 protected:
     SmartPtr<V4l2Device> mIsppStatsDev;
     SmartPtr<V4l2Device> mIsppParamsDev;
@@ -154,6 +158,7 @@ protected:
     IspLumaListener* mIspLumaListener;
     IspStatsListener* mIspStatsLintener;
     IspEvtsListener* mIspEvtsListener;
+    IspTxBufListener* mIspTxBufLintener;
     int mWorkingMode;
     const CamCalibDbContext_t* mCalibDb;
     bool mKpHwSt;

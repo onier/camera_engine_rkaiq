@@ -123,7 +123,11 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     }
 
     RKAiqAecExpInfo_t* pAERes = procPara->rk_com.u.proc.curExp;
-
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        pAERes = procPara->adhaz_proc_com.com_ext.u.proc.curExp;
+    } else {
+        pAERes = procPara->rk_com.u.proc.curExp;
+    }
     if(pAERes != NULL) {
         if(AdehazeHandle->working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
             stExpInfo.arAGain[0] = pAERes->LinearExp.exp_real_params.analog_gain;

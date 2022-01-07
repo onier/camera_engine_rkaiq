@@ -841,14 +841,14 @@ Isp20Params::convertAiqAwbGainToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg
     // rescale
     float max_value  = awb_gain1.bgain > awb_gain1.gbgain ? awb_gain1.bgain : awb_gain1.gbgain;
     max_value = max_value > awb_gain1.rgain ? max_value : awb_gain1.rgain;
-    float max_wb_gain_f = (float)max_wb_gain/(1 << (ISP2X_WBGAIN_FIXSCALE_BIT));
-    if (max_value  > max_wb_gain_f ){
-        float scale = max_value/max_wb_gain_f;
+    float max_wb_gain_f = (float)max_wb_gain / (1 << (ISP2X_WBGAIN_FIXSCALE_BIT));
+    if (max_value  > max_wb_gain_f ) {
+        float scale = max_value / max_wb_gain_f;
         awb_gain1.bgain /= scale;
         awb_gain1.gbgain /= scale;
         awb_gain1.grgain /= scale;
         awb_gain1.rgain /= scale;
-        LOGD_CAMHW("%s: scale %f, awbgain(r,g,g,b):[%f,%f,%f,%f]",__FUNCTION__,scale,awb_gain1.rgain, awb_gain1.grgain, awb_gain1.gbgain, awb_gain1.bgain);
+        LOGD_CAMHW("%s: scale %f, awbgain(r,g,g,b):[%f,%f,%f,%f]", __FUNCTION__, scale, awb_gain1.rgain, awb_gain1.grgain, awb_gain1.gbgain, awb_gain1.bgain);
     }
     //fix point
     //LOGE_CAMHW_SUBM(ISP20PARAM_SUBM,"max_wb_gain:%d\n",max_wb_gain);
@@ -1030,10 +1030,10 @@ Isp20Params::convertAiqBlcToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
 
     isp_cfg.others.bls_cfg.bls_samples = 0;
 
-    isp_cfg.others.bls_cfg.fixed_val.r = aiq_results->data()->blc.stResult.blc_gr;
+    isp_cfg.others.bls_cfg.fixed_val.r = aiq_results->data()->blc.stResult.blc_r;
     isp_cfg.others.bls_cfg.fixed_val.gr = aiq_results->data()->blc.stResult.blc_gr;
-    isp_cfg.others.bls_cfg.fixed_val.gb = aiq_results->data()->blc.stResult.blc_gr;
-    isp_cfg.others.bls_cfg.fixed_val.b = aiq_results->data()->blc.stResult.blc_gr;
+    isp_cfg.others.bls_cfg.fixed_val.gb = aiq_results->data()->blc.stResult.blc_gb;
+    isp_cfg.others.bls_cfg.fixed_val.b = aiq_results->data()->blc.stResult.blc_b;
 
     LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) exit \n", __FUNCTION__, __LINE__);
 }
@@ -2113,6 +2113,10 @@ Isp20Params::convertAiqOtherResultsToIsp20Params(struct isp2x_isp_params_cfg& is
 
     if(aiq_results->data()->update_mask & RKAIQ_ISP_CP_ID)
         convertAiqCpToIsp20Params(isp_cfg, aiq_results->data()->cp);
+
+    if(aiq_results->data()->update_mask & RKAIQ_ISP_WDR_ID)
+        convertAiqWdrToIsp20Params(isp_cfg, aiq_results->data()->wdr);
+
     last_aiq_results = aiq_results;
 
     return ret;
@@ -2287,6 +2291,39 @@ Isp20Params::convertAiqCpToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
     cproc_cfg->sat = (uint8_t)(cp_cfg.saturation);
     cproc_cfg->brightness = (uint8_t)(cp_cfg.brightness - 128);
     cproc_cfg->hue = (uint8_t)(cp_cfg.hue - 128);
+}
+
+void
+Isp20Params::convertAiqWdrToIsp20Params(struct isp2x_isp_params_cfg& isp_cfg,
+                                        const rk_aiq_isp_wdr_t& wdr_cfg)
+{
+    struct isp2x_wdr_cfg* awdr_cfg = &isp_cfg.others.wdr_cfg;
+
+    if (wdr_cfg.enable) {
+        isp_cfg.module_ens |= ISP2X_MODULE_WDR;
+        isp_cfg.module_en_update |= ISP2X_MODULE_WDR;
+        isp_cfg.module_cfg_update |= ISP2X_MODULE_WDR;
+    } else {
+        isp_cfg.module_ens &= ~ISP2X_MODULE_WDR;
+        isp_cfg.module_en_update |= ISP2X_MODULE_WDR;
+    }
+
+    if(wdr_cfg.mode == WDR_MODE_BLOCK)
+        awdr_cfg->mode = ISP2X_WDR_MODE_BLOCK;
+    else if(wdr_cfg.mode == WDR_MODE_GLOBAL)
+        awdr_cfg->mode = ISP2X_WDR_MODE_GLOBAL;
+
+    for(int i = 0; i < ISP2X_WDR_SIZE; i++)
+        awdr_cfg->c_wdr[i] = wdr_cfg.c_wdr[i];
+
+    LOG1_AWDR( "%s:ISP_WDR_2A00_CTRL0[0x%x] ISP_WDR_2A00_CTRL1[0x%x]\n", __FUNCTION__,
+               awdr_cfg->c_wdr[40], awdr_cfg->c_wdr[41]);
+    LOG1_AWDR( "%s:ISP_WDR_2A00_BLKOFF0[0x%x] ISP_WDR_2A00_AVGCLIP[0x%x]\n", __FUNCTION__,
+               awdr_cfg->c_wdr[42], awdr_cfg->c_wdr[43]);
+    LOG1_AWDR( "%s:ISP_WDR_2A00_COE_0[0x%x] ISP_WDR_2A00_COE_1[0x%x]\n", __FUNCTION__,
+               awdr_cfg->c_wdr[44], awdr_cfg->c_wdr[45]);
+    LOG1_AWDR( "%s:ISP_WDR_2A00_COE_2[0x%x] ISP_WDR_2A00_COE_OFF[0x%x]\n", __FUNCTION__,
+               awdr_cfg->c_wdr[46], awdr_cfg->c_wdr[47]);
 }
 
 void
@@ -3113,7 +3150,8 @@ Isp20Params::hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWei
     float LumaDeviationLinear = 0;
     float LumaDeviationFinnal = 0;
 
-    if(AntiTmoFlicker.preFrameNum != frameNum) {
+    //set default value when secne change or flow restart
+    if(AntiTmoFlicker.preFrameNum != frameNum || frameId == 0) {
         AntiTmoFlicker.preFrameNum = 0;
         AntiTmoFlicker.FirstChange = false;
         AntiTmoFlicker.FirstChangeNum = 0;
@@ -3121,6 +3159,7 @@ Isp20Params::hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWei
         AntiTmoFlicker.FirstChangeDoneNum = 0;
     }
 
+    //get LumaDeviationFinnal value
     if(frameNum == 1) {
         LumaDeviationLinear = LumaDeviation[0];
         LumaDeviationFinnal = LumaDeviationLinear;
@@ -3151,6 +3190,7 @@ Isp20Params::hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWei
     LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "frameId:%ld LumaDeviationLinear:%f LumaDeviationS:%f LumaDeviationM:%f LumaDeviationL:%f\n",
                     frameId, LumaDeviationLinear, LumaDeviationS, LumaDeviationM, LumaDeviationL);
 
+    //skip first N frame for starting
     if(AntiTmoFlicker.FirstChange == false) {
         if(LumaDeviationFinnal) {
             AntiTmoFlicker.FirstChange = true;
@@ -3165,6 +3205,7 @@ Isp20Params::hdrtmoSceneStable(sint32_t frameId, int IIRMAX, int IIR, int SetWei
         }
     }
 
+    //detect stable
     if(AntiTmoFlicker.FirstChangeDoneNum && AntiTmoFlicker.FirstChangeNum) {
         if(LumaDeviationFinnal <= StableThr)
             SceneStable = true;

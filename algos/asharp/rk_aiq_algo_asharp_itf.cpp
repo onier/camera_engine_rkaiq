@@ -167,8 +167,17 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
 	stExpInfo.snr_mode = 0;
 
 #if 1
-    RKAiqAecExpInfo_t *preExp = pAsharpProcParams->rk_com.u.proc.preExp;
-    RKAiqAecExpInfo_t *curExp = pAsharpProcParams->rk_com.u.proc.curExp;
+    RKAiqAecExpInfo_t *preExp = NULL;
+    RKAiqAecExpInfo_t *curExp = NULL;
+
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        preExp = pAsharpProcParams->asharp_proc_com.com_ext.u.proc.curExp;
+        curExp = pAsharpProcParams->asharp_proc_com.com_ext.u.proc.curExp;
+    } else {
+        preExp = pAsharpProcParams->rk_com.u.proc.curExp;
+        curExp = pAsharpProcParams->rk_com.u.proc.curExp;
+    }
+
     if(preExp != NULL && curExp != NULL) {
         stExpInfo.cur_snr_mode = curExp->CISFeature.SNR;
         stExpInfo.pre_snr_mode = preExp->CISFeature.SNR;
@@ -218,6 +227,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     } else {
         LOGE_ASHARP("%s:%d pAEPreRes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
+
 #endif
 
     AsharpResult_t ret = AsharpProcess(pAsharpCtx, &stExpInfo);

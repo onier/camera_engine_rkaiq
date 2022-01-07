@@ -143,8 +143,12 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         stExpInfo.hdr_mode = 2;
     }
 
-    RKAiqAecExpInfo_t* pAERes = pAdpccProcParams->rk_com.u.proc.curExp;
-
+    RKAiqAecExpInfo_t* pAERes = NULL;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        pAERes = pAdpccProcParams->adpcc_proc_com.com_ext.u.proc.curExp;
+    } else {
+        pAERes = pAdpccProcParams->rk_com.u.proc.curExp;
+    }
     if(pAERes != NULL) {
         if(pAdpccProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
             stExpInfo.arPreResAGain[0] = pAERes->LinearExp.exp_real_params.analog_gain;
@@ -172,17 +176,30 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         LOGE_ADPCC("%s:%d pAERes is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
 
-
-    RkAiqAlgoProcResAeInt* pAEProcRes =
-        (RkAiqAlgoProcResAeInt*)(pAdpccProcParams->rk_com.u.proc.proc_res_comb->ae_proc_res);
-
-    if(pAEProcRes != NULL) {
-        int cnt = pAEProcRes->ae_proc_res_rk.exp_set_cnt;
+    RKAiqAecExpInfo_t *pexp_info = NULL;
+    int cnt = 0;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        RkAiqAlgoProcAdpcc* pAdpccProcParams = (RkAiqAlgoProcAdpcc*)inparams;
+        RkAiqAlgoProcResAe* pAEProcRes =
+            (RkAiqAlgoProcResAe*)(pAdpccProcParams->com_ext.u.proc.proc_res_comb->ae_proc_res);
+        if (pAEProcRes != NULL) {
+            pexp_info = pAEProcRes->ae_proc_res.exp_set_tbl;
+            cnt = pAEProcRes->ae_proc_res.exp_set_cnt;
+        }
+    } else {
+        RkAiqAlgoProcResAeInt* pAEProcRes =
+            (RkAiqAlgoProcResAeInt*)(pAdpccProcParams->rk_com.u.proc.proc_res_comb->ae_proc_res);
+        if (pAEProcRes != NULL) {
+            pexp_info = pAEProcRes->ae_proc_res_rk.exp_set_tbl;
+            cnt = pAEProcRes->ae_proc_res_rk.exp_set_cnt;
+        }
+    }
+    if(pexp_info != NULL) {
         if(cnt != 0) {
             if(pAdpccProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-                stExpInfo.arProcResAGain[0] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].LinearExp.exp_real_params.analog_gain;
-                stExpInfo.arProcResDGain[0] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].LinearExp.exp_real_params.digital_gain;
-                stExpInfo.arProcResTime[0] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].LinearExp.exp_real_params.integration_time;
+                stExpInfo.arProcResAGain[0] = pexp_info[cnt - 1].LinearExp.exp_real_params.analog_gain;
+                stExpInfo.arProcResDGain[0] = pexp_info[cnt - 1].LinearExp.exp_real_params.digital_gain;
+                stExpInfo.arProcResTime[0] = pexp_info[cnt - 1].LinearExp.exp_real_params.integration_time;
                 stExpInfo.arProcResIso[0] = stExpInfo.arProcResAGain[0] * 50;
 
                 pAdpccCtx->PreAe.arProcResIso[0] = stExpInfo.arProcResIso[0];
@@ -191,9 +208,9 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                 pAdpccCtx->PreAe.arProcResTime[0] = stExpInfo.arProcResTime[0];
             } else {
                 for(int i = 0; i < 3; i++) {
-                    stExpInfo.arProcResAGain[i] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].HdrExp[i].exp_real_params.analog_gain;
-                    stExpInfo.arProcResDGain[i] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].HdrExp[i].exp_real_params.digital_gain;
-                    stExpInfo.arProcResTime[i] = pAEProcRes->ae_proc_res_rk.exp_set_tbl[cnt - 1].HdrExp[i].exp_real_params.integration_time;
+                    stExpInfo.arProcResAGain[i] = pexp_info[cnt - 1].HdrExp[i].exp_real_params.analog_gain;
+                    stExpInfo.arProcResDGain[i] = pexp_info[cnt - 1].HdrExp[i].exp_real_params.digital_gain;
+                    stExpInfo.arProcResTime[i] = pexp_info[cnt - 1].HdrExp[i].exp_real_params.integration_time;
                     stExpInfo.arProcResIso[i] = stExpInfo.arProcResAGain[i] * stExpInfo.arProcResDGain[i] * 50;
 
                     pAdpccCtx->PreAe.arProcResIso[i] = stExpInfo.arProcResIso[i];

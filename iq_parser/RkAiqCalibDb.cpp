@@ -100,66 +100,445 @@ static int reconstruct(int fd, int payload_size, char** payload_ptr) {
     return 0;
 }
 
+static int persistBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
+    int ret = 0;
+    LOGD("%s:%d", __func__, __LINE__);
+    ret |= persist(fd,
+            sizeof(bayernr->enable),
+            (char*)(&bayernr->enable));
+    ret |= persist(fd,
+            sizeof(bayernr->version),
+            (char*)(bayernr->version));
+    ret |= persist(fd,
+            sizeof(bayernr->mode_num),
+            (char*)(&bayernr->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_BayerNr_ModeCell_t) * bayernr->mode_num,
+            (char*)(bayernr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructBayernr(int fd, CalibDb_BayerNr_2_t* bayernr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &bayernr->enable, sizeof(bayernr->enable)) <= 0)
+        return -1;
+    if (read(fd, bayernr->version, sizeof(bayernr->version)) <= 0)
+        return -1;
+    if (read(fd, &bayernr->mode_num, sizeof(bayernr->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_BayerNr_ModeCell_t) * bayernr->mode_num,
+            (char**)(&bayernr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(uvnr->enable),
+            (char*)(&uvnr->enable));
+    ret |= persist(fd,
+            sizeof(uvnr->version),
+            (char*)(uvnr->version));
+    ret |= persist(fd,
+            sizeof(uvnr->mode_num),
+            (char*)(&uvnr->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_UVNR_ModeCell_t) * uvnr->mode_num,
+            (char*)(uvnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructUvnr(int fd, CalibDb_UVNR_2_t* uvnr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &uvnr->enable, sizeof(uvnr->enable)) <= 0)
+        return -1;
+    if (read(fd, uvnr->version, sizeof(uvnr->version)) <= 0)
+        return -1;
+    if (read(fd, &uvnr->mode_num, sizeof(uvnr->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_UVNR_ModeCell_t) * uvnr->mode_num,
+            (char**)(&uvnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistYnr(int fd, CalibDb_YNR_2_t* ynr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(ynr->enable),
+            (char*)(&ynr->enable));
+    ret |= persist(fd,
+            sizeof(ynr->version),
+            (char*)(ynr->version));
+    ret |= persist(fd,
+            sizeof(ynr->mode_num),
+            (char*)(&ynr->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_YNR_ModeCell_t) * ynr->mode_num,
+            (char*)(ynr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructYnr(int fd, CalibDb_YNR_2_t* ynr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &ynr->enable, sizeof(ynr->enable)) <= 0)
+        return -1;
+    if (read(fd, ynr->version, sizeof(ynr->version)) <= 0)
+        return -1;
+    if (read(fd, &ynr->mode_num, sizeof(ynr->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_YNR_ModeCell_t) * ynr->mode_num,
+            (char**)(&ynr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+
+static int persistMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(mfnr->enable),
+            (char*)(&mfnr->enable));
+    ret |= persist(fd,
+            sizeof(mfnr->version),
+            (char*)(mfnr->version));
+    ret |= persist(fd,
+            sizeof(mfnr->local_gain_en),
+            (char*)(&mfnr->local_gain_en));
+    ret |= persist(fd,
+            sizeof(mfnr->motion_detect_en),
+            (char*)(&mfnr->motion_detect_en));
+    ret |= persist(fd,
+            sizeof(mfnr->mode_3to1),
+            (char*)(&mfnr->mode_3to1));
+    ret |= persist(fd,
+            sizeof(mfnr->max_level),
+            (char*)(&mfnr->max_level));
+    ret |= persist(fd,
+            sizeof(mfnr->max_level_uv),
+            (char*)(&mfnr->max_level_uv));
+    ret |= persist(fd,
+            sizeof(mfnr->back_ref_num),
+            (char*)(&mfnr->back_ref_num));
+    ret |= persist(fd,
+            sizeof(mfnr->uv_ratio),
+            (char*)(mfnr->uv_ratio));
+    ret |= persist(fd,
+            sizeof(mfnr->mode_num),
+            (char*)(&mfnr->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_MFNR_ModeCell_t) * mfnr->mode_num,
+            (char*)(mfnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructMfnr(int fd, CalibDb_MFNR_2_t* mfnr) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &mfnr->enable, sizeof(mfnr->enable)) <= 0)
+        return -1;
+    if (read(fd, mfnr->version, sizeof(mfnr->version)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->local_gain_en, sizeof(mfnr->local_gain_en)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->motion_detect_en, sizeof(mfnr->motion_detect_en)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->mode_3to1, sizeof(mfnr->mode_3to1)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->max_level, sizeof(mfnr->max_level)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->max_level_uv, sizeof(mfnr->max_level_uv)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->back_ref_num, sizeof(mfnr->back_ref_num)) <= 0)
+        return -1;
+    if (read(fd, mfnr->uv_ratio, sizeof(mfnr->uv_ratio)) <= 0)
+        return -1;
+    if (read(fd, &mfnr->mode_num, sizeof(mfnr->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_MFNR_ModeCell_t) * mfnr->mode_num,
+            (char**)(&mfnr->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistSharp(int fd, CalibDb_Sharp_2_t* sharp) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(sharp->enable),
+            (char*)(&sharp->enable));
+    ret |= persist(fd,
+            sizeof(sharp->version),
+            (char*)(sharp->version));
+    ret |= persist(fd,
+            sizeof(sharp->luma_point),
+            (char*)(sharp->luma_point));
+    ret |= persist(fd,
+            sizeof(sharp->mode_num),
+            (char*)(&sharp->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_Sharp_ModeCell_t) * sharp->mode_num,
+            (char*)(sharp->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructSharp(int fd, CalibDb_Sharp_2_t* sharp) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &sharp->enable, sizeof(sharp->enable)) <= 0)
+        return -1;
+    if (read(fd, sharp->version, sizeof(sharp->version)) <= 0)
+        return -1;
+    if (read(fd, sharp->luma_point, sizeof(sharp->luma_point)) <= 0)
+        return -1;
+    if (read(fd, &sharp->mode_num, sizeof(sharp->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_Sharp_ModeCell_t) * sharp->mode_num,
+            (char**)(&sharp->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(ef->enable),
+            (char*)(&ef->enable));
+    ret |= persist(fd,
+            sizeof(ef->version),
+            (char*)(ef->version));
+    ret |= persist(fd,
+            sizeof(ef->luma_point),
+            (char*)(ef->luma_point));
+    ret |= persist(fd,
+            sizeof(ef->mode_num),
+            (char*)(&ef->mode_num));
+    ret |= persist(fd,
+            sizeof(CalibDb_EdgeFilter_ModeCell_t) * ef->mode_num,
+            (char*)(ef->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructEdgeFilter(int fd, CalibDb_EdgeFilter_2_t* ef) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &ef->enable, sizeof(ef->enable)) <= 0)
+        return -1;
+    if (read(fd, ef->version, sizeof(ef->version)) <= 0)
+        return -1;
+    if (read(fd, ef->luma_point, sizeof(ef->luma_point)) <= 0)
+        return -1;
+    if (read(fd, &ef->mode_num, sizeof(ef->mode_num)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_EdgeFilter_ModeCell_t) * ef->mode_num,
+            (char**)(&ef->mode_cell));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistLsc(int fd, CalibDb_Lsc_t* lsc) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd,
+            sizeof(lsc->enable),
+            (char*)(&lsc->enable));
+    ret |= persist(fd,
+            sizeof(lsc->damp_enable),
+            (char*)(&lsc->damp_enable));
+    ret |= persist(fd,
+            sizeof(lsc->aLscCof),
+            (char*)(&lsc->aLscCof));
+    ret |= persist(fd,
+            sizeof(lsc->tableAllNum),
+            (char*)(&lsc->tableAllNum));
+    ret |= persist(fd,
+            sizeof(CalibDb_LscTableProfile_t) * lsc->tableAllNum,
+            (char*)(lsc->tableAll));
+    LOGD("%s:%d", __func__, __LINE__);
+   return ret;
+}
+
+static int reconstructLsc(int fd, CalibDb_Lsc_t* lsc) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, &lsc->enable, sizeof(lsc->enable)) <= 0)
+        return -1;
+    if (read(fd, &lsc->damp_enable, sizeof(lsc->damp_enable)) <= 0)
+        return -1;
+    if (read(fd, &lsc->aLscCof, sizeof(lsc->aLscCof)) <= 0)
+        return -1;
+    if (read(fd, &lsc->tableAllNum, sizeof(lsc->tableAllNum)) <= 0)
+        return -1;
+
+    ret |= reconstruct(fd,
+            sizeof(CalibDb_LscTableProfile_t) * lsc->tableAllNum,
+            (char**)(&lsc->tableAll));
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int persistAf(int fd, CalibDb_AF_t* af) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    ret |= persist(fd, sizeof(CalibDb_AF_t), (char*)af);
+    ret |= persist(fd,
+        sizeof(float) * af->zoomfocus_tbl.tbl_len,
+        (char*)(af->zoomfocus_tbl.focal_length));
+    ret |= persist(fd,
+        sizeof(signed short) * af->zoomfocus_tbl.tbl_len,
+        (char*)(af->zoomfocus_tbl.zoomcode));
+    for (int i = 0; i < af->zoomfocus_tbl.focuspos_len; i++) {
+        ret |= persist(fd,
+            sizeof(signed short) * af->zoomfocus_tbl.tbl_len,
+            (char*)(af->zoomfocus_tbl.focuscode[i]));
+    }
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
+static int reconstructAf(int fd, CalibDb_AF_t* af) {
+    LOGD("%s:%d", __func__, __LINE__);
+    int ret = 0;
+    if (read(fd, af, sizeof(CalibDb_AF_t)) <= 0)
+        return -1;
+    ret |= reconstruct(fd,
+        sizeof(float) * af->zoomfocus_tbl.tbl_len,
+        (char**)(&af->zoomfocus_tbl.focal_length));
+    ret |= reconstruct(fd,
+        sizeof(signed short) * af->zoomfocus_tbl.tbl_len,
+        (char**)(&af->zoomfocus_tbl.zoomcode));
+    for (int i = 0; i < af->zoomfocus_tbl.focuspos_len; i++) {
+        ret |= reconstruct(fd,
+            sizeof(signed short) * af->zoomfocus_tbl.tbl_len,
+            (char**)(&af->zoomfocus_tbl.focuscode[i]));
+    }
+    LOGD("%s:%d", __func__, __LINE__);
+    return ret;
+}
+
 static int persistCalib(int fd, CamCalibDbContext_t* calib) {
     int ret = 0;
 
-    ret |= persist(fd, sizeof(CamCalibDbContext_t), (char*)calib);
-    LOGD("CamCalibDbContext_t size %d bytes", sizeof(CamCalibDbContext_t));
-    // points
-    ret |= persist(fd,
-            sizeof(CalibDb_BayerNr_ModeCell_t) * calib->bayerNr.mode_num,
-            (char*)(calib->bayerNr.mode_cell));
-    ret |= persist(fd,
-            sizeof(CalibDb_LscTableProfile_t) * calib->lsc.tableAllNum,
-            (char*)(calib->lsc.tableAll));
-    ret |= persist(fd,
-            sizeof(CalibDb_UVNR_ModeCell_t) * calib->uvnr.mode_num,
-            (char*)(calib->uvnr.mode_cell));
-    ret |= persist(fd,
-            sizeof(CalibDb_YNR_ModeCell_t) * calib->ynr.mode_num,
-            (char*)(calib->ynr.mode_cell));
-    ret |= persist(fd,
-            sizeof(CalibDb_MFNR_ModeCell_t) * calib->mfnr.mode_num,
-            (char*)(calib->mfnr.mode_cell));
-    ret |= persist(fd,
-            sizeof(CalibDb_Sharp_ModeCell_t) * calib->sharp.mode_num,
-            (char*)(calib->sharp.mode_cell));
-    ret |= persist(fd,
-            sizeof(CalibDb_EdgeFilter_ModeCell_t) * calib->edgeFilter.mode_num,
-            (char*)(calib->edgeFilter.mode_cell));
-
+    ret |= persist(fd, sizeof(CalibDb_Header_t), (char*)(&calib->header));
+    ret |= persist(fd, sizeof(CalibDb_Awb_Para_t), (char*)(&calib->awb));
+    ret |= persist(fd, sizeof(CalibDb_Lut3d_t), (char*)(&calib->lut3d));
+    ret |= persist(fd, sizeof(CalibDb_Aec_Para_t), (char*)(&calib->aec));
+    ret |= persistAf(fd, &calib->af);
+    ret |= persist(fd, sizeof(CalibDb_Ahdr_Para_t), (char*)(&calib->ahdr));
+    ret |= persist(fd, sizeof(CalibDb_Blc_t), (char*)(&calib->blc));
+    ret |= persist(fd, sizeof(CalibDb_Dpcc_t), (char*)(&calib->dpcc));
+    ret |= persistBayernr(fd, &calib->bayerNr);
+    ret |= persistLsc(fd, &calib->lsc);
+    ret |= persist(fd, sizeof(CalibDb_RKDM_t), (char*)(&calib->dm));
+    ret |= persist(fd, sizeof(CalibDb_Ccm_t), (char*)(&calib->ccm));
+    ret |= persistUvnr(fd, &calib->uvnr);
+    ret |= persist(fd, sizeof(CalibDb_Gamma_t), (char*)(&calib->gamma));
+    ret |= persist(fd, sizeof(CalibDb_Degamma_t), (char*)(&calib->degamma));
+    ret |= persistYnr(fd, &calib->ynr);
+    ret |= persist(fd, sizeof(CalibDb_Gic_t), (char*)(&calib->gic));
+    ret |= persistMfnr(fd, &calib->mfnr);
+    ret |= persistSharp(fd, &calib->sharp);
+    ret |= persistEdgeFilter(fd, &calib->edgeFilter);
+    ret |= persist(fd, sizeof(CalibDb_Dehaze_t), (char*)(&calib->dehaze));
+    ret |= persist(fd, sizeof(CalibDb_FEC_t), (char*)(&calib->afec));
+    ret |= persist(fd, sizeof(CalibDb_LDCH_t), (char*)(&calib->aldch));
+    ret |= persist(fd, sizeof(CalibDb_LUMA_DETECT_t), (char*)(&calib->lumaDetect));
+    ret |= persist(fd, sizeof(CalibDb_ORB_t), (char*)(&calib->orb));
+    ret |= persist(fd, sizeof(CalibDb_Sensor_Para_t), (char*)(&calib->sensor));
+    ret |= persist(fd, sizeof(CalibDb_Module_Info_t), (char*)(&calib->module));
+    ret |= persist(fd, sizeof(CalibDb_Cpsl_t), (char*)(&calib->cpsl));
+    ret |= persist(fd, sizeof(CalibDb_ColorAsGrey_t), (char*)(&calib->colorAsGrey));
+    ret |= persist(fd, sizeof(CalibDb_cProc_t), (char*)(&calib->cProc));
+    ret |= persist(fd, sizeof(CalibDb_IE_t), (char*)(&calib->ie));
+    ret |= persist(fd, sizeof(CalibDb_System_t), (char*)(&calib->sysContrl));
     return ret;
 }
 
 static int reconstructCalib(int fd, CamCalibDbContext_t* calib) {
     int ret = 0;
 
-    if (read(fd, calib, sizeof(CamCalibDbContext_t)) <= 0)
+    if (read(fd, &calib->header, sizeof(CalibDb_Header_t)) <= 0)
         return -1;
-    LOGD("CamCalibDbContext_t size %d bytes", sizeof(CamCalibDbContext_t));
-    // reconstruct points
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_BayerNr_ModeCell_t) * calib->bayerNr.mode_num,
-            (char**)(&calib->bayerNr.mode_cell));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_LscTableProfile_t) * calib->lsc.tableAllNum,
-            (char**)(&calib->lsc.tableAll));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_UVNR_ModeCell_t) * calib->uvnr.mode_num,
-            (char**)(&calib->uvnr.mode_cell));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_YNR_ModeCell_t) * calib->ynr.mode_num,
-            (char**)(&calib->ynr.mode_cell));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_MFNR_ModeCell_t) * calib->mfnr.mode_num,
-            (char**)(&calib->mfnr.mode_cell));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_Sharp_ModeCell_t) * calib->sharp.mode_num,
-            (char**)(&calib->sharp.mode_cell));
-    ret |= reconstruct(fd,
-            sizeof(CalibDb_EdgeFilter_ModeCell_t) * calib->edgeFilter.mode_num,
-            (char**)(&calib->edgeFilter.mode_cell));
-
+    if (read(fd, &calib->awb, sizeof(CalibDb_Awb_Para_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->lut3d, sizeof(CalibDb_Lut3d_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->aec, sizeof(CalibDb_Aec_Para_t)) <= 0)
+        return -1;
+    ret |= reconstructAf(fd, &calib->af);
+    if (read(fd, &calib->ahdr, sizeof(CalibDb_Ahdr_Para_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->blc, sizeof(CalibDb_Blc_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->dpcc, sizeof(CalibDb_Dpcc_t)) <= 0)
+        return -1;
+    ret |= reconstructBayernr(fd, &calib->bayerNr);
+    ret |= reconstructLsc(fd, &calib->lsc);
+    if (read(fd, &calib->dm, sizeof(CalibDb_RKDM_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->ccm, sizeof(CalibDb_Ccm_t)) <= 0)
+        return -1;
+    ret |= reconstructUvnr(fd, &calib->uvnr);
+    if (read(fd, &calib->gamma, sizeof(CalibDb_Gamma_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->degamma, sizeof(CalibDb_Degamma_t)) <= 0)
+        return -1;
+    ret |= reconstructYnr(fd, &calib->ynr);
+    if (read(fd, &calib->gic, sizeof(CalibDb_Gic_t)) <= 0)
+        return -1;
+    ret |= reconstructMfnr(fd, &calib->mfnr);
+    ret |= reconstructSharp(fd, &calib->sharp);
+    ret |= reconstructEdgeFilter(fd, &calib->edgeFilter);
+    if (read(fd, &calib->dehaze, sizeof(CalibDb_Dehaze_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->afec, sizeof(CalibDb_FEC_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->aldch, sizeof(CalibDb_LDCH_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->lumaDetect, sizeof(CalibDb_LUMA_DETECT_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->orb, sizeof(CalibDb_ORB_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->sensor, sizeof(CalibDb_Sensor_Para_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->module, sizeof(CalibDb_Module_Info_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->cpsl, sizeof(CalibDb_Cpsl_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->colorAsGrey, sizeof(CalibDb_ColorAsGrey_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->cProc, sizeof(CalibDb_cProc_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->ie, sizeof(CalibDb_IE_t)) <= 0)
+        return -1;
+    if (read(fd, &calib->sysContrl, sizeof(CalibDb_System_t)) <= 0)
+        return -1;
     return ret;
 }
 
@@ -455,44 +834,63 @@ bool RkAiqCalibDb::generateCalibDb(char* iqFileRef, char* iqFileOutput, CamCalib
     return false;
 }
 
+void RkAiqCalibDb::freeAfPart(CalibDb_AF_t *af)
+{
+    if (af->zoomfocus_tbl.focal_length) {
+        free(af->zoomfocus_tbl.focal_length);
+        af->zoomfocus_tbl.focal_length = NULL;
+    }
+    if (af->zoomfocus_tbl.zoomcode) {
+        free(af->zoomfocus_tbl.zoomcode);
+        af->zoomfocus_tbl.zoomcode = NULL;
+    }
+    if (af->zoomfocus_tbl.focuscode) {
+        for (int i = 0; i < af->zoomfocus_tbl.focuspos_len; i++) {
+            free(af->zoomfocus_tbl.focuscode[i]);
+            af->zoomfocus_tbl.focuscode[i] = NULL;
+        }
+    }
+}
+
 void RkAiqCalibDb::releaseCalibDb()
 {
     std::map<string, CamCalibDbContext_t*>::iterator it;
     for (it = mCalibDbsMap.begin(); it != mCalibDbsMap.end(); it++) {
         CamCalibDbContext_t *pCalibDb = it->second;
         if(pCalibDb) {
+            freeAfPart(&pCalibDb->af);
             if(pCalibDb->lsc.tableAll != NULL){
                 free(pCalibDb->lsc.tableAll);
 
             }
             LOGI("releaseCalibDb!");
-			if(pCalibDb->bayerNr.mode_cell != NULL){				
+			if(pCalibDb->bayerNr.mode_cell != NULL){
 				free(pCalibDb->bayerNr.mode_cell);
 				pCalibDb->bayerNr.mode_cell = NULL;
 				pCalibDb->bayerNr.mode_num = 0;
 			}
-			if( pCalibDb->uvnr.mode_cell != NULL){				
+			if( pCalibDb->uvnr.mode_cell != NULL){
 				free(pCalibDb->uvnr.mode_cell);
 				pCalibDb->uvnr.mode_cell = NULL;
 				pCalibDb->uvnr.mode_num = 0;
 			}
-			if(pCalibDb->ynr.mode_cell != NULL){				
+			if(pCalibDb->ynr.mode_cell != NULL){
 				free(pCalibDb->ynr.mode_cell);
 				pCalibDb->ynr.mode_cell = NULL;
 				pCalibDb->ynr.mode_num = 0;
-				
+
 			}
-			if(pCalibDb->mfnr.mode_cell != NULL){				
+			if(pCalibDb->mfnr.mode_cell != NULL){
 				free(pCalibDb->mfnr.mode_cell);
 				pCalibDb->mfnr.mode_cell = NULL;
 				pCalibDb->mfnr.mode_num = 0;
 			}
-			if( pCalibDb->sharp.mode_cell != NULL){				
+			if( pCalibDb->sharp.mode_cell != NULL){
 				free(pCalibDb->sharp.mode_cell);
 				pCalibDb->sharp.mode_cell = NULL;
 				pCalibDb->sharp.mode_num = 0;
 			}
-			if( pCalibDb->edgeFilter.mode_cell != NULL){			
+			if( pCalibDb->edgeFilter.mode_cell != NULL){
 				free(pCalibDb->edgeFilter.mode_cell);
 				pCalibDb->edgeFilter.mode_cell = NULL;
 				pCalibDb->edgeFilter.mode_num = 0;

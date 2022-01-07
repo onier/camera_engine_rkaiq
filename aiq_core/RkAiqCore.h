@@ -186,6 +186,46 @@ private:
     SafeList<ispHwEvt_t> mEvtsQueue;
 };
 
+typedef struct RkAiqTxBufInfo_s {
+    SmartPtr<RkAiqExpParamsProxy> expParams;
+    SmartPtr<VideoBuffer> txBuf;
+} RkAiqTxBufInfo;
+
+class RkAiqCoreTxBufAnalyzerThread
+    : public Thread {
+public:
+    RkAiqCoreTxBufAnalyzerThread(RkAiqCore* rkAiqCore)
+        : Thread("RkAiqCoreTxBufAnalyzerThread")
+        , mRkAiqCore(rkAiqCore) {};
+    ~RkAiqCoreTxBufAnalyzerThread() {
+        mTxBufQueue.clear ();
+    };
+
+    void triger_stop() {
+        mTxBufQueue.pause_pop ();
+    };
+
+    void triger_start() {
+        mTxBufQueue.clear ();
+        mTxBufQueue.resume_pop ();
+    };
+
+    bool push_buf (const SmartPtr<RkAiqTxBufInfo> &buffer) {
+        mTxBufQueue.push (buffer);
+        return true;
+    };
+
+protected:
+    //virtual bool started ();
+    virtual void stopped () {
+        mTxBufQueue.clear ();
+    };
+    virtual bool loop ();
+private:
+    RkAiqCore* mRkAiqCore;
+    SafeList<RkAiqTxBufInfo> mTxBufQueue;
+};
+
 struct RkAiqHwInfo {
     bool fl_supported;   // led flash
     bool fl_strth_adj;   // led streng_adjust
@@ -197,6 +237,7 @@ struct RkAiqHwInfo {
 class RkAiqCore {
     friend class RkAiqCoreThread;
     friend class RkAiqCoreEvtsThread;
+    friend class RkAiqCoreTxBufAnalyzerThread;
 public:
     RkAiqCore();
     virtual ~RkAiqCore();
@@ -223,13 +264,15 @@ public:
         return mAiqCurParams;
     };
     XCamReturn pushStats(SmartPtr<VideoBuffer> &buffer);
+    XCamReturn pushTxBuf(SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqExpParamsProxy>& expParams);
     XCamReturn pushEvts(SmartPtr<ispHwEvt_t> &evts);
     XCamReturn addAlgo(RkAiqAlgoDesComm& algo);
     XCamReturn enableAlgo(int algoType, int id, bool enable);
     XCamReturn rmAlgo(int algoType, int id);
     bool getAxlibStatus(int algoType, int id);
-    const RkAiqAlgoContext* getEnabledAxlibCtx(const int algo_type);
-    const RkAiqHandle* getAiqAlgoHandle(const int algo_type);
+    RkAiqAlgoContext* getEnabledAxlibCtx(const int algo_type);
+    RkAiqAlgoContext* getAxlibCtx(const int algo_type, const int lib_id);
+    RkAiqHandle* getAiqAlgoHandle(const int algo_type);
     XCamReturn get3AStatsFromCachedList(rk_aiq_isp_stats_t &stats);
     XCamReturn get3AStatsFromCachedList(rk_aiq_isp_stats_t **stats, int timeout_ms);
     void release3AStatsRef(rk_aiq_isp_stats_t *stats);
@@ -282,6 +325,8 @@ public:
         bool sns_flip;
         RKAiqAecExpInfo_t preExp;
         RKAiqAecExpInfo_t curExp;
+        rk_aiq_tx_info_t tx_buf;
+        int mCustomAlgoRunningMode;
         void reset() {
             xcam_mem_clear(preResComb);
             xcam_mem_clear(procResComb);
@@ -302,6 +347,7 @@ public:
             sns_mirror = false;
             sns_flip = false;
             conf_type = RK_AIQ_ALGO_CONFTYPE_INIT;
+            mCustomAlgoRunningMode = CUSTOM_ALGO_RUNNING_MODE_WITH_RKAE;
         }
     } RkAiqAlgosShared_t;
     RkAiqAlgosShared_t mAlogsSharedParams;
@@ -311,10 +357,12 @@ private:
         RK_AIQ_CORE_ANALYZE_ALL,
         RK_AIQ_CORE_ANALYZE_MEAS,
         RK_AIQ_CORE_ANALYZE_OTHER,
+        RK_AIQ_CORE_ANALYZE_AFD,
     };
     // in analyzer thread
     XCamReturn analyze(const SmartPtr<VideoBuffer> &buffer);
     XCamReturn events_analyze(const SmartPtr<ispHwEvt_t> &evts);
+    XCamReturn txBufAnalyze(const SmartPtr<RkAiqTxBufInfo> &buffer);
     SmartPtr<RkAiqFullParamsProxy> analyzeInternal(enum rk_aiq_core_analyze_type_e type);
     SmartPtr<RkAiqFullParamsProxy> analyzeInternalPp();
     XCamReturn preProcess(enum rk_aiq_core_analyze_type_e type);
@@ -330,6 +378,7 @@ private:
     void addDefaultAlgos();
     XCamReturn genIspResult(RkAiqFullParams *aiqParams, enum rk_aiq_core_analyze_type_e type);
     XCamReturn genIspAeResult(RkAiqFullParams* params);
+    XCamReturn genIspAfdResult(RkAiqFullParams* params);
     XCamReturn genIspAwbResult(RkAiqFullParams* params);
     XCamReturn genIspAfResult(RkAiqFullParams* params);
     XCamReturn genIspAhdrResult(RkAiqFullParams* params);
@@ -369,6 +418,8 @@ private:
     SmartPtr<RkAiqCoreThread> mRkAiqCoreTh;
     SmartPtr<RkAiqCoreThread> mRkAiqCorePpTh;
     SmartPtr<RkAiqCoreEvtsThread> mRkAiqCoreEvtsTh;
+    SmartPtr<RkAiqCoreTxBufAnalyzerThread> mRkAiqCoreTxBufAnalyzerTh;
+
     int mState;
     RkAiqAnalyzerCb* mCb;
     std::map<int, SmartPtr<RkAiqHandle>> mAeAlgoHandleMap;
@@ -396,6 +447,7 @@ private:
     std::map<int, SmartPtr<RkAiqHandle>> mAorbAlgoHandleMap;
     std::map<int, SmartPtr<RkAiqHandle>> mAr2yAlgoHandleMap;
     std::map<int, SmartPtr<RkAiqHandle>> mAwdrAlgoHandleMap;
+    std::map<int, SmartPtr<RkAiqHandle>> mAfdAlgoHandleMap;
     SmartPtr<RkAiqHandle> mCurAhdrAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAnrAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAdhazAlgoHdl;
@@ -421,6 +473,12 @@ private:
     SmartPtr<RkAiqHandle> mCurAeAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAwbAlgoHdl;
     SmartPtr<RkAiqHandle> mCurAfAlgoHdl;
+    SmartPtr<RkAiqHandle> mCurAfdAlgoHdl;
+
+    SmartPtr<RkAiqHandle> mCurCustomAeAlgoHdl;
+    SmartPtr<RkAiqHandle> mCurCustomAwbAlgoHdl;
+    SmartPtr<RkAiqHandle> mCurCustomAfAlgoHdl;
+
     SmartPtr<RkAiqFullParamsPool> mAiqParamsPool;
     SmartPtr<RkAiqFullParamsProxy> mAiqCurParams;
     SmartPtr<RkAiqExpParamsPool> mAiqExpParamsPool;
@@ -438,10 +496,14 @@ private:
     struct RkAiqHwInfo mHwInfo;
     rk_aiq_cpsl_cap_t mCpslCap;
     bool mCurCpslOn;
+    RKAiqOPMode_t mCurOpMode;
     float mStrthLed;
     float mStrthIr;
     rk_aiq_gray_mode_t mGrayMode;
     bool firstStatsReceived;
+    Mutex mApiMutex;
+    XCam::Cond mApiMutexCond;
+    bool mSafeEnableAlgo;
     typedef SharedItemPool<rk_aiq_isp_stats_t> RkAiqStatsPool;
     typedef SharedItemProxy<rk_aiq_isp_stats_t> RkAiqStatsProxy;
     SmartPtr<RkAiqStatsPool> mAiqStatsPool;
