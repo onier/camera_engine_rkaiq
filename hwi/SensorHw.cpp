@@ -444,6 +444,10 @@ SensorHw::setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar)
                         if(_exp_list.empty())
                             break;
                     }
+                    // remove many redundant table-first element
+                    while (_exp_list.size() > 1) {
+                        _exp_list.pop_back();
+                    }
                 }
 
                 for(int i = 0; i < expPar->data()->exp_tbl_size; i++) {

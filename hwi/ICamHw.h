@@ -71,6 +71,15 @@ private:
     XCAM_DEAD_COPY (IspEvtsListener);
 };
 
+class IspTxBufListener {
+public:
+    IspTxBufListener () {};
+    virtual ~IspTxBufListener () {};
+    virtual XCamReturn ispTxBufCb(SmartPtr<VideoBuffer>& ispTxBuf) = 0;
+private:
+    XCAM_DEAD_COPY (IspTxBufListener);
+};
+
 class ICamHw {
 public:
     ICamHw() {};
@@ -100,6 +109,7 @@ public:
     virtual XCamReturn setIspLumaListener(IspLumaListener* lumaListener) = 0;
     virtual XCamReturn setIspStatsListener(IspStatsListener* statsListener) = 0;
     virtual XCamReturn setEvtsListener(IspEvtsListener* evtListener) = 0;
+    virtual XCamReturn setIspTxBufListener(IspTxBufListener* txBufListener) = 0;
     virtual XCamReturn setModuleCtl(rk_aiq_module_id_t mId, bool mod_en) = 0;
     virtual XCamReturn getModuleCtl(rk_aiq_module_id_t mId, bool& mod_en) = 0;
     virtual XCamReturn notify_capture_raw() = 0;
@@ -124,6 +134,7 @@ public:
     virtual XCamReturn setIspParamsSync(int frameId) = 0;
     virtual XCamReturn setIsppParamsSync(int frameId) = 0;
     virtual uint64_t getIspModuleEnState() = 0;
+    virtual XCamReturn getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& ExpParams) = 0;
 private:
     XCAM_DEAD_COPY (ICamHw);
 };

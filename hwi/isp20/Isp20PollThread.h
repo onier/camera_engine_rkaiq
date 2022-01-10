@@ -55,7 +55,7 @@ public:
     bool set_event_handle_dev(SmartPtr<BaseSensorHw> &dev);
     bool set_iris_handle_dev(SmartPtr<LensHw> &dev);
     bool set_focus_handle_dev(SmartPtr<LensHw> &dev);
-    bool setCamHw(ICamHw *dev);
+    bool setCamHw(CamHwIsp20 *dev);
     void set_mipi_devs(SmartPtr<V4l2Device> mipi_tx_devs[3],
                        SmartPtr<V4l2Device> mipi_rx_devs[3],
                        SmartPtr<V4l2SubDevice> isp_dev);
@@ -121,11 +121,10 @@ private:
     SmartPtr<BaseSensorHw> _event_handle_dev;
     SmartPtr<LensHw> _iris_handle_dev;
     SmartPtr<LensHw> _focus_handle_dev;
-    ICamHw *mCamHw;
+    CamHwIsp20 *mCamHw;
     uint32_t sns_width;
     uint32_t sns_height;
     uint32_t pixelformat;
-    uint32_t _stride_perline;
     char raw_dir_path[64];
     char user_set_raw_dir[64];
     bool _is_raw_dir_exist;
@@ -142,6 +141,10 @@ private:
     bool _is_multi_cam_conc;
     int _skip_num;
     int64_t _skip_to_seq;
+    const struct capture_fmt *_fmt;
+    uint32_t _stride_perline;
+    uint32_t _bytes_perline;
+
     int calculate_stride_per_line(const struct capture_fmt& fmt,
                                   uint32_t& bytesPerLine);
     const struct capture_fmt* find_fmt(const uint32_t pixelformat);

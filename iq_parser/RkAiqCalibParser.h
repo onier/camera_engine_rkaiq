@@ -199,6 +199,10 @@ private:
     bool parseEntrySensorAhdrTmoDetailsLowLight(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAhdrLocalTMO(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAhdrGlobalTMO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDR(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDRMode(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAWDRModeStrength(const XMLElement* pelement, int index );
+    bool parseEntrySensorAWDRModeConfig(const XMLElement* pelement, int index );
     bool parseEntrySensorBlcModeCell(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorBlc(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLut3d(const XMLElement* pelement, void* param = NULL);
@@ -270,7 +274,10 @@ private:
     bool parseEntrySensorAfLaserAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfPdaf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfVcmCfg(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfLdgParam(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfHighlight(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfMeasISO(const XMLElement* pelement, void* param = NULL);
+    bool parseEntrySensorAfZoomFocusDist(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAfZoomFocusTbl(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorAf(const XMLElement* pelement, void* param = NULL);
     bool parseEntrySensorLdch(const XMLElement* pelement, void* param = NULL);

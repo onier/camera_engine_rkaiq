@@ -10,9 +10,10 @@
 #define CALIBDB_NR_SHARP_SETTING_LEVEL 6
 #define CALIBDB_MAX_MODE_NUM 5
 #define CALIBDB_MAX_MODE_NAME_LENGTH (20)
-#define CALIBDB_ZOOM_FOCUS_TBL_SIZE 10240
 #define CALIBDB_DEGAMMA_CRUVE_KNOTS 17
-
+#define CALIBDB_ZOOM_FOCUS_POSITION_NUM 32
+#define CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE 32
+#define CALIBDB_AF_CORRECT_SEARCHTBL_MAX  100
 
 /*****************************************************************************/
 /**
@@ -106,6 +107,7 @@ typedef enum _CalibDb_FlickerFreq_e {
     AEC_FLICKER_FREQUENCY_OFF   = 0,
     AEC_FLICKER_FREQUENCY_50HZ = 1,
     AEC_FLICKER_FREQUENCY_60HZ = 2,
+    AEC_FLICKER_FREQUENCY_AUTO = 3,
 } CalibDb_FlickerFreq_t;
 
 typedef enum _CalibDb_AntiFlickerMode_e {
@@ -580,7 +582,7 @@ typedef struct CalibDb_Module_Info_s {
     float IRCutT;
 } CalibDb_Module_Info_t;
 
-#define CALD_AWB_LS_NUM_MAX 7
+#define CALD_AWB_LS_NUM_MAX 14
 #define CALD_AWB_WINDOW_NUM_MAX 8
 #define CALD_AWB_EXCRANGE_NUM_MAX 7
 #define CALD_AWB_RRES_NUM_MAX 5
@@ -1002,6 +1004,47 @@ typedef struct CalibDb_Ahdr_Para_s {
     CalibDb_HdrTmo_t tmo;
 } CalibDb_Ahdr_Para_t;
 
+typedef struct CalibDb_Awdr_Strength_Para_s {
+    float  Envlv[13];
+    float  Level[13];
+    float damp;
+    float Tolerance;
+} CalibDb_Awdr_Strength_Para_t;
+
+typedef struct CalibDb_Awdr_Config_Para_s {
+    float                   LocalCurve[33];
+    float                   GlobalCurve[33];
+    float                   wdr_noiseratio;
+    float                   wdr_bestlight;
+    float                   wdr_gain_off1;
+    float                   wdr_pym_cc;
+    float                    wdr_epsilon;
+    float                    wdr_lvl_en;
+    float                    wdr_flt_sel;
+    float                    wdr_gain_max_clip_enable;
+    float                    wdr_bavg_clip;
+    float                    wdr_nonl_segm;
+    float                    wdr_nonl_open;
+    float                    wdr_nonl_mode1;
+    float                   wdr_coe0;
+    float                   wdr_coe1;
+    float                   wdr_coe2;
+    float                   wdr_coe_off;
+} CalibDb_Awdr_Config_Para_t;
+
+typedef struct CalibDbAwdrParas {
+    char name[CALIBDB_MAX_MODE_NAME_LENGTH];
+    float SceneEnbale;
+    float mode;
+    CalibDb_Awdr_Strength_Para_t  WdrStrength;
+    CalibDb_Awdr_Config_Para_t WdrConfig;
+} CalibDbAwdrPara_t;
+
+typedef struct CalibDb_Awdr_Para_s {
+    float Enbale;
+    CalibDbAwdrPara_t Mode[CALIBDB_MAX_MODE_NUM];
+} CalibDb_Awdr_Para_t;
+
 typedef struct CalibDb_Blc_ModeCell_s {
     char name[CALIBDB_MAX_MODE_NAME_LENGTH];
     float iso[CALIBDB_BLC_MAX_ISO_LEVEL];
@@ -1182,7 +1225,7 @@ typedef struct CalibDb_BayerNr_2_s {
 #define CIFISP_LSC_GRAD_TBL_SIZE           8
 #define CIFISP_LSC_SIZE_TBL_SIZE           8
 #define LSC_GRAD_TBL_SIZE                  8
-#define LSC_ILLUMINATION_MAX               10
+#define LSC_ILLUMINATION_MAX               14
 typedef enum  CalibDb_Used_For_Case_e {
     USED_FOR_CASE_NORMAL = 0,
     USED_FOR_CASE_FLASH,
@@ -1283,7 +1326,7 @@ typedef struct CalibDb_RKDM_s {
     unsigned char debayer_shift_num;
 } CalibDb_RKDM_t;
 
-#define CCM_ILLUMINATION_MAX               7
+#define CCM_ILLUMINATION_MAX               14
 #define CCM_PROFILE_NAME            ( 25U )
 typedef char                        CalibDb_Ccm_ProfileName_t[CCM_PROFILE_NAME];
 #define CCM_ILLUMINATION_NAME       ( 20U )
@@ -1881,8 +1924,22 @@ typedef struct CalibDb_Af_Contrast_s {
     CalibDb_Af_SearchDir_t  AdaptiveDir;
     unsigned char           AdaptiveSteps;
     unsigned short          AdaptRangeTbl[65];                /**< adaptive range search table*/
-    float                   TrigThers;                    /**< AF trigger threshold */
+    unsigned short          QuickFoundThersZoomIdx[256];
+    float                   QuickFoundThers[256];
+    unsigned short          QuickFoundThersNum;
+    unsigned short          SearchStepZoomIdx[256];
+    unsigned short          SearchStep[256];
+    unsigned short          SearchStepNum;
+    unsigned short          StopStepZoomIdx[256];
+    unsigned short          StopStep[256];
+    unsigned short          StopStepNum;
+    unsigned short          SkipHighPassZoomIdx;
+    float                   SkipHighPassGain;
+    float                   TrigThers[32];                    /**< AF trigger threshold */
+    float                   TrigThersFv[32];
+    unsigned char           TrigThersNums;
     float                   LumaTrigThers;
+    float                   ExpTrigThers;
 
     float                   StableThers;                  /**< AF stable threshold */
     unsigned short          StableFrames;                 /**< AF stable  status must hold frames */
@@ -1940,11 +1997,46 @@ typedef struct CalibDb_Af_DefCode_s {
 
 typedef struct CalibDb_Af_ZoomFocusTbl_s {
     int tbl_len;
-    float focal_length[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int zoom_pos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int focus_infpos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
-    int focus_macropos[CALIBDB_ZOOM_FOCUS_TBL_SIZE];
+    int focuspos_len;
+    int widemod_deviate;
+    int telemod_deviate;
+    int zoom_move_tbl_len;
+    int zoom_move_dot[CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE];
+    int zoom_move_step[CALIBDB_ZOOM_FOCUS_ZOOM_MOVE_TBL_SIZE];
+    float *focal_length;
+    signed short *zoomcode;
+    float focuspos[CALIBDB_ZOOM_FOCUS_POSITION_NUM];
+    signed short *focuscode[CALIBDB_ZOOM_FOCUS_POSITION_NUM];
+
+    int ZoomSearchTbl[CALIBDB_AF_CORRECT_SEARCHTBL_MAX];
+    int ZoomSearchTblNum;
+    int ZoomSearchRefCurveIdx;
+    int FocusSearchMargin;
+    int FocusSearchPlusRange[CALIBDB_AF_CORRECT_SEARCHTBL_MAX];
+    int FocusStage1Step;
+    int searchZoomRange;
+    int searchFocusRange;
+    float searchEmax;
+    float searchEavg;
+
+    unsigned char IsZoomFocusRec;
+    char ZoomFocusRecDir[256];
 } CalibDb_Af_ZoomFocusTbl_t;
+
+typedef struct CalibDb_Af_LdgParam_s {
+    unsigned char enable;
+    int ldg_xl;
+    int ldg_yl;
+    int ldg_kl;
+    int ldg_xh;
+    int ldg_yh;
+    int ldg_kh;
+} CalibDb_Af_LdgParam_t;
+
+typedef struct CalibDb_Af_HighLightParam_s {
+    int ther0;
+    int ther1;
+} CalibDb_Af_HighLightParam_t;
 
 typedef struct CalibDb_AF_s {
     signed char af_mode;
@@ -1955,6 +2047,8 @@ typedef struct CalibDb_AF_s {
     CalibDb_Af_DefCode_t fixed_mode;
     CalibDb_Af_DefCode_t macro_mode;
     CalibDb_Af_DefCode_t infinity_mode;
+    CalibDb_Af_LdgParam_t ldg_param;
+    CalibDb_Af_HighLightParam_t highlight;
     CalibDb_Af_Contrast_t contrast_af;
     CalibDb_Af_Laser_t laser_af;
     CalibDb_Af_Pdaf_t pdaf;
@@ -2101,6 +2195,7 @@ typedef struct CamCalibDbContext_s {
     CalibDb_Aec_Para_t aec;
     CalibDb_AF_t af;
     CalibDb_Ahdr_Para_t ahdr;
+    CalibDb_Awdr_Para_t awdr;
     CalibDb_Blc_t blc;
     CalibDb_Dpcc_t dpcc;
     CalibDb_BayerNr_2_t bayerNr;

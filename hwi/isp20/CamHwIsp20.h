@@ -108,6 +108,10 @@ typedef struct {
     char mipi_id1[DEV_PATH_LEN];
     char mipi_id2[DEV_PATH_LEN];
     char mipi_id3[DEV_PATH_LEN];
+    char dvp_id0[DEV_PATH_LEN];
+    char dvp_id1[DEV_PATH_LEN];
+    char dvp_id2[DEV_PATH_LEN];
+    char dvp_id3[DEV_PATH_LEN];
     char mipi_dphy_rx_path[DEV_PATH_LEN];
     char mipi_csi2_sd_path[DEV_PATH_LEN];
     char lvds_sd_path[DEV_PATH_LEN];
@@ -216,6 +220,7 @@ public:
     XCamReturn FocusCorrection();
     XCamReturn ZoomCorrection();
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops);
+    XCamReturn getEffectiveExpParams(uint32_t id, SmartPtr<RkAiqExpParamsProxy>& ExpParams);
 protected:
     XCAM_DEAD_COPY(CamHwIsp20);
     enum cam_hw_state_e {
@@ -263,9 +268,9 @@ protected:
     void gen_full_ispp_params(const struct rkispp_params_cfg* update_params,
                               struct rkispp_params_cfg* full_params);
     XCamReturn overrideExpRatioToAiqResults(const sint32_t frameId,
-            int module_id,
-            SmartPtr<RkAiqIspMeasParamsProxy>& aiq_results,
-            SmartPtr<RkAiqIspOtherParamsProxy>& aiq_other_results);
+                                            int module_id,
+                                            SmartPtr<RkAiqIspMeasParamsProxy>& aiq_results,
+                                            SmartPtr<RkAiqIspOtherParamsProxy>& aiq_other_results);
     void dump_isp_config(struct isp2x_isp_params_cfg* isp_params,
                          SmartPtr<RkAiqIspMeasParamsProxy> aiq_results,
                          SmartPtr<RkAiqIspOtherParamsProxy> aiq_other_results);
@@ -322,6 +327,7 @@ protected:
     uint32_t _ds_width_align;
     uint32_t _ds_heigth_align;
     uint32_t _exp_delay;
+    rk_aiq_lens_descriptor _lens_des;
 };
 
 };

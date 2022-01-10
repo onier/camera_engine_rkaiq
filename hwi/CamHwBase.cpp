@@ -169,6 +169,14 @@ CamHwBase::setEvtsListener(IspEvtsListener* evtListener)
 }
 
 XCamReturn
+CamHwBase::setIspTxBufListener(IspTxBufListener* txBufListener)
+{
+    mIspTxBufLintener = txBufListener;
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
 CamHwBase::poll_buffer_ready (SmartPtr<VideoBuffer> &buf, int type)
 {
     if ((type == ISP_POLL_3A_STATS || type == ISPP_POLL_STATS) && mIspStatsLintener) {
@@ -177,6 +185,10 @@ CamHwBase::poll_buffer_ready (SmartPtr<VideoBuffer> &buf, int type)
 
     if (type == ISP_POLL_LUMA && mIspLumaListener) {
         return mIspLumaListener->ispLumaCb(buf);
+    }
+
+    if (type == ISP_POLL_TX_BUF && mIspTxBufLintener) {
+        return mIspTxBufLintener->ispTxBufCb(buf);
     }
 
     return XCAM_RETURN_NO_ERROR;

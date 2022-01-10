@@ -50,13 +50,11 @@ typedef struct rk_aiq_af_attrib_s {
     unsigned int h_size;
     unsigned int v_size;
 
-    unsigned short fixedModeDefCode;
-    unsigned short macroModeDefCode;
-    unsigned short infinityModeDefCode;
+    short fixedModeDefCode;
+    short macroModeDefCode;
+    short infinityModeDefCode;
 
     rk_aiq_af_algo_meas_t manual_meascfg;
-
-    int zoom_zero_pos;
 } rk_aiq_af_attrib_t;
 
 #endif

@@ -146,7 +146,12 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     }
 
 #if 1
-    RKAiqAecExpInfo_t *curExp = pAblcProcParams->rk_com.u.proc.curExp;
+    RKAiqAecExpInfo_t *curExp = NULL;
+    if (inparams->u.prepare.ae_algo_id != 0) {
+        curExp = pAblcProcParams->ablc_proc_com.com_ext.u.proc.curExp;
+    } else {
+        curExp = pAblcProcParams->rk_com.u.proc.curExp;
+    }
     if(curExp != NULL) {
         if(pAblcProcParams->hdr_mode == RK_AIQ_WORKING_MODE_NORMAL) {
             stExpInfo.arAGain[0] = curExp->LinearExp.exp_real_params.analog_gain;
@@ -173,6 +178,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     } else {
         LOGE_ABLC("%s:%d curExp is NULL, so use default instead \n", __FUNCTION__, __LINE__);
     }
+
 #endif
 
     AblcResult_t ret = AblcProcess(pAblcCtx, &stExpInfo);

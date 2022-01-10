@@ -218,10 +218,9 @@ read_mesh_table(FECContext_t* fecCtx, unsigned int correct_level)
 #else
     FILE* ofp;
     char filename[512];
-    sprintf(filename, "%s/%s/meshxi_level%d.bin",
+    sprintf(filename, "%s/%s/meshxi_level.bin",
             fecCtx->resource_path,
-            fecCtx->meshfile,
-            correct_level);
+            fecCtx->meshfile);
     ofp = fopen(filename, "rb");
     if (ofp != NULL) {
         unsigned int num = fread(fecCtx->meshxi, 1, fecCtx->fec_mesh_size * sizeof(unsigned short), ofp);
@@ -236,10 +235,9 @@ read_mesh_table(FECContext_t* fecCtx, unsigned int correct_level)
         fecCtx->fec_en = 0;
     }
 
-    sprintf(filename, "%s/%s/meshxf_level%d.bin",
+    sprintf(filename, "%s/%s/meshxf_level.bin",
             fecCtx->resource_path,
-            fecCtx->meshfile,
-            correct_level);
+            fecCtx->meshfile);
     ofp = fopen(filename, "rb");
     if (ofp != NULL) {
         unsigned int num = fread(fecCtx->meshxf, 1, fecCtx->fec_mesh_size * sizeof(unsigned char), ofp);
@@ -253,10 +251,9 @@ read_mesh_table(FECContext_t* fecCtx, unsigned int correct_level)
         fecCtx->fec_en = 0;
     }
 
-    sprintf(filename, "%s/%s/meshyi_level%d.bin",
+    sprintf(filename, "%s/%s/meshyi_level.bin",
             fecCtx->resource_path,
-            fecCtx->meshfile,
-            correct_level);
+            fecCtx->meshfile);
     ofp = fopen(filename, "rb");
     if (ofp != NULL) {
         unsigned int num = fread(fecCtx->meshyi, 1, fecCtx->fec_mesh_size * sizeof(unsigned short), ofp);
@@ -270,10 +267,9 @@ read_mesh_table(FECContext_t* fecCtx, unsigned int correct_level)
         fecCtx->fec_en = 0;
     }
 
-    sprintf(filename, "%s/%s/meshyf_level%d.bin",
+    sprintf(filename, "%s/%s/meshyf_level.bin",
             fecCtx->resource_path,
-            fecCtx->meshfile,
-            correct_level);
+            fecCtx->meshfile);
     ofp = fopen(filename, "rb");
     if (ofp != NULL) {
         unsigned int num = fread(fecCtx->meshyf, 1, fecCtx->fec_mesh_size * sizeof(unsigned char), ofp);
@@ -297,6 +293,7 @@ prepare(RkAiqAlgoCom* params)
     FECHandle_t hFEC = (FECHandle_t)params->ctx->hFEC;
     FECContext_t* fecCtx = (FECContext_t*)hFEC;
     RkAiqAlgoConfigAfecInt* rkaiqAfecConfig = (RkAiqAlgoConfigAfecInt*)params;
+    double correct_level = 0;
 #if 0 //moved to create_ctx
     fecCtx->fec_en = rkaiqAfecConfig->afec_calib_cfg.fec_en;
     memcpy(fecCtx->meshfile, rkaiqAfecConfig->afec_calib_cfg.meshfile, sizeof(fecCtx->meshfile));
@@ -343,6 +340,12 @@ prepare(RkAiqAlgoCom* params)
         fecCtx->mesh_density = 1;
     }
 
+    alloc_fec_buf(fecCtx);
+    if (get_fec_buf(fecCtx) != XCAM_RETURN_NO_ERROR) {
+        LOGE_AFEC("%s: get fec buf failed!", __FUNCTION__);
+        goto out;
+    }
+
 #if GENMESH_ONLINE
     // process the new attrib set before prepare
     fecCtx->afecReadMeshThread->triger_stop();
@@ -351,9 +354,8 @@ prepare(RkAiqAlgoCom* params)
         fecCtx->afecReadMeshThread->clear_attr();
         fecCtx->isAttribUpdated = true;
     }
-#endif
 
-    double correct_level = fecCtx->correct_level;
+    correct_level = fecCtx->correct_level;
     if (fecCtx->isAttribUpdated) {
         fecCtx->fec_en = fecCtx->user_config.en;
         if (fecCtx->user_config.bypass)
@@ -395,7 +397,6 @@ prepare(RkAiqAlgoCom* params)
     }
     fecCtx->user_config.correct_level = correct_level;
 
-#if GENMESH_ONLINE
     // deinit firtly
     if (fecCtx->fecParams.pMeshXY)
         genFecMeshDeInit(fecCtx->fecParams);
@@ -412,11 +413,6 @@ prepare(RkAiqAlgoCom* params)
     //        &fecCtx->meshxf, &fecCtx->meshyi, &fecCtx->meshyf);
     fecCtx->fec_mesh_h_size = fecCtx->fecParams.meshSizeW;
     fecCtx->fec_mesh_v_size = fecCtx->fecParams.meshSizeH;
-    alloc_fec_buf(fecCtx);
-    if (get_fec_buf(fecCtx) != XCAM_RETURN_NO_ERROR) {
-        LOGE_AFEC("%s: get fec buf failed!", __FUNCTION__);
-        goto out;
-    }
     fecCtx->fec_mesh_size = fecCtx->fecParams.meshSize4bin;
     LOGI_AFEC("en: %d, mode(%d), bypass(%d), correct_level(%d), direction(%d), dimen(%d-%d), mesh dimen(%d-%d), size(%d)",
               fecCtx->fec_en,
@@ -433,6 +429,11 @@ prepare(RkAiqAlgoCom* params)
     if (!fecCtx->fec_en)
         goto out;
 #else
+    if (fecCtx->isAttribUpdated){
+        fecCtx->fec_en = fecCtx->user_config.en;
+        fecCtx->isAttribUpdated = false;
+    }
+
     fecCtx->fec_mesh_size =
         cal_fec_mesh(fecCtx->src_width, fecCtx->src_height, fecCtx->mesh_density,
                      fecCtx->fec_mesh_h_size, fecCtx->fec_mesh_v_size);
@@ -445,29 +446,6 @@ prepare(RkAiqAlgoCom* params)
               fecCtx->fec_mesh_size);
     if (!fecCtx->fec_en)
         return XCAM_RETURN_NO_ERROR;
-
-    // need realloc ?
-    if (fecCtx->meshxi) {
-        free(fecCtx->meshxi);
-        fecCtx->meshxi = NULL;
-    }
-    if (fecCtx->meshxf) {
-        free(fecCtx->meshxf);
-        fecCtx->meshxf = NULL;
-    }
-    if (fecCtx->meshyi) {
-        free(fecCtx->meshyi);
-        fecCtx->meshyi = NULL;
-    }
-    if (fecCtx->meshyf) {
-        free(fecCtx->meshyf);
-        fecCtx->meshyf = NULL;
-    }
-    fecCtx->meshxi = (unsigned short*)malloc(fecCtx->fec_mesh_size * sizeof(unsigned short));
-    fecCtx->meshxf = (unsigned char*)malloc(fecCtx->fec_mesh_size * sizeof(unsigned char));
-    fecCtx->meshyi = (unsigned short*)malloc(fecCtx->fec_mesh_size * sizeof(unsigned short));
-    fecCtx->meshyf = (unsigned char*)malloc(fecCtx->fec_mesh_size * sizeof(unsigned char));
-
 #endif
     read_mesh_table(fecCtx, fecCtx->user_config.correct_level);
 

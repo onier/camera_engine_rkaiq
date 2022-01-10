@@ -1,4 +1,4 @@
-Current Version: v1.6.0
+Current Version: v1.7.2
 
 ==================== RKISP2X TUNER VERSION HISTORY ====================
 v0.1.0 - 2020.07.15
@@ -69,4 +69,12 @@ v1.5.3 -2021.01.19
 v1.6.0 -2021.02.08
   - add XML2Bin function
   - NR/SHARP module support dynamic number of scene
+
+v1.7.0 -2021.06.09
+  - AWB supports adaptive UV white point condition parameters
+  - AWB supports up to 14 lights calibration
+
+v1.7.2 -2021.08.20
+  - update IQ Parser to adapt to CCM and AWB API size changes
+  - fix a bug that ct_grid_num and cri_grid_num  in lutAll[1] lutAll[2] are zero
 ==================== RKISP2X TUNER VERSION HISTORY ====================

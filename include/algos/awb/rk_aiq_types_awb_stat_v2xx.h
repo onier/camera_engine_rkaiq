@@ -23,7 +23,8 @@
 #ifndef __RK_AIQ_TYPE_AWB_STAT_V2XX_H__
 #define __RK_AIQ_TYPE_AWB_STAT_V2XX_H__
 #include "rk_aiq_comm.h"
-#define TIME_SHARE_TEST
+//#define TIME_SHARE_TEST
+#define RK_AIQ_AWB_STAT_YUV_ILL_OFF 7
 #define TIME_SHARE_MODE
 #define RK_AIQ_AWB_MAX_WHITEREGIONS_NUM       7
 #define RK_AIQ_AWB_YUV_LS_PARA_NUM 4

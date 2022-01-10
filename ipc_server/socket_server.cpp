@@ -8,7 +8,7 @@
 #endif
 #define LOG_TAG "socket_server.cpp"
 #define UNIX_DOMAIN "/tmp/UNIX.domain"
-#define UNIX_DOMAIN1 "/tmp/UNIX_1.domain" 
+#define UNIX_DOMAIN1 "/tmp/UNIX_1.domain"
 SocketServer::~SocketServer() {
 }
 
@@ -82,11 +82,11 @@ int ProcessText(int client_socket, rk_aiq_sys_ctx_t* ctx, char * data, int size)
         LOGE("packetSize check failed,returnsize is %d, pack is %d",size, packetSize);
         return -1;
     }
-    
+
     char* receivedPacket = (char*)malloc(packetSize);
     memset(receivedPacket, 0, packetSize);
     memcpy(receivedPacket, tmpArray, packetSize);
-    
+
     //parse data
     RkAiqSocketData receivedData;
     int offset = 0;
@@ -101,11 +101,11 @@ int ProcessText(int client_socket, rk_aiq_sys_ctx_t* ctx, char * data, int size)
     //command id
     memcpy((void*) & (receivedData.commandResult), receivedPacket + offset, sizeof(int));
     offset += sizeof(int);
-    
+
     //data size
     memcpy((void*) & (receivedData.dataSize), receivedPacket + offset, sizeof(unsigned int));
     //LOGE("receivedData.dataSize:%d", receivedData.dataSize);
-    
+
     offset += sizeof(unsigned int);
     //data
     receivedData.data = (char*)malloc(receivedData.dataSize);
@@ -115,13 +115,13 @@ int ProcessText(int client_socket, rk_aiq_sys_ctx_t* ctx, char * data, int size)
     memcpy((void*) & (receivedData.dataHash), receivedPacket + offset, sizeof(unsigned int));
     free(receivedPacket);
     receivedPacket = NULL;
-    
+
     //hash check
     unsigned int dataHash = MurMurHash(receivedData.data, receivedData.dataSize);
     //LOGE("receivedData.dataSize:%d", receivedData.dataSize);
     //LOGE("dataHash calculated:%x", dataHash);
     //LOGE("receivedData.dataHash:%x", receivedData.dataHash);
-    
+
     if(dataHash != receivedData.dataHash) {
         LOGE("data hash not match.return");
         free(receivedData.data);
@@ -136,10 +136,10 @@ int ProcessText(int client_socket, rk_aiq_sys_ctx_t* ctx, char * data, int size)
     ret = ProcessCommand(ctx, &receivedData, &dataReply);
     free(receivedData.data);
     receivedData.data = NULL;
-    
+
     if (ret != -1) {
         unsigned int packetSize = sizeof(RkAiqSocketData) + dataReply.dataSize - sizeof(char*);
-        memcpy(dataReply.packetSize, &packetSize, 4);   
+        memcpy(dataReply.packetSize, &packetSize, 4);
         char* dataToSend = (char*)malloc(packetSize);
         int offset = 0;
         char magic[2] = {'R','K'};
@@ -162,7 +162,7 @@ int ProcessText(int client_socket, rk_aiq_sys_ctx_t* ctx, char * data, int size)
         if (dataReply.data != NULL){
             free(dataReply.data);
             dataReply.data = NULL;
-            }       
+            }
         free(dataToSend);
         dataToSend = NULL;
     }
@@ -196,7 +196,7 @@ int SocketServer::Recvieve() {
     else {
         length = recv(client_socket, buffer, 17000, 0);
     }
-    
+
     if (length <= 0) {
 
         if (length == 0) {
@@ -370,21 +370,31 @@ void SocketServer::Deinit(){
     struct linger so_linger;
     so_linger.l_onoff = 1;
     so_linger.l_linger = 0;
+
     this->SaveEixt();
     //setsockopt(client_socket,SOL_SOCKET,SO_LINGER,&so_linger,sizeof(so_linger));
     struct timeval interval = {0, 0};
     //setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval,sizeof(struct timeval));
-    shutdown(client_socket, SHUT_RDWR);  
-    close(client_socket);
-    close(sockfd);
+
+    if (client_socket >= 0)
+        shutdown(client_socket, SHUT_RDWR);
+
+    if (this->accept_threads_) {
+        this->accept_threads_->join();
+        this->accept_threads_ = nullptr;
+    }
+
+    //close(client_socket); //client_socket has been closed in SocketServer::Accepted()
+    if (sockfd >= 0) {
+        close(sockfd);
+    }
+
     if (sns_idx == 0) {
         unlink(UNIX_DOMAIN);
     } else {
         unlink(UNIX_DOMAIN1);
     }
 
-    this->accept_threads_->join();
-    this->accept_threads_ = nullptr;
     if (_stop_fds[0] != -1)
       close(_stop_fds[0]);
     if (_stop_fds[1] != -1)

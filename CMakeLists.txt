@@ -91,6 +91,7 @@ include/algos/adehaze
 include/algos/adpcc
 include/algos/ae
 include/algos/af
+include/algos/afd
 include/algos/afec
 include/algos/agamma
 include/algos/adegamma
@@ -302,7 +303,7 @@ link_directories("${LIBRARY_OUTPUT_PATH}")
 target_link_libraries(rkaiq rkaiq_ae rkaiq_awb rkaiq_af rkaiq_anr rkaiq_asd rkaiq_ahdr
 	rkaiq_acp rkaiq_asharp rkaiq_adhaz rkaiq_a3dlut rkaiq_ablc rkaiq_accm rkaiq_acgc
 	rkaiq_adebayer rkaiq_adpcc rkaiq_afec rkaiq_agamma rkaiq_adegamma rkaiq_agic rkaiq_aie rkaiq_aldch
-	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr ${OPENCV_LIBS}
+	rkaiq_alsc rkaiq_aorb rkaiq_ar2y rkaiq_awdr rkaiq_afd ${OPENCV_LIBS}
 	${OPENCV_3RDPARTY_LIBS} ${GENMESH_LIBS} ${LINK_ASAN} pthread ${MOTION_DETECT_LIBS})
 
 set (VERSIONFILEPATH ${PROJECT_SOURCE_DIR}/)

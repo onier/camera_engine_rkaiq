@@ -42,6 +42,14 @@ rk_aiq_user_api_af_SetZoomPos(const rk_aiq_sys_ctx_t* sys_ctx, int zoom_pos);
 XCamReturn
 rk_aiq_user_api_af_GetZoomPos(const rk_aiq_sys_ctx_t* sys_ctx, int* zoom_pos);
 XCamReturn
+rk_aiq_user_api_af_SetZoomIndex(const rk_aiq_sys_ctx_t* sys_ctx, int index);
+XCamReturn
+rk_aiq_user_api_af_GetZoomIndex(const rk_aiq_sys_ctx_t* sys_ctx, int *index);
+XCamReturn
+rk_aiq_user_api_af_EndZoomChg(const rk_aiq_sys_ctx_t* sys_ctx);
+XCamReturn
+rk_aiq_user_api_af_StartZoomCalib(const rk_aiq_sys_ctx_t* sys_ctx);
+XCamReturn
 rk_aiq_user_api_af_SetVcmCfg(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_lens_vcmcfg* cfg);
 XCamReturn
 rk_aiq_user_api_af_GetVcmCfg(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_lens_vcmcfg* cfg);
@@ -52,9 +60,13 @@ rk_aiq_user_api_af_GetSearchResult(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_re
 XCamReturn
 rk_aiq_user_api_af_GetZoomRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_zoomrange* range);
 XCamReturn
+rk_aiq_user_api_af_GetFocusRange(const rk_aiq_sys_ctx_t* sys_ctx, rk_aiq_af_focusrange* range);
+XCamReturn
 rk_aiq_user_api_af_FocusCorrection(const rk_aiq_sys_ctx_t* sys_ctx);
 XCamReturn
 rk_aiq_user_api_af_ZoomCorrection(const rk_aiq_sys_ctx_t* sys_ctx);
+XCamReturn
+rk_aiq_user_api_af_resetZoom(const rk_aiq_sys_ctx_t* sys_ctx);
 
 RKAIQ_END_DECLARE
 

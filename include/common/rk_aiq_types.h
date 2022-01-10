@@ -30,6 +30,7 @@
 #include "a3dlut/rk_aiq_types_a3dlut_algo.h"
 #include "ahdr/rk_aiq_types_ahdr_algo_int.h"
 #include "ahdr/rk_aiq_types_ahdr_algo.h"
+#include "awdr/rk_aiq_types_awdr_algo_int.h"
 #include "agamma/rk_aiq_types_agamma_algo_int.h"
 #include "adegamma/rk_aiq_types_adegamma_algo_int.h"
 #include "adehaze/rk_aiq_types_adehaze_algo.h"
@@ -85,7 +86,8 @@ typedef enum rk_aiq_af_sec_stat_e
 {
     RK_AIQ_AF_SEARCH_INVAL   = 0,
     RK_AIQ_AF_SEARCH_RUNNING = 1,
-    RK_AIQ_AF_SEARCH_END     = 2
+    RK_AIQ_AF_SEARCH_END     = 2,
+    RK_AIQ_AF_SEARCH_WINCHG  = 3
 } rk_aiq_af_sec_stat_t;
 
 typedef enum {
@@ -307,6 +309,11 @@ typedef struct {
     bool focus_support;
     bool iris_support;
     bool zoom_support;
+
+    int32_t focus_minimum;
+    int32_t focus_maximum;
+    int32_t zoom_minimum;
+    int32_t zoom_maximum;
 } rk_aiq_lens_descriptor;
 
 typedef struct {
@@ -333,6 +340,11 @@ typedef struct {
     float min_fl;
     float max_fl;
 } rk_aiq_af_zoomrange;
+
+typedef struct {
+    int min_pos;
+    int max_pos;
+} rk_aiq_af_focusrange;
 
 // sensor
 typedef struct {
@@ -365,10 +377,23 @@ typedef RKAiqAecExpInfo_t rk_aiq_exposure_params_t;
 // focus
 typedef struct
 {
+    bool zoomfocus_modifypos;
+    bool focus_correction;
+    bool zoom_correction;
     bool lens_pos_valid;
     bool zoom_pos_valid;
-    unsigned int next_lens_pos;
-    unsigned int next_zoom_pos;
+    bool send_zoom_reback;
+    bool send_focus_reback;
+    bool end_zoom_chg;
+    bool focus_noreback;
+    int next_pos_num;
+    int next_lens_pos[RKAIQ_RAWAF_NEXT_ZOOMFOCUS_NUM];
+    int next_zoom_pos[RKAIQ_RAWAF_NEXT_ZOOMFOCUS_NUM];
+    int use_manual;
+    int auto_focpos;
+    int auto_zoompos;
+    int manual_focpos;
+    int manual_zoompos;
 } rk_aiq_focus_params_t;
 
 // isp
@@ -427,9 +452,7 @@ typedef struct {
     unsigned short gamma_y[45];
 } rk_aiq_isp_goc_t;
 
-typedef struct {
-    int UNKNOWN;
-} rk_aiq_isp_wdr_t;
+typedef RkAiqAwdrProcResult_t rk_aiq_isp_wdr_t;
 
 typedef struct {
     int UNKNOWN;
@@ -573,8 +596,9 @@ typedef enum rk_aiq_cpsls_e {
  *
  * user data types of compensation lights, applied to IR and
  * full colour light source.
+ *
+ * @on: whether IR-cut filtering the infrared, (0:filter), (1:don't filter)
  */
-
 typedef struct rk_aiq_cpsl_cfg_s {
     RKAiqOPMode_t mode;
     rk_aiq_cpsls_t lght_src;
@@ -585,7 +609,7 @@ typedef struct rk_aiq_cpsl_cfg_s {
             uint32_t sw_interval; /*!< switch interval time, unit seconds */
         } a; /*< auto mode */
         struct {
-            uint8_t on; /*!< disable 0, enable 1 */
+            uint8_t on;
             float strength_led; /*!< Range [0-100] */
             float strength_ir; /*!< Range [0-100] */
         } m; /*!< manual mode */
@@ -638,4 +662,44 @@ typedef struct {
     uint16_t hdrProcessCnt;
     unsigned int luma[3][16];
 } rk_aiq_luma_params_t;
+
+typedef struct rk_aiq_ae_param_s
+{
+    int working_mode;//values look up in rk_aiq_working_mode_t definiton
+    int raw_width;
+    int raw_height;
+    rk_aiq_exposure_sensor_descriptor sensor_desc;
+} rk_aiq_ae_param_t;
+
+typedef struct rk_aiq_ae_statistics_s
+{
+    rk_aiq_isp_aec_stats_t aec_stats;
+} rk_aiq_ae_statistics_t;
+
+typedef struct rk_aiq_ae_result_s
+{
+    RkAiqExpParamComb_t LinearExp;
+    RkAiqExpParamComb_t HdrExp[3];
+    unsigned short line_length_pixels;
+    unsigned short frame_length_lines;
+    //rk_aiq_isp_aec_meas_t ae_meas;
+    //rk_aiq_isp_hist_meas_t hist_meas;
+    struct window meas_win;
+    unsigned char meas_weight[15 * 15];
+} rk_aiq_ae_result_t;
+
+typedef struct rk_aiq_ae_func_s
+{
+    int32_t (*pfn_ae_init)(int32_t s32Handle, const rk_aiq_ae_param_t *pstAeParam);
+    int32_t (*pfn_ae_run)(int32_t s32Handle, const rk_aiq_ae_statistics_t *pstAeInfo,
+                          rk_aiq_ae_result_t *pstAeResult, int32_t s32Rsv);
+    int32_t (*pfn_ae_ctrl)(int32_t s32Handle, uint32_t u32Cmd, void *pValue);
+    int32_t (*pfn_ae_exit)(int32_t s32Handle);
+} rk_aiq_ae_func_t;
+
+typedef struct rk_aiq_ae_register_s
+{
+    rk_aiq_ae_func_t stAeExpFunc;
+} rk_aiq_ae_register_t;
+
 #endif
