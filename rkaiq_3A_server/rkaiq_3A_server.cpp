@@ -331,7 +331,7 @@ int main(int argc, char **argv)
         threads++;
     }
 
-    if (threads > 1)
+    if (1 || threads > 1)
         has_mul_cam = 1;
 
     for (i = 0; i < MAX_MEDIA_NODES; i++) {
