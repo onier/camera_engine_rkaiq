@@ -210,6 +210,7 @@ static int arm_camera_yuv420_scale_arm(char *srcbuf, char *dstbuf,int src_w, int
 	return 0;
 }	
 
+volatile int drmfb_init_flag = 0;
 int drmDspFrame(int srcWidth, int srcHeight, int dispWidth, int dispHeight,
 		void* dmaFd, int fmt)
 {
@@ -283,17 +284,19 @@ int drmDspFrame(int srcWidth, int srcHeight, int dispWidth, int dispHeight,
   else
 	  arm_camera_yuv420_scale_arm(dmaFd, bo->map_addr, ori_width, ori_height, width, height);
 #endif
-
-  ret = drmModeAddFB2(bo->dev->fd, bo->width, bo->height,
-                      bo->format, handles, pitches, offsets,
-                      &bo->fb_id, bo->flags);
-  if (ret) {
-    printf("%s:failed to create fb ret=%d\n", __func__, ret);
-    printf("fd:%d ,wxh:%ux%u,format:%u,handles:%u,%u,pictches:%u,%u,offsets:%u,%u,fb_id:%u,flags:%u \n",
-           bo->dev->fd, bo->width, bo->height, bo->format,
-           handles[0], handles[1], pitches[0], pitches[1],
-           offsets[0], offsets[1], bo->fb_id, bo->flags);
-    return ret;
+  if(drmfb_init_flag != 2) {
+    ret = drmModeAddFB2(bo->dev->fd, bo->width, bo->height,
+                        bo->format, handles, pitches, offsets,
+                        &bo->fb_id, bo->flags);
+    if (ret) {
+      printf("%s:failed to create fb ret=%d\n", __func__, ret);
+      printf("fd:%d ,wxh:%ux%u,format:%u,handles:%u,%u,pictches:%u,%u,offsets:%u,%u,fb_id:%u,flags:%u \n",
+             bo->dev->fd, bo->width, bo->height, bo->format,
+             handles[0], handles[1], pitches[0], pitches[1],
+             offsets[0], offsets[1], bo->fb_id, bo->flags);
+      return ret;
+    }
+    drmfb_init_flag++;
   }
 
   ret = drmModeSetPlane(pDrmDsp->dev->fd, pDrmDsp->test_plane->plane->plane_id,
