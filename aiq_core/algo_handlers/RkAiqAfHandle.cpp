@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021 Rockchip Eletronics Co., Ltd.
+ * Copyright (c) 2019-2022 Rockchip Eletronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "RkAiqAfHandle.h"
+
 #include "RkAiqCore.h"
-#include "RkAiqHandle.h"
-#include "RkAiqHandleInt.h"
+#include "RkAiqAeHandle.h"
 
 namespace RkCam {
 
@@ -67,15 +68,21 @@ XCamReturn RkAiqAfHandleInt::setAttrib(rk_aiq_af_attrib_t* att) {
 
     if (sharedCom->snsDes.lens_des.focus_support) {
         mCfgMutex.lock();
-        // TODO
-        // check if there is different between att & mCurAtt
+
+        // check if there is different between att & mCurAtt(sync)/mNewAtt(async)
         // if something changed, set att to mNewAtt, and
         // the new params will be effective later when updateConfig
         // called by RkAiqCore
+        bool isChanged = false;
+        if (att->sync.sync_mode == RK_AIQ_UAPI_MODE_ASYNC && \
+            memcmp(&mNewAtt, att, sizeof(*att)))
+            isChanged = true;
+        else if (att->sync.sync_mode != RK_AIQ_UAPI_MODE_ASYNC && \
+                 memcmp(&mCurAtt, att, sizeof(*att)))
+            isChanged = true;
 
         // if something changed
-        if ((0 != memcmp(&mCurAtt, att, sizeof(rk_aiq_af_attrib_t))) ||
-            (mCurAtt.AfMode == RKAIQ_AF_MODE_AUTO)) {
+        if (isChanged || (mCurAtt.AfMode == RKAIQ_AF_MODE_AUTO)) {
             mNewAtt         = *att;
             updateAtt       = true;
             isUpdateAttDone = false;
@@ -439,6 +446,7 @@ XCamReturn RkAiqAfHandleInt::processing() {
 
     if ((!xAfStats || !xAfStats->af_stats_valid) && !sharedCom->init) {
         LOGW("no af stats, ignore!");
+        mProcResShared.release();
         return XCAM_RETURN_BYPASS;
     }
 
@@ -524,6 +532,10 @@ XCamReturn RkAiqAfHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPara
     RkAiqCore::RkAiqAlgosGroupShared_t* shared =
         (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
+
+    if (!mProcResShared.ptr())
+        return XCAM_RETURN_NO_ERROR;
+
     RkAiqAlgoProcResAf* af_com                  = &mProcResShared->result;
 
 #if defined(ISP_HW_V30)
