@@ -68,7 +68,7 @@ void
 Isp21Params::convertAiqBlcToIsp21Params(T& isp_cfg,
                                         rk_aiq_isp_blc_v21_t &blc)
 {
-    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) enter \n", __FUNCTION__, __LINE__);
+    LOG1_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) enter \n", __FUNCTION__, __LINE__);
     int tmp = 0;
 
     if(blc.v0.enable) {
@@ -134,7 +134,7 @@ Isp21Params::convertAiqBlcToIsp21Params(T& isp_cfg,
     isp_cfg.others.bls_cfg.bls1_val.b = tmp;
 #endif
 
-    LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) exit \n", __FUNCTION__, __LINE__);
+    LOG1_CAMHW_SUBM(ISP20PARAM_SUBM, "%s:(%d) exit \n", __FUNCTION__, __LINE__);
 
 }
 
@@ -999,8 +999,11 @@ Isp21Params::convertAiqCsmToIsp21Params(T& isp_cfg,
         csm_cfg->csm_full_range = csm_param.full_range ? 1 : 0;
         csm_cfg->csm_y_offset = csm_param.y_offset;
         csm_cfg->csm_c_offset = csm_param.c_offset;
-        csm_cfg->csm_coeff[ISP21_CSM_COEFF_NUM];
-        memcpy(csm_cfg->csm_coeff, csm_param.coeff, sizeof(csm_cfg->csm_coeff));
+        for (int i = 0; i < RK_AIQ_CSM_COEFF_NUM; i++) {
+            csm_cfg->csm_coeff[i] = csm_param.coeff[i] > 0
+                                        ? (short)(csm_param.coeff[i] * 128 + 0.5)
+                                        : (short)(csm_param.coeff[i] * 128 - 0.5);
+        }
     } else {
         isp_cfg.module_ens &= ~ISP2X_MODULE_CSM;
         isp_cfg.module_en_update |= ISP2X_MODULE_CSM;
