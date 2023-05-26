@@ -392,6 +392,7 @@ public:
         XCamVideoBuffer* nrImg;
         XCamVideoBuffer* pdafStatsBuf;
         RkAiqResComb res_comb;
+        rk_aiq_scale_raw_info_t scaleRawInfo;
         void reset() {
             frameId = -1;
             sof     = 0;
@@ -404,6 +405,7 @@ public:
             xcam_mem_clear(res_comb.ablcV32_proc_res);
             xcam_mem_clear(res_comb.aynrV22_proc_res);
             xcam_mem_clear(res_comb.aynrV3_proc_res);
+            xcam_mem_clear(scaleRawInfo);
             ispStats = nullptr;
             sp = nullptr;
             ispGain = nullptr;
@@ -431,8 +433,8 @@ public:
     void post_message (SmartPtr<XCamMessage> &msg);
     int32_t getGroupId(RkAiqAlgoType_t type);
     XCamReturn getGroupSharedParams(uint64_t groupId, RkAiqAlgosGroupShared_t* &shared);
-    uint64_t getCustomEnAlgosMask() {
-        return mCustomEnAlgosMask;
+    uint64_t getInitDisAlgosMask() {
+        return mInitDisAlgosMask;
     }
     // TODO(Cody): Just AF use it, should it be public ?
     SmartPtr<RkAiqHandle>* getCurAlgoTypeHandle(int algo_type);
@@ -443,7 +445,7 @@ public:
     XCamReturn updateCalib(enum rk_aiq_core_analyze_type_e type);
     XCamReturn updateCalibDbBrutal(CamCalibDbV2Context_t* aiqCalib);
     void setDelayCnts(int8_t delayCnts);
-
+    void setVicapScaleFlag(bool mode);
     void setTbInfo(rk_aiq_tb_info_t& info) {
         mTbInfo = info;
     }
@@ -451,6 +453,9 @@ public:
     rk_aiq_tb_info_t* getTbInfo(void) {
         return &mTbInfo;
     }
+
+    void syncVicapScaleMode();
+
 protected:
     // in analyzer thread
     XCamReturn analyze(const SmartPtr<VideoBuffer> &buffer);
@@ -591,6 +596,8 @@ protected:
 
     SmartPtr<RkAiqIspAfParamsPoolV32Lite>   mAiqIspAfV32LiteParamsPool;
 
+    SmartPtr<RkAiqIspAfdParamsPool>         mAiqIspAfdParamsPool;
+
 #endif
     static uint16_t DEFAULT_POOL_SIZE;
     XCam::Cond mIspStatsCond;
@@ -664,6 +671,7 @@ protected:
     inline uint64_t grpId2GrpMask(uint32_t grpId) {
         return grpId == RK_AIQ_CORE_ANALYZE_ALL ? (uint64_t)grpId : (1ULL << grpId);
     }
+    XCamReturn handleVicapScaleBufs(const SmartPtr<VideoBuffer> &buffer);
 
     std::bitset<RK_AIQ_ALGO_TYPE_MAX> getReqAlgoResMask(int algoType);
     void setReqAlgoResMask(int algoType, bool req);
@@ -686,7 +694,7 @@ private:
     int mSpHeight;
     int mSpAlignedWidth;
     int mSpAlignedHeight;
-    uint64_t mCustomEnAlgosMask;
+    uint64_t mInitDisAlgosMask;
     // update calib for each group
     XCam::Mutex _update_mutex;
     XCam::Cond _update_done_cond;
@@ -704,6 +712,9 @@ private:
     SmartPtr<RkAiqAfStatsProxy> mAfStats;
     SmartPtr<RkAiqPdafStatsProxy> mPdafStats;
     CamProfiles mProfiles;
+    SmartPtr<RkAiqVicapRawBuf_t> mVicapBufs;
+    bool mIsEnableVicap{false};
+    int mScaleRatio{32};
 };
 
 }

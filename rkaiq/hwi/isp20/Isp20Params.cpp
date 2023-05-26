@@ -25,7 +25,7 @@
 
 namespace RkCam {
 
-uint32_t IspParamsAssembler::MAX_PENDING_PARAMS = 10;
+uint32_t IspParamsAssembler::MAX_PENDING_PARAMS = 2;
 
 IspParamsAssembler::IspParamsAssembler (const char* name)
     : mLatestReadyFrmId(-1)
@@ -140,10 +140,15 @@ IspParamsAssembler::queue_locked(SmartPtr<cam3aResult>& result)
             if (!mParamsMap.empty())
                 frame_id = (mParamsMap.rbegin())->first + 1;
             else {
-                frame_id = mLatestReadyFrmId + 1;
-                LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: type %s, mLatestReadyFrmId %u, frame_id %u, "
-                                "can't find a proper unready params, impossible case",
-                                mName.c_str(), Cam3aResultType2Str[type], mLatestReadyFrmId, frame_id);
+                // except for initial 3 frame params
+                if ((mLatestReadyFrmId == (uint32_t)(-1)) || (mLatestReadyFrmId < 3)) {
+                    frame_id = mLatestReadyFrmId + 1;
+                } else {
+                    LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: type %s, mLatestReadyFrmId %u, frame_id %u, "
+                                    "can't find a proper unready params, impossible case, drop it",
+                                    mName.c_str(), Cam3aResultType2Str[type], mLatestReadyFrmId, frame_id);
+                    return ret;
+                }
             }
         }
         LOGI_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: type %s , delayed result_id[%u], merged to %u",
@@ -212,7 +217,7 @@ IspParamsAssembler::queue_locked(SmartPtr<cam3aResult>& result)
         uint32_t merge_id = 0;
         for (it = mParamsMap.begin(); it != mParamsMap.end();) {
             if (!(it->second.ready)) {
-                LOGW_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: ready disorderd, NOT ready id(flags:0x%x) %u < ready %u !",
+                LOGW_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: ready disorderd, NOT ready id(flags:0x%llx) %u < ready %u !",
                                 mName.c_str(), it->second.flags, it->first, frame_id);
                 // print missing params
                 std::string missing_conds;
