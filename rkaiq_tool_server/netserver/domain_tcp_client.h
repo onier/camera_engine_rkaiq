@@ -25,12 +25,12 @@ using namespace std;
 class DomainTCPClient
 {
   private:
-    int sock;
     std::string address;
     int port;
     struct sockaddr_un server;
 
   public:
+    int sock;
     std::timed_mutex m_inetSocketOperationMtx;
     DomainTCPClient();
     virtual ~DomainTCPClient();

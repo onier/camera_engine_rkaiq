@@ -134,7 +134,8 @@ static void* switch_ir_thread(void* args)
     rk_aiq_isp_stats_t *stats_ref = NULL;
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    rk_smart_ir_autoled_t auto_irled = { 0 };
+    rk_smart_ir_autoled_t auto_irled;
+    memset(&auto_irled, 0, sizeof(auto_irled));
     int irled_cur_value = 100;
     if (RK_SMART_IR_AUTO_IRLED) {
         // TODO: set init irled pwm duty
@@ -182,7 +183,6 @@ static void* switch_ir_thread(void* args)
 
 static void sample_smartIr_start(const void* arg)
 {
-    const rk_aiq_sys_ctx_t* ctx = (rk_aiq_sys_ctx_t*)(arg);
     sample_smartIr_t* smartIr_ctx = &g_sample_smartIr_ctx;
 
     smartIr_ctx->ir_ctx = rk_smart_ir_init((rk_aiq_sys_ctx_t*)arg);
@@ -195,7 +195,6 @@ static void sample_smartIr_start(const void* arg)
 
 static void sample_smartIr_stop(const void* arg)
 {
-    const rk_aiq_sys_ctx_t* ctx = (rk_aiq_sys_ctx_t*)(arg);
     sample_smartIr_t* smartIr_ctx = &g_sample_smartIr_ctx;
 
     if (smartIr_ctx->started) {

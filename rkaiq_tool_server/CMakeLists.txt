@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 project(rkaiq_tool_server C CXX)
 
 # add_compile_options(${ISP_HW_VERSION})
-add_definitions(-DISP_HW_V30)
+#add_definitions(-DISP_HW_V30)
+add_definitions(-DISP_HW_V32)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
@@ -42,7 +43,8 @@ if(BUILD_SANITIZER_STATIC)
         add_definitions(-g -ggdb -gdwarf -funwind-tables -rdynamic -O0 )
 endif()
 
-SET(RKAIQ_PROJECT_DIR "../")
+SET(RKAIQ_PROJECT_DIR "../rkaiq")
+#SET(RKAIQ_PROJECT_DIR "/home/lili/hdd/projects/3588-linux-ipc-dev/media/isp/camera_engine_rkaiq/rkaiq")
 include_directories(${RKAIQ_PROJECT_DIR}/include/iq_parser_v2/j2s)
 include_directories(${RKAIQ_PROJECT_DIR}/xcore)
 include_directories(${RKAIQ_PROJECT_DIR}/xcore/base)
@@ -129,12 +131,12 @@ include_directories(${RKAIQ_PROJECT_DIR}/include/algos/asharpV33)
 include_directories(${RKAIQ_PROJECT_DIR}/include/algos/ablcV32)
 include_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/arm)
 
-include_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/arm/installed/include/rkaiq)
-link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/arm/all_lib/MinSizeRel)
-include_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64)
-link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64/all_lib/MinSizeRel)
+#include_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/arm/installed/include/rkaiq)
+#link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/arm/all_lib/MinSizeRel)
 
-link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64/all_lib/RelWithDebInfo)
+# include_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64)
+# link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64/all_lib/MinSizeRel)
+# link_directories(${RKAIQ_PROJECT_DIR}/build/linux/output/aarch64/all_lib/RelWithDebInfo)
 
 include_directories(${PROJECT_SOURCE_DIR}/rkaiq/rkaiq_api)
 

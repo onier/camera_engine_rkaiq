@@ -82,12 +82,13 @@ public:
         :  XCamMessage(msg_id, id)
         , msg(message)
     {};
+    RkAiqCoreMsg() {};
     virtual ~RkAiqCoreMsg() {};
 
     SmartPtr<StandardMsg> msg;
 
 private:
-    XCAM_DEAD_COPY (RkAiqCoreMsg);
+    //XCAM_DEAD_COPY (RkAiqCoreMsg);
 };
 
 typedef RkAiqCoreMsg<VideoBuffer>                       RkAiqCoreVdBufMsg;
@@ -379,10 +380,10 @@ public:
         RKAiqAecExpInfo_t curExp;
         RKAiqAecExpInfo_t nxtExp;
         rk_aiq_amd_params_t amdResParams;
-        XCamVideoBuffer* aecStatsBuf;
-        XCamVideoBuffer* awbStatsBuf;
-        XCamVideoBuffer* afStatsBuf;
-        XCamVideoBuffer* adehazeStatsBuf;
+        RkAiqAecStats* aecStatsBuf;
+        RkAiqAwbStats* awbStatsBuf;
+        RkAiqAfStats* afStatsBuf;
+        RkAiqAdehazeStats* adehazeStatsBuf;
         XCamVideoBuffer* sp;
         XCamVideoBuffer* ispGain;
         XCamVideoBuffer* kgGain;
@@ -390,21 +391,18 @@ public:
         XCamVideoBuffer* tx;
         XCamVideoBuffer* orbStats;
         XCamVideoBuffer* nrImg;
-        XCamVideoBuffer* pdafStatsBuf;
+        RkAiqPdafStats* pdafStatsBuf;
         RkAiqResComb res_comb;
         rk_aiq_scale_raw_info_t scaleRawInfo;
+        RkAiqFullParams* fullParams;
         void reset() {
-            frameId = -1;
+            frameId = 0;
             sof     = 0;
             xcam_mem_clear(res_comb);
             xcam_mem_clear(amdResParams);
             xcam_mem_clear(preExp);
             xcam_mem_clear(curExp);
             xcam_mem_clear(nxtExp);
-            xcam_mem_clear(res_comb.ablc_proc_res);
-            xcam_mem_clear(res_comb.ablcV32_proc_res);
-            xcam_mem_clear(res_comb.aynrV22_proc_res);
-            xcam_mem_clear(res_comb.aynrV3_proc_res);
             xcam_mem_clear(scaleRawInfo);
             ispStats = nullptr;
             sp = nullptr;
@@ -419,6 +417,7 @@ public:
             orbStats = nullptr;
             nrImg       = nullptr;
             pdafStatsBuf = nullptr;
+            fullParams = nullptr;
         }
     } RkAiqAlgosGroupShared_t;
     RkAiqAlgosComShared_t mAlogsComSharedParams;
@@ -430,7 +429,7 @@ public:
 
     isp_drv_share_mem_ops_t *mShareMemOps;
 
-    void post_message (SmartPtr<XCamMessage> &msg);
+    void post_message (RkAiqCoreVdBufMsg& msg);
     int32_t getGroupId(RkAiqAlgoType_t type);
     XCamReturn getGroupSharedParams(uint64_t groupId, RkAiqAlgosGroupShared_t* &shared);
     uint64_t getInitDisAlgosMask() {
@@ -455,7 +454,9 @@ public:
     }
 
     void syncVicapScaleMode();
-
+    IRkAiqResourceTranslator* getTranslator() {
+        return mTranslator.ptr();
+    }
 protected:
     // in analyzer thread
     XCamReturn analyze(const SmartPtr<VideoBuffer> &buffer);
@@ -684,7 +685,7 @@ protected:
 #ifdef RKAIQ_ENABLE_CAMGROUP
     RkAiqCamGroupManager* mCamGroupCoreManager;
 #endif
-    std::bitset<RK_AIQ_ALGO_TYPE_MAX> mAllReqAlgoResMask{0};
+    std::bitset<RK_AIQ_ALGO_TYPE_MAX> mAllReqAlgoResMask {0};
 
 private:
 #if defined(RKAIQ_HAVE_THUMBNAILS)
@@ -706,15 +707,30 @@ private:
     bool mPdafSupport{false};
     int64_t mFrmInterval = 30000LL;
     int64_t mSofTime = 0LL;
-    int64_t mAfStatsTime;
-    int64_t mPdafStatsTime;
-    uint32_t mAfStatsFrmId;
-    SmartPtr<RkAiqAfStatsProxy> mAfStats;
-    SmartPtr<RkAiqPdafStatsProxy> mPdafStats;
+    int64_t mAfStatsTime[2] {0};
+    int64_t mPdafStatsTime[2] {0};
+    uint32_t mAfStatsFrmId[2] {(uint32_t) -1, (uint32_t) -1};
+    uint32_t mPdafStatsFrmId[2] {(uint32_t) -1, (uint32_t) -1};
+    SmartPtr<RkAiqAfStatsProxy> mAfStats[2];
+    SmartPtr<RkAiqPdafStatsProxy> mPdafStats[2];
     CamProfiles mProfiles;
     SmartPtr<RkAiqVicapRawBuf_t> mVicapBufs;
     bool mIsEnableVicap{false};
     int mScaleRatio{32};
+    typedef struct {
+        SmartPtr<RkAiqFullParamsProxy> proxy;
+        uint64_t groupMasks;
+        bool ready;
+    } pending_params_t;
+    // key: frame_id
+    std::map<uint32_t, pending_params_t> mFullParamsPendingMap;
+    uint64_t mFullParamReqGroupsMasks{0};
+    XCam::Mutex _mFullParam_mutex;
+    uint32_t mLatestParamsDoneId {0};
+    uint32_t mLatestEvtsId {0};
+    uint32_t mLatestStatsId {0};
+    std::list<RkAiqAlgoType_t> mUpdateCalibAlgosList;
+    void mapModStrListToEnum(ModuleNameList& change_name_list);
 };
 
 }

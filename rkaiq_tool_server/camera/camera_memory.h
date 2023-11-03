@@ -44,14 +44,16 @@ enum sensor_link
     link_to_dvp,
 };
 
-struct buffer {
+struct buffer
+{
     void* start;
     size_t length;
     int socket;
     unsigned short checksum;
 };
 
-struct isp_t {
+struct isp_t
+{
     char media_dev_path[DEV_PATH_LEN];
     char isp_main_path[DEV_PATH_LEN];
     char isp_sd_path[DEV_PATH_LEN];
@@ -60,14 +62,16 @@ struct isp_t {
     __u32 sd_fmt;
 };
 
-struct vicap_t {
+struct vicap_t
+{
     char cif_video_path[DEV_PATH_LEN];
     int width;
     int height;
     __u32 sd_fmt;
 };
 
-struct sensor_t {
+struct sensor_t
+{
     char device_name[DEV_PATH_LEN];
     char sensor_name[DEV_PATH_LEN];
     int width;
@@ -76,12 +80,14 @@ struct sensor_t {
     __u32 sen_fmt;
 };
 
-struct lens_t {
+struct lens_t
+{
     char lens_device_name[DEV_PATH_LEN];
 };
 
 #pragma pack(1)
-typedef struct RkAiqExpRealParam_s1 {
+typedef struct RkAiqExpRealParam_s1
+{
 
     // M4_NUMBER_DESC("CISTime", "f32", M4_RANGE(0,1), "0", M4_DIGIT(6))
     float integration_time;
@@ -105,7 +111,8 @@ typedef struct RkAiqExpRealParam_s1 {
     int longfrm_mode;
 } RkAiqExpRealParam_t1;
 
-typedef struct RkAiqExpSensorParam_s1 {
+typedef struct RkAiqExpSensorParam_s1
+{
 
     // M4_NUMBER_DESC("fine_integration_time", "u32", M4_RANGE(0,65535), "0", M4_DIGIT(0),M4_HIDE(1))
     unsigned int fine_integration_time;
@@ -123,7 +130,8 @@ typedef struct RkAiqExpSensorParam_s1 {
     unsigned int isp_digital_gain;
 } RkAiqExpSensorParam_t1;
 
-typedef struct {
+typedef struct
+{
     // M4_STRUCT_DESC("RealPara", "normal_ui_style")
     RkAiqExpRealParam_t1 exp_real_params; // real value
 
@@ -131,14 +139,16 @@ typedef struct {
     RkAiqExpSensorParam_t1 exp_sensor_params; // reg value
 } RkAiqExpParamComb_t1;
 
-typedef struct ExpInfo_s1 {
+typedef struct ExpInfo_s1
+{
     uint32_t frameId;
     RkAiqExpParamComb_t1 linearExp;
     RkAiqExpParamComb_t1 hdrExp[3];
 } ExpInfo_t1;
 #pragma pack()
 
-struct capture_info {
+struct capture_info
+{
     const char* dev_name;
     int dev_fd;
     int subdev_fd;

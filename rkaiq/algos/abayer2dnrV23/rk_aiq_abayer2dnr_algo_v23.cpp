@@ -241,10 +241,10 @@ Abayer2dnr_result_V23_t Abayer2dnr_GetProcResult_V23(Abayer2dnr_Context_V23_t *p
     }
 
     //transfer to reg value
-    bayer2dnr_fix_transfer_V23(st2DSelect, &pAbayernrResult->st2DFix, &pAbayernrCtx->stStrength, &pAbayernrCtx->stExpInfo);
+    bayer2dnr_fix_transfer_V23(st2DSelect, pAbayernrResult->st2DFix, &pAbayernrCtx->stStrength, &pAbayernrCtx->stExpInfo);
 
     if(pAbayernrCtx->eMode == ABAYER2DNR_V23_OP_MODE_REG_MANUAL) {
-        pAbayernrResult->st2DFix = pAbayernrCtx->stManual.st2Dfix;
+        *pAbayernrResult->st2DFix = pAbayernrCtx->stManual.st2Dfix;
         pAbayernrCtx->stStrength.percent = 1.0;
     }
 
@@ -292,6 +292,8 @@ Abayer2dnr_result_V23_t Abayer2dnr_ConfigSettingParam_V23(Abayer2dnr_Context_V23
 
 #if (ABAYER2DNR_USE_JSON_FILE_V23)
     bayer2dnr_config_setting_param_json_V23(&pAbayernrCtx->stAuto.st2DParams, &pAbayernrCtx->bayernr_v23, param_mode_name, snr_name);
+    // init 2dnr manual params
+    pAbayernrCtx->stManual.st2DSelect = pAbayernrCtx->stAuto.st2DParams.Bayer2dnrParamsISO[0];
 #endif
     LOGI_ANR("%s(%d): exit!\n", __FUNCTION__, __LINE__);
     return ABAYER2DNR_V23_RET_SUCCESS;
@@ -299,12 +301,13 @@ Abayer2dnr_result_V23_t Abayer2dnr_ConfigSettingParam_V23(Abayer2dnr_Context_V23
 
 Abayer2dnr_result_V23_t Abayer2dnr_ParamModeProcess_V23(Abayer2dnr_Context_V23_t *pAbayernrCtx, Abayer2dnr_ExpInfo_V23_t *pExpInfo, Abayer2dnr_ParamMode_V23_t *mode) {
     Abayer2dnr_result_V23_t res  = ABAYER2DNR_V23_RET_SUCCESS;
-    *mode = pAbayernrCtx->eParamMode;
 
     if(pAbayernrCtx == NULL) {
         LOGE_ANR("%s(%d): null pointer\n", __FUNCTION__, __LINE__);
         return ABAYER2DNR_V23_RET_INVALID_PARM;
     }
+
+    *mode = pAbayernrCtx->eParamMode;
 
     if(pAbayernrCtx->isGrayMode) {
         *mode = ABAYER2DNR_V23_PARAM_MODE_GRAY;

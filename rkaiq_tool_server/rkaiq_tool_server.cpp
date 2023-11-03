@@ -6,6 +6,7 @@
 #include <thread>
 #include <sys/types.h>
 #include <dirent.h>
+#include <memory>
 
 #include "camera_infohw.h"
 #include "domain_tcp_client.h"
@@ -36,7 +37,7 @@ std::atomic<int> g_app_run_mode(APP_RUN_STATUS_INIT);
 int g_width = 1920;
 int g_height = 1080;
 int g_device_id = 0;
-uint32_t g_mmapNumber = 4;
+uint32_t g_mmapNumber = 2;
 uint32_t g_offlineFrameRate = 10;
 int g_rtsp_en = 0;
 int g_rtsp_en_from_cmdarg = 0;
@@ -46,9 +47,11 @@ uint32_t g_sensorHdrMode = 0;
 std::string g_capture_dev_name = "";
 
 std::string g_stream_dev_name;
+int g_stream_dev_index = -1; // for yuv capture rkisp_iqtool node. RKISP_CMD_SET_IQTOOL_CONN_ID 0:mainpath 1:selfpath
 std::string iqfile;
 std::string g_sensor_name;
 int g_sensorMemoryMode = -1;
+int g_sensorSyncMode = -1;
 
 std::shared_ptr<TCPServer> tcpServer = nullptr;
 #if 0
@@ -71,14 +74,18 @@ void signal_handle(int sig)
 static int get_env(const char* name, int* value, int default_value)
 {
     char* ptr = getenv(name);
-    if (NULL == ptr) {
+    if (NULL == ptr)
+    {
         *value = default_value;
-    } else {
+    }
+    else
+    {
         char* endptr;
         int base = (ptr[0] == '0' && ptr[1] == 'x') ? (16) : (10);
         errno = 0;
         *value = strtoul(ptr, &endptr, base);
-        if (errno || (ptr == endptr)) {
+        if (errno || (ptr == endptr))
+        {
             errno = 0;
             *value = default_value;
         }
@@ -86,7 +93,7 @@ static int get_env(const char* name, int* value, int default_value)
     return 0;
 }
 
-static const char short_options[] = "c:s:r:i:m:Dd:w:h:n:f:";
+static const char short_options[] = "c:s:S:r:i:m:Dd:w:h:n:f:";
 static const struct option long_options[] = {{"stream_dev", required_argument, NULL, 's'},
                                              {"enable_rtsp", required_argument, NULL, 'r'},
                                              {"iqfile", required_argument, NULL, 'i'},
@@ -102,22 +109,29 @@ static const struct option long_options[] = {{"stream_dev", required_argument, N
 static int parse_args(int argc, char** argv)
 {
     int ret = 0;
-    for (;;) {
+    for (;;)
+    {
         int idx;
         int c;
         c = getopt_long(argc, argv, short_options, long_options, &idx);
-        if (-1 == c) {
+        if (-1 == c)
+        {
             break;
         }
-        switch (c) {
+        switch (c)
+        {
             case 0:
                 break;
             case 's':
                 g_stream_dev_name = optarg;
                 break;
+            case 'S':
+                g_stream_dev_index = atoi(optarg);
+                break;
             case 'r':
                 g_rtsp_en_from_cmdarg = atoi(optarg);
-                if (g_rtsp_en_from_cmdarg != 0 && g_rtsp_en_from_cmdarg != 1) {
+                if (g_rtsp_en_from_cmdarg != 0 && g_rtsp_en_from_cmdarg != 1)
+                {
                     LOG_ERROR("enable_rtsp arg|only equals 0 or 1\n");
                     ret = 1;
                 }
@@ -139,16 +153,20 @@ static int parse_args(int argc, char** argv)
                 break;
             case 'n':
                 g_mmapNumber = (uint32_t)atoi(optarg);
-                if (g_mmapNumber < 4) {
-                    g_mmapNumber = 4;
-                    LOG_INFO("mmap Number out of range[4,x], use minimum value 4\n");
+                if (g_mmapNumber < 2)
+                {
+                    g_mmapNumber = 2;
+                    LOG_INFO("mmap Number out of range[2,x], use minimum value 2\n");
                 }
                 break;
             case 'f':
                 g_offlineFrameRate = (uint32_t)atoi(optarg);
-                if (g_offlineFrameRate < 1) {
+                if (g_offlineFrameRate < 1)
+                {
                     g_offlineFrameRate = 1;
-                } else if (g_offlineFrameRate > 100) {
+                }
+                else if (g_offlineFrameRate > 100)
+                {
                     g_offlineFrameRate = 100;
                 }
                 LOG_INFO("set framerate:%u\n", g_offlineFrameRate);
@@ -161,7 +179,8 @@ static int parse_args(int argc, char** argv)
                 break;
         }
     }
-    if (iqfile.empty()) {
+    if (iqfile.empty())
+    {
 #ifdef __ANDROID__
         iqfile = "/vendor/etc/camera/rkisp2";
 #else
@@ -175,7 +194,8 @@ static int parse_args(int argc, char** argv)
 int main(int argc, char** argv)
 {
     int ret = -1;
-    LOG_ERROR("#### AIQ tool server 20221001_110437 ####\n");
+    LOG_ERROR("#### 2023-7-31 11:17:41 ####\n");
+    signal(SIGPIPE, SIG_IGN);
 
 #ifdef _WIN32
     signal(SIGINT, signal_handle);
@@ -218,7 +238,8 @@ int main(int argc, char** argv)
     get_env("rkaiq_tool_server_kill_app", &g_allow_killapp, 0);
 #endif
 
-    if (parse_args(argc, argv) != 0) {
+    if (parse_args(argc, argv) != 0)
+    {
         LOG_ERROR("Tool server args parse error.\n");
         return 1;
     }
@@ -237,15 +258,21 @@ int main(int argc, char** argv)
     system("mkdir -p /data/OfflineRAW && sync");
 
     // return 0;
-    if (g_stream_dev_name.length() > 0) {
-        if (0 > access(g_stream_dev_name.c_str(), R_OK | W_OK)) {
+    if (g_stream_dev_name.length() > 0)
+    {
+        if (0 > access(g_stream_dev_name.c_str(), R_OK | W_OK))
+        {
             LOG_DEBUG("Could not access streaming device\n");
-            if (g_rtsp_en_from_cmdarg == 1) {
+            if (g_rtsp_en_from_cmdarg == 1)
+            {
                 g_rtsp_en = 0;
             }
-        } else {
+        }
+        else
+        {
             LOG_DEBUG("Access streaming device\n");
-            if (g_rtsp_en_from_cmdarg == 1) {
+            if (g_rtsp_en_from_cmdarg == 1)
+            {
                 g_rtsp_en = 1;
             }
         }
@@ -269,19 +296,17 @@ int main(int argc, char** argv)
     // }
 
 #ifdef __ANDROID__
-    if (g_tcpClient.Setup(LOCAL_SOCKET_PATH) == false) {
-        LOG_DEBUG("domain connect failed\n");
-        g_tcpClient.Close();
-        return -1;
-    }
-#else
-    DIR* dir = opendir("/tmp");
+    DIR* dir = opendir("/dev/socket");
     struct dirent* dir_ent = NULL;
     std::vector<std::string> domainSocketNodes;
-    if (dir) {
-        while ((dir_ent = readdir(dir))) {
-            if (dir_ent->d_type == DT_SOCK) {
-                if (strstr(dir_ent->d_name, "UNIX.domain") != NULL) {
+    if (dir)
+    {
+        while ((dir_ent = readdir(dir)))
+        {
+            if (dir_ent->d_type == DT_SOCK)
+            {
+                if (strstr(dir_ent->d_name, "camera_tool") != NULL)
+                {
                     domainSocketNodes.push_back(dir_ent->d_name);
                 }
             }
@@ -294,9 +319,73 @@ int main(int argc, char** argv)
     //     LOG_INFO("socketNode:%s\n", socketNode.c_str());
     // }
 
-    if (domainSocketNodes.size() > 1) {
+    if (domainSocketNodes.size() > 1)
+    {
         LOG_INFO("################ Please input camera index to connect\n");
-        for (int i = 0; i < domainSocketNodes.size(); i++) {
+        for (int i = 0; i < domainSocketNodes.size(); i++)
+        {
+            string tmpStr = domainSocketNodes[i];
+            tmpStr = tmpStr.replace(tmpStr.find("camera_tool"), strlen("camera_tool"), "");
+            LOG_INFO("camera %d ,please input %s\n", i, tmpStr.c_str());
+        }
+        LOG_INFO("----\n");
+        LOG_INFO("PLEASE INPUT CAMERA INDEX:");
+
+        int camIndexInput = getchar() - '0';
+        LOG_INFO("camera index %d:\n", camIndexInput);
+        sprintf((char*)g_linuxSocketDomainPath.c_str(), "/dev/socket/camera_tool%d", camIndexInput);
+        while (access(g_linuxSocketDomainPath.c_str(), F_OK) == -1)
+        {
+            camIndexInput = getchar() - '0';
+            LOG_INFO("camera index %d:\n", camIndexInput);
+            sprintf((char*)g_linuxSocketDomainPath.c_str(), "/dev/socket/camera_tool%d", camIndexInput);
+        }
+        LOG_INFO("camera socket node %s selected\n", g_linuxSocketDomainPath.c_str());
+    }
+
+    if (access("/dev/socket/camera_tool", F_OK) == 0) // Compatible with nodes of older versions
+    {
+        LOG_INFO("ToolServer using old socket node\n");
+        g_linuxSocketDomainPath = "/dev/socket/camera_tool";
+    }
+
+    if (g_tcpClient.Setup(g_linuxSocketDomainPath) == false)
+    {
+        LOG_INFO("#### ToolServer connect AIQ failed ####\n");
+    }
+    else
+    {
+        LOG_INFO("#### ToolServer connect AIQ success ####\n");
+    }
+#else
+    DIR* dir = opendir("/tmp");
+    struct dirent* dir_ent = NULL;
+    std::vector<std::string> domainSocketNodes;
+    if (dir)
+    {
+        while ((dir_ent = readdir(dir)))
+        {
+            if (dir_ent->d_type == DT_SOCK)
+            {
+                if (strstr(dir_ent->d_name, "UNIX.domain") != NULL)
+                {
+                    domainSocketNodes.push_back(dir_ent->d_name);
+                }
+            }
+        }
+        closedir(dir);
+    }
+    std::sort(domainSocketNodes.begin(), domainSocketNodes.end());
+    // for (string socketNode : domainSocketNodes)
+    // {
+    //     LOG_INFO("socketNode:%s\n", socketNode.c_str());
+    // }
+
+    if (domainSocketNodes.size() > 1)
+    {
+        LOG_INFO("################ Please input camera index to connect\n");
+        for (int i = 0; i < domainSocketNodes.size(); i++)
+        {
             string tmpStr = domainSocketNodes[i];
             tmpStr = tmpStr.replace(tmpStr.find("UNIX.domain"), strlen("UNIX.domain"), "");
             LOG_INFO("camera %d ,please input %s\n", i, tmpStr.c_str());
@@ -307,7 +396,8 @@ int main(int argc, char** argv)
         int camIndexInput = getchar() - '0';
         LOG_INFO("camera index %d:\n", camIndexInput);
         sprintf((char*)g_linuxSocketDomainPath.c_str(), "/tmp/UNIX.domain%d", camIndexInput);
-        while (access(g_linuxSocketDomainPath.c_str(), F_OK) == -1) {
+        while (access(g_linuxSocketDomainPath.c_str(), F_OK) == -1)
+        {
             camIndexInput = getchar() - '0';
             LOG_INFO("camera index %d:\n", camIndexInput);
             sprintf((char*)g_linuxSocketDomainPath.c_str(), "/tmp/UNIX.domain%d", camIndexInput);
@@ -315,9 +405,18 @@ int main(int argc, char** argv)
         LOG_INFO("camera socket node %s selected\n", g_linuxSocketDomainPath.c_str());
     }
 
-    if (g_tcpClient.Setup(g_linuxSocketDomainPath.c_str()) == false) {
+    if (access("/tmp/UNIX.domain", F_OK) == 0) // Compatible with nodes of older versions
+    {
+        LOG_INFO("ToolServer using old socket node\n");
+        g_linuxSocketDomainPath = "/tmp/UNIX.domain";
+    }
+
+    if (g_tcpClient.Setup(g_linuxSocketDomainPath.c_str()) == false)
+    {
         LOG_INFO("#### ToolServer connect AIQ failed ####\n");
-    } else {
+    }
+    else
+    {
         LOG_INFO("#### ToolServer connect AIQ success ####\n");
     }
 #endif
@@ -326,14 +425,16 @@ int main(int argc, char** argv)
     tcpServer = std::make_shared<TCPServer>();
     tcpServer->RegisterRecvCallBack(RKAiqProtocol::HandlerTCPMessage);
     tcpServer->Process(SERVER_PORT);
-    while (!quit.load() && !tcpServer->Exited()) {
+    while (!quit.load() && !tcpServer->Exited())
+    {
         pause();
         // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     tcpServer->SaveExit();
 
-    if (g_aiqCred != nullptr) {
+    if (g_aiqCred != nullptr)
+    {
         delete g_aiqCred;
         g_aiqCred = nullptr;
     }

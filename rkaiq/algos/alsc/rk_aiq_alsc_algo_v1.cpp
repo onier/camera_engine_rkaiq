@@ -372,7 +372,6 @@ void StableIlluEstimation(struct list_head * head, int listSize, int illuNum, fl
         illuSet[pL->value]++;
         pNextNode = pNextNode->next;
     }
-    int count2 = 0;
     int max_count = 0;
     for (int i = 0; i < illuNum; i++) {
         LOGV_ALSC("illu(%d), count(%d)\n", i, illuSet[i]);
@@ -566,10 +565,10 @@ XCamReturn convertSensorLscOTP(resolution_t *cur_res, alsc_otp_grad_t *otpGrad,
     if (!otpGrad->flag)
         return XCAM_RETURN_BYPASS;
 
-    if ((cur_res->width > otpGrad->width && \
-         cur_res->height > otpGrad->height) || \
-        (cur_res->width < otpGrad->width && \
-         cur_res->height < otpGrad->height)) {
+    if ((cur_res->width >= otpGrad->width && \
+         cur_res->height >= otpGrad->height) || \
+        (cur_res->width <= otpGrad->width && \
+         cur_res->height <= otpGrad->height)) {
         convertLscTableParameter(cur_res, otpGrad, bayerPattern);
     }
 

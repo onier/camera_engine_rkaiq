@@ -32,10 +32,18 @@
 
 template<class T>
 struct rk_aiq_isp_params_t : public XCam::BufferData {
+    /* should be the first member */
+    union {
+        bool is_update;
+        char aligned[4]; // for aligned to 4
+    };
     T   result;
-    uint32_t update_mask;
-    uint32_t module_enable_mask;
     uint32_t frame_id;
+    uint32_t sync_flag;
+    rk_aiq_isp_params_t() {
+        is_update = false;
+        sync_flag = (uint32_t)(-2); // initial value should be different with handler's
+    }
 };
 
 //common
@@ -92,7 +100,9 @@ typedef struct rkisp_effect_params_s {
 } rkisp_effect_params_v20;
 #elif defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
 typedef struct rkisp_effect_params_s {
-    //struct isp32_isp_params_cfg isp_params_v32;
+#if defined(RKAIQ_HAVE_MULTIISP)
+    struct isp32_isp_params_cfg isp_params_v32[2];
+#endif
     struct isp32_isp_meas_cfg meas;
     struct isp32_bls_cfg bls_cfg;
     struct isp32_awb_gain_cfg awb_gain_cfg;

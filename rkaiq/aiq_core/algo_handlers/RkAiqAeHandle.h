@@ -31,7 +31,7 @@ class RkAiqAeHandleInt : public RkAiqHandle {
 
 public:
     explicit RkAiqAeHandleInt(RkAiqAlgoDesComm* des, RkAiqCore* aiqCore)
-        : RkAiqHandle(des, aiqCore), mPreResShared(nullptr), mProcResShared(nullptr) {
+        : RkAiqHandle(des, aiqCore), mPreResShared(nullptr) {
 #ifndef DISABLE_HANDLE_ATTRIB
         updateExpSwAttrV2  = false;
         updateLinExpAttrV2 = false;
@@ -101,6 +101,8 @@ public:
     virtual XCamReturn getAfdResForAE(AfdPeakRes_t AfdRes);
     virtual XCamReturn setExpWinAttr(Uapi_ExpWin_t ExpWinAttr);
     virtual XCamReturn getExpWinAttr(Uapi_ExpWin_t* pExpWinAttr);
+    virtual XCamReturn setAecStatsCfg(Uapi_AecStatsCfg_t AecStatsCfg);
+    virtual XCamReturn getAecStatsCfg(Uapi_AecStatsCfg_t* pAecStatsCfg);
     virtual XCamReturn genIspResult(RkAiqFullParams* params, RkAiqFullParams* cur_params);
 
 protected:
@@ -109,7 +111,6 @@ protected:
         RkAiqHandle::deInit();
     };
     SmartPtr<RkAiqAlgoPreResAeIntShared> mPreResShared;
-    SmartPtr<RkAiqAlgoProcResAeIntShared> mProcResShared;
 
 private:
     // TODO: calibv1
@@ -139,6 +140,8 @@ private:
     Uapi_AecSyncTest_t mNewAecSyncTestAttr;
     Uapi_ExpWin_t mCurExpWinAttr;
     Uapi_ExpWin_t mNewExpWinAttr;
+    Uapi_AecStatsCfg_t mCurAecStatsCfg;
+    Uapi_AecStatsCfg_t mNewAecStatsCfg;
 
     bool updateExpSwAttr  = false;
     bool updateLinExpAttr = false;
@@ -153,6 +156,7 @@ private:
     mutable std::atomic<bool> updateIrisAttr;
     mutable std::atomic<bool> updateSyncTestAttr;
     mutable std::atomic<bool> updateExpWinAttr;
+    mutable std::atomic<bool> updateAecStatsCfg;
 
     uint16_t updateAttr = 0;
 #endif
@@ -161,7 +165,16 @@ private:
 
     XCam::Mutex mGetAfdResMutex;
     AfdPeakRes_t mAfdRes;
-
+#if RKAIQ_HAVE_AF
+    SmartPtr<RkAiqHandle>* mAf_handle;
+#endif
+#if RKAIQ_HAVE_AFD_V1 || RKAIQ_HAVE_AFD_V2
+    SmartPtr<RkAiqHandle>* mAfd_handle;
+#endif
+    SmartPtr<RkAiqHandle>* mAmerge_handle;
+    SmartPtr<RkAiqHandle>* mAdrc_handle;
+    uint32_t mMeasSyncFlag{(uint32_t)(-1)};
+    uint32_t mHistSyncFlag{(uint32_t)(-1)};
 private:
     DECLARE_HANDLE_REGISTER_TYPE(RkAiqAeHandleInt);
 };

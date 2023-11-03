@@ -21,11 +21,17 @@
 
 XCamReturn AdrcStart(AdrcContext_t* pAdrcCtx);
 XCamReturn AdrcStop(AdrcContext_t* pAdrcCtx);
-bool DrcEnableSetting(AdrcContext_t* pAdrcCtx);
-void AdrcTuningParaProcessing(AdrcContext_t* pAdrcCtx);
-void AdrcExpoParaProcessing(AdrcContext_t* pAdrcCtx);
-bool AdrcByPassTuningProcessing(AdrcContext_t* pAdrcCtx, AecPreResult_t AecHdrPreResult);
-void AdrcParams2Api(AdrcContext_t* pAdrcCtx);
+bool DrcEnableSetting(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pAdrcProcRes);
+void AdrcTuningParaProcessing(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pAdrcProcRes);
+void AdrcExpoParaProcessing(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pAdrcProcRes);
+bool AdrcByPassTuningProcessing(AdrcContext_t* pAdrcCtx);
+#if RKAIQ_HAVE_DRC_V12
+void AdrcV12Params2Api(AdrcContext_t* pAdrcCtx, DrcInfoV12_t* pDrcInfo);
+#endif
+#if RKAIQ_HAVE_DRC_V12_LITE
+void AdrcV12LiteParams2Api(AdrcContext_t* pAdrcCtx, DrcInfoV12Lite_t* pDrcInfo);
+#endif
+void AdrcV12ClipStAutoParams(AdrcContext_t* pAdrcCtx);
 XCamReturn AdrcInit(AdrcContext_t** ppAdrcCtx, CamCalibDbV2Context_t* pCalibDb);
 XCamReturn AdrcRelease(AdrcContext_t* pAdrcCtx);
 

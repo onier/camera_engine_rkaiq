@@ -115,10 +115,11 @@ XCamReturn RkAiqAfdHandleInt::preProcess() {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     RkAiqAlgoPreAfd* afd_pre_int        = (RkAiqAlgoPreAfd*)mPreInParam;
-    RkAiqAlgoPreResAfd* afd_pre_res_int = (RkAiqAlgoPreResAfd*)mPreOutParam;
     RkAiqCore::RkAiqAlgosGroupShared_t* shared =
         (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
+
+    afd_pre_int->aeProcRes = &mAeProcRes;
 
     ret = RkAiqHandle::preProcess();
     if (ret) {
@@ -162,13 +163,6 @@ XCamReturn RkAiqAfdHandleInt::processing() {
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    RkAiqAlgoProcAfd* afd_proc_int = (RkAiqAlgoProcAfd*)mProcInParam;
-    RkAiqAlgoProcResAfd* afd_proc_res_int =
-        (RkAiqAlgoProcResAfd*)mProcOutParam;
-    RkAiqCore::RkAiqAlgosGroupShared_t* shared =
-        (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
-    RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
-
     ret = RkAiqHandle::processing();
     if (ret) {
         RKAIQCORE_CHECK_RET(ret, "afd handle processing failed");
@@ -181,9 +175,9 @@ XCamReturn RkAiqAfdHandleInt::processing() {
 #if RKAIQ_HAVE_AFD_V2
     RkAiqAlgoProcResAfd* afd_res = (RkAiqAlgoProcResAfd*)mProcOutParam;
     SmartPtr<RkAiqHandle>* ae_handle = mAiqCore->getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AE);
-    int algo_id                      = (*ae_handle)->getAlgoId();
 
     if (ae_handle) {
+        int algo_id = (*ae_handle)->getAlgoId();
         if (algo_id == 0) {
             RkAiqAeHandleInt* ae_algo = dynamic_cast<RkAiqAeHandleInt*>(ae_handle->ptr());
             ae_algo->getAfdResForAE(afd_res->afdRes.PeakRes);
@@ -228,15 +222,9 @@ XCamReturn RkAiqAfdHandleInt::genIspResult(RkAiqFullParams* params,
     XCamReturn ret                = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosGroupShared_t* shared =
         (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
-    RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
     RkAiqAlgoProcResAfd* afd_com = (RkAiqAlgoProcResAfd*)mProcOutParam;
     rk_aiq_isp_afd_params_t* afd_param = params->mAfdParams->data().ptr();
-    XCamVideoBuffer* xCamAeProcRes = shared->res_comb.ae_proc_res;
-    RkAiqAlgoProcResAe* pAEProcRes = NULL;
-    if (xCamAeProcRes) {
-        pAEProcRes = (RkAiqAlgoProcResAe*)xCamAeProcRes->map(xCamAeProcRes);
-        afd_param->result.enable = pAEProcRes->ae_proc_res_rk.IsAutoAfd;
-    }
+    afd_param->result.enable = mAeProcRes.IsAutoAfd;
     getScaleRatio(&afd_param->result.ratio);
     cur_params->mAfdParams = params->mAfdParams;
     if (!afd_com) {

@@ -46,22 +46,29 @@ int TCPServer::Recvieve(int cilent_socket)
     LOG_DEBUG("TCPServer::Recvieve enter %d\n", cilent_socket);
     char buffer[MAXPACKETSIZE];
     int size = sizeof(buffer);
-    struct timeval interval = {0, 1000 * 100};
-    setsockopt(cilent_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&interval, sizeof(struct timeval));
-    while (!quit_.load()) {
+    struct timeval timeout = {1, 0};
+    setsockopt(cilent_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(struct timeval));
+    while (!quit_.load())
+    {
         int length = recv(cilent_socket, buffer, size, 0);
-        if (length == 0) {
+        if (length == 0)
+        {
             LOG_DEBUG("socket recvieve exit\n");
             break;
-        } else if (length < 0 && errno == EAGAIN) {
+        }
+        else if (length < 0 && errno == EAGAIN)
+        {
             // LOG_INFO("socket recvieve failed\n");
             continue;
-        } else if (length < 0) {
+        }
+        else if (length < 0)
+        {
             break;
         }
-        LOG_DEBUG("socket recvieve length: %d\n", length);
+        // LOG_DEBUG("socket recvieve length: %d\n", length);
 
-        if (callback_) {
+        if (callback_)
+        {
             callback_(cilent_socket, buffer, length);
         }
     }
@@ -85,17 +92,20 @@ void TCPServer::Accepted()
     sigaddset(&set, SIGTERM);
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
-    struct timeval interval = {1, 0};
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&interval, sizeof(struct timeval));
+    struct timeval timeout = {1, 0};
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(struct timeval));
     int reuseTrue = 1;
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseTrue, sizeof(int));
-    while (!quit_) {
+    while (!quit_)
+    {
         int cilent_socket;
         socklen_t sosize = sizeof(clientAddress);
         cilent_socket = accept(sockfd, (struct sockaddr*)&clientAddress, &sosize);
 
-        if (cilent_socket < 0) {
-            if (errno != EAGAIN && errno != EINTR) {
+        if (cilent_socket < 0)
+        {
+            if (errno != EAGAIN && errno != EINTR)
+            {
                 LOG_ERROR("Error socket accept failed %d %d\n", cilent_socket, errno);
                 break;
             }
@@ -103,8 +113,7 @@ void TCPServer::Accepted()
         }
         LOG_DEBUG("socket accept ip %s\n", inet_ntoa(clientAddress.sin_addr));
 
-        recv_threads_.push_back(
-            std::unique_ptr<std::thread>(new std::thread(&TCPServer::Recvieve, this, cilent_socket)));
+        recv_threads_.push_back(std::unique_ptr<std::thread>(new std::thread(&TCPServer::Recvieve, this, cilent_socket)));
         LOG_DEBUG("socket accept close\n");
     }
     close(sockfd);
@@ -119,14 +128,16 @@ int TCPServer::Process(int port)
     LOG_DEBUG("TCPServer::Process\n");
     int opt = 1;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
+    if (sockfd < 0)
+    {
         LOG_ERROR("Failed to create socket with tunner");
         exited_.store(true, std::memory_order_release);
         return -1;
     }
 
     memset(&serverAddress, 0, sizeof(serverAddress));
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+    {
         LOG_ERROR("Error setsockopt\n");
         exited_.store(true, std::memory_order_release);
         return -1;
@@ -135,18 +146,21 @@ int TCPServer::Process(int port)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddress.sin_port = htons(port);
-    if ((::bind(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress))) < 0) {
+    if ((::bind(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress))) < 0)
+    {
         LOG_ERROR("Error bind\n");
         exited_.store(true, std::memory_order_release);
         return -1;
     }
-    if (listen(sockfd, 5) < 0) {
+    if (listen(sockfd, 5) < 0)
+    {
         LOG_ERROR("Error listen\n");
         exited_.store(true, std::memory_order_release);
         return -1;
     }
 
-    if (accept_thread_) {
+    if (accept_thread_)
+    {
         // SaveExit();
     }
     quit_.store(false, std::memory_order_release);

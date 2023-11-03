@@ -199,10 +199,6 @@ XCamReturn RkAiqAgicHandleInt::prepare() {
     ret = RkAiqHandle::prepare();
     RKAIQCORE_CHECK_RET(ret, "agic handle prepare failed");
 
-    RkAiqAlgoConfigAgic* agic_config_int = (RkAiqAlgoConfigAgic*)mConfig;
-    RkAiqCore::RkAiqAlgosGroupShared_t* shared =
-        (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
-
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret                       = des->prepare(mConfig);
     RKAIQCORE_CHECK_RET(ret, "agic algo prepare failed");
@@ -246,6 +242,13 @@ XCamReturn RkAiqAgicHandleInt::processing() {
     RkAiqCore::RkAiqAlgosGroupShared_t* shared =
         (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
+
+    if (!shared->fullParams || !shared->fullParams->mGicParams.ptr()) {
+        LOGE_ALSC("[%d]: no gic buf !", shared->frameId);
+        return XCAM_RETURN_BYPASS;
+    }
+
+    agic_proc_res_int->gicRes = &shared->fullParams->mGicParams->data()->result;
 
     ret = RkAiqHandle::processing();
     if (ret) {
@@ -358,10 +361,35 @@ XCamReturn RkAiqAgicHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPa
         } else {
             gic_param->frame_id = shared->frameId;
         }
-        memcpy(&gic_param->result, &agic_rk->gicRes, sizeof(AgicProcResult_t));
-    }
 
-    cur_params->mGicParams = params->mGicParams;
+        if (agic_com->res_com.cfg_update) {
+            mSyncFlag = shared->frameId;
+            gic_param->sync_flag = mSyncFlag;
+            // copy from algo result
+            // set as the latest result
+            cur_params->mGicParams = params->mGicParams;
+            gic_param->is_update = true;
+            LOGD_AGIC("[%d] params from algo", mSyncFlag);
+        } else if (mSyncFlag != gic_param->sync_flag) {
+            gic_param->sync_flag = mSyncFlag;
+            // copy from latest result
+            if (cur_params->mGicParams.ptr()) {
+                gic_param->result = cur_params->mGicParams->data()->result;
+                gic_param->is_update = true;
+            } else {
+                LOGE_AGIC("no latest params !");
+                gic_param->is_update = false;
+            }
+            LOGD_AGIC("[%d] params from latest [%d]", shared->frameId, mSyncFlag);
+        } else {
+            // do nothing, result in buf needn't update
+            gic_param->is_update = false;
+            LOGD_AGIC("[%d] params needn't update", shared->frameId);
+        }
+#if 0//moved to processing out params
+        memcpy(&gic_param->result, &agic_rk->gicRes, sizeof(AgicProcResult_t));
+#endif
+    }
 
     EXIT_ANALYZER_FUNCTION();
 

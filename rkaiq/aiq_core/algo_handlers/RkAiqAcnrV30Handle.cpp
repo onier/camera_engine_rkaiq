@@ -202,8 +202,6 @@ XCamReturn RkAiqAcnrV30HandleInt::prepare() {
     ret = RkAiqHandle::prepare();
     RKAIQCORE_CHECK_RET(ret, "acnr handle prepare failed");
 
-    RkAiqAlgoConfigAcnrV1* acnr_config_int = (RkAiqAlgoConfigAcnrV1*)mConfig;
-
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret                       = des->prepare(mConfig);
     RKAIQCORE_CHECK_RET(ret, "acnr algo prepare failed");
@@ -247,6 +245,8 @@ XCamReturn RkAiqAcnrV30HandleInt::processing() {
     RkAiqCore::RkAiqAlgosGroupShared_t* shared =
         (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
+
+    acnr_proc_res_int->stAcnrProcResult.stFix = &shared->fullParams->mCnrV32Params->data()->result;
 
     ret = RkAiqHandle::processing();
     if (ret) {
@@ -322,11 +322,33 @@ XCamReturn RkAiqAcnrV30HandleInt::genIspResult(RkAiqFullParams* params,
             cnr_param->frame_id = shared->frameId;
         }
 
-        memcpy(&cnr_param->result, &acnr_rk->stAcnrProcResult.stFix, sizeof(RK_CNR_Fix_V30_t));
+        if (acnr_rk->res_com.cfg_update) {
+            mSyncFlag = shared->frameId;
+            cnr_param->sync_flag = mSyncFlag;
+            // copy from algo result
+            // set as the latest result
+            cur_params->mCnrV32Params = params->mCnrV32Params;
+            cnr_param->is_update = true;
+            LOGD_ANR("[%d] params from algo", mSyncFlag);
+        } else if (mSyncFlag != cnr_param->sync_flag) {
+            cnr_param->sync_flag = mSyncFlag;
+            // copy from latest result
+            if (cur_params->mCnrV32Params.ptr()) {
+                cnr_param->result = cur_params->mCnrV32Params->data()->result;
+                cnr_param->is_update = true;
+            } else {
+                LOGE_ANR("no latest params !");
+                cnr_param->is_update = false;
+            }
+            LOGD_ANR("[%d] params from latest [%d]", shared->frameId, mSyncFlag);
+        } else {
+            // do nothing, result in buf needn't update
+            cnr_param->is_update = false;
+            LOGD_ANR("[%d] params needn't update", shared->frameId);
+        }
+
         LOGD_ANR("oyyf: %s:%d output isp param end \n", __FUNCTION__, __LINE__);
     }
-
-    cur_params->mCnrV32Params = params->mCnrV32Params;
 
     EXIT_ANALYZER_FUNCTION();
 

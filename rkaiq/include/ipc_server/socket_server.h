@@ -51,6 +51,7 @@ using namespace std;
 #define LOGV_IPC(...) XCAM_MODULE_LOG_VERBOSE(XCORE_LOG_MODULE_IPC, 0xff, ##__VA_ARGS__)
 #define LOGI_IPC(...) XCAM_MODULE_LOG_INFO(XCORE_LOG_MODULE_IPC, 0xff, ##__VA_ARGS__)
 #define LOG1_IPC(...) XCAM_MODULE_LOG_LOW1(XCORE_LOG_MODULE_IPC, 0xff, ##__VA_ARGS__)
+#define LOGK_IPC(...) XCAM_MODULE_LOG_KEY(XCORE_LOG_MODULE_IPC, 0xff, ##__VA_ARGS__)
 
 
 typedef struct rk_aiq_sys_ctx_s rk_aiq_sys_ctx_t;
@@ -84,7 +85,7 @@ private:
   int Recvieve(int sync);
   int poll_event(int timeout_msec, int fds[]);
 #ifdef __ANDROID__
-  int getAndroidLocalSocket();
+  int getAndroidLocalSocket(int camid);
 #endif
 
 private:
@@ -100,6 +101,7 @@ private:
   std::shared_ptr<std::thread> tunning_thread;
   RecvCallBack callback_;
   int _stop_fds[2];
+  int camId_{-1};
 };
 
 void hexdump2(char *buf, const int num);

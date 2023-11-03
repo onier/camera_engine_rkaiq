@@ -42,12 +42,11 @@ typedef struct accm_rest_s {
 #endif
     struct list_head problist;
     int dominateIlluProfileIdx;
-    const CalibDbV2_Ccm_Matrix_Para_t *pCcmProfile1;
-    const CalibDbV2_Ccm_Matrix_Para_t *pCcmProfile2;
+    const rk_aiq_ccm_matrixcfg_t *pCcmProfile1;
+    const rk_aiq_ccm_matrixcfg_t *pCcmProfile2;
     float undampedCcmMatrix[9];
-    float dampedCcmMatrix[9];
     float undampedCcOffset[3];
-    float dampedCcOffset[3];
+    float fScale;
     float color_inhibition_level;
     float color_saturation_level;
     ccm_3ares_info_t res3a_info;
@@ -67,25 +66,27 @@ typedef struct prob_node_s {
 typedef struct accm_context_s {
 #if RKAIQ_HAVE_CCM_V1
     const CalibDbV2_Ccm_Para_V2_t* ccm_v1;
+    rk_aiq_ccm_iqparam_attrib_t stCalib_v1;
     rk_aiq_ccm_cfg_t ccmHwConf;
     rk_aiq_ccm_attrib_t mCurAtt;
-    rk_aiq_ccm_attrib_t mNewAtt;
 #endif
 #if RKAIQ_HAVE_CCM_V2
     const CalibDbV2_Ccm_Para_V32_t* ccm_v2;
+    rk_aiq_ccm_v2_iqparam_attrib_t stCalib_v2;
     rk_aiq_ccm_cfg_v2_t ccmHwConf_v2;
     rk_aiq_ccm_v2_attrib_t mCurAttV2;
-    rk_aiq_ccm_v2_attrib_t mNewAttV2;
 #endif
-    const CalibDbV2_Ccm_Matrix_Para_t *pCcmMatrixAll[CCM_ILLUMINATION_MAX][CCM_PROFILES_NUM_MAX];// reorder para //to do, change to pointer
+    CalibDbV2_Ccm_illu_est_Para_t stIlluestCfg;
+    const rk_aiq_ccm_matrixcfg_t *pCcmMatrixAll[CCM_ILLUMINATION_MAX][CCM_PROFILES_NUM_MAX];// reorder para //to do, change to pointer
     accm_sw_info_t accmSwInfo;
     accm_rest_t accmRest;
     unsigned int count;
-    CalibDbV2_Ccm_Tuning_Para_t ccm_tune;
     //ctrl & api
+    uint8_t invarMode; // 0- mode change 1- mode unchange
     bool updateAtt;
     bool update;
     bool calib_update;
+    bool isReCal_;
 } accm_context_t ;
 
 typedef accm_context_t* accm_handle_t ;
