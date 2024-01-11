@@ -65,12 +65,12 @@ prepare(RkAiqAlgoCom* params)
     if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
 #if RKAIQ_HAVE_CCM_V1
         hAccm->ccm_v1 = (CalibDbV2_Ccm_Para_V2_t*)(CALIBDBV2_GET_MODULE_PTR(
-                            (CamCalibDbV2Context_t*)(para->s_calibv2), ccm_calib));
+                                (CamCalibDbV2Context_t*)(para->s_calibv2), ccm_calib));
 #endif
 
 #if RKAIQ_HAVE_CCM_V2
         hAccm->ccm_v2 = (CalibDbV2_Ccm_Para_V32_t*)(CALIBDBV2_GET_MODULE_PTR(
-                            (CamCalibDbV2Context_t*)(para->s_calibv2), ccm_calib_v2));
+                                (CamCalibDbV2Context_t*)(para->s_calibv2), ccm_calib_v2));
 #endif
     }
     AccmPrepare((accm_handle_t)(params->ctx->accm_para));
@@ -98,9 +98,9 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
     }
 
     rk_aiq_singlecam_3a_result_t* scam_3a_res = procParaGroup->camgroupParmasArray[0];
-    XCamVideoBuffer* awb_proc_res = scam_3a_res->awb._awbProcRes;
+    RkAiqAlgoProcResAwbShared_t* awb_proc_res = &scam_3a_res->awb._awbProcRes;
     if (awb_proc_res) {
-        RkAiqAlgoProcResAwbShared_t* awb_res = (RkAiqAlgoProcResAwbShared_t*)awb_proc_res->map(awb_proc_res);
+        RkAiqAlgoProcResAwbShared_t* awb_res = (RkAiqAlgoProcResAwbShared_t*)awb_proc_res;
         if(awb_res) {
             if(awb_res->awb_gain_algo.grgain < DIVMIN ||
                     awb_res->awb_gain_algo.gbgain < DIVMIN ) {

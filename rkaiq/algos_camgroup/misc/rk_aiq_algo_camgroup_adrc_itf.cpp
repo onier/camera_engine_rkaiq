@@ -418,7 +418,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         bypass_tuning_params = AdrcByPassTuningProcessing(pAdrcGrpCtx);
 
         // get tuning paras
-        if (!bypass_tuning_params || !pAdrcGrpCtx->isDampStable)
+        if (!bypass_expo_params || !bypass_tuning_params || !pAdrcGrpCtx->isDampStable)
             AdrcTuningParaProcessing(pAdrcGrpCtx,
                                      pAdrcGrpProcRes->camgroupParmasArray[0]->_adrcConfig);
 
@@ -436,10 +436,12 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
         __func__);
 
     // output ProcRes
+    outparams->cfg_update = !bypass_tuning_params || !bypass_expo_params ||
+                            pAdrcGrpCtx->ifReCalcStAuto || pAdrcGrpCtx->ifReCalcStManual ||
+                            !pAdrcGrpCtx->isDampStable || inparams->u.proc.init;
+    IS_UPDATE_MEM((pAdrcGrpProcRes->camgroupParmasArray[0]->_adrcConfig), pAdrcGrpParams->_offset_is_update) =
+        outparams->cfg_update;
     for (int i = 1; i < pAdrcGrpProcRes->arraySize; i++) {
-        outparams->cfg_update = !bypass_tuning_params || !bypass_expo_params ||
-                                pAdrcGrpCtx->ifReCalcStAuto || pAdrcGrpCtx->ifReCalcStManual ||
-                                !pAdrcGrpCtx->isDampStable || inparams->u.proc.init;
         pAdrcGrpProcRes->camgroupParmasArray[i]->_adrcConfig->bDrcEn =
             pAdrcGrpProcRes->camgroupParmasArray[0]->_adrcConfig->bDrcEn;
         pAdrcGrpProcRes->camgroupParmasArray[i]->_adrcConfig->DrcProcRes =

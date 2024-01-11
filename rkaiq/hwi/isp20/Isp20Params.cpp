@@ -36,6 +36,7 @@ IspParamsAssembler::IspParamsAssembler (const char* name)
     , mCondNum(0)
     , started(false)
 {
+    mCamPhyId = -1;
 }
 
 IspParamsAssembler::~IspParamsAssembler ()
@@ -69,7 +70,7 @@ IspParamsAssembler::addReadyCondition(uint32_t cond)
             return;
         }
 
-        mCondMaskMap[cond] = 1 << mCondNum;
+        mCondMaskMap[cond] = 1ULL << mCondNum;
         mReadyMask |= mCondMaskMap[cond];
         mCondNum++;
         LOGI_CAMHW_SUBM(ISP20PARAM_SUBM, "%s: map cond %s 0x%x -> 0x%llx, mask: 0x%llx",
@@ -439,7 +440,9 @@ struct ConvertAeHelper {
                     std::is_same<U, struct isp21_isp_params_cfg>::value),
                    bool >::type = true >
     void copyYuvAeCfg(U& cfg, const rk_aiq_isp_aec_meas_t& aec_meas) {
+#if ISP_HW_V20
         memcpy(&cfg.meas.yuvae, &aec_meas.yuvae, sizeof(aec_meas.yuvae));
+#endif
     }
 
     template < typename U                          = T,
@@ -453,7 +456,9 @@ struct ConvertAeHelper {
                                           std::is_same<U, struct isp21_isp_params_cfg>::value),
                                          bool >::type = true >
     void copyAeHistCfg(U& cfg, const rk_aiq_isp_hist_meas_t& hist_meas) {
+#if ISP_HW_V20
         memcpy(&cfg.meas.sihst, &hist_meas.sihist, sizeof(hist_meas.sihist));
+#endif
     }
 
     template < typename U                          = T,
@@ -531,10 +536,25 @@ void Isp20Params::convertAiqAeToIsp20Params(T& isp_cfg, const rk_aiq_isp_aec_mea
         return;
     }
 
-    memcpy(&isp_cfg.meas.rawae3, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+#if ISP_HW_V20 || ISP_HW_V30
+    memcpy(&isp_cfg.meas.rawae0, &aec_meas.rawae0, sizeof(aec_meas.rawae0));
     memcpy(&isp_cfg.meas.rawae1, &aec_meas.rawae1, sizeof(aec_meas.rawae1));
     memcpy(&isp_cfg.meas.rawae2, &aec_meas.rawae2, sizeof(aec_meas.rawae2));
+    memcpy(&isp_cfg.meas.rawae3, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+#endif
+#if ISP_HW_V21 || ISP_HW_V32
     memcpy(&isp_cfg.meas.rawae0, &aec_meas.rawae0, sizeof(aec_meas.rawae0));
+    memcpy(&isp_cfg.meas.rawae1, &aec_meas.rawae1, sizeof(aec_meas.rawae1));
+    memcpy(&isp_cfg.meas.rawae2, &aec_meas.rawae1, sizeof(aec_meas.rawae1));
+    memcpy(&isp_cfg.meas.rawae3, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+#endif
+#if ISP_HW_V32_LITE
+    memcpy(&isp_cfg.meas.rawae0, &aec_meas.rawae0, sizeof(aec_meas.rawae0));
+    memcpy(&isp_cfg.meas.rawae1, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+    memcpy(&isp_cfg.meas.rawae2, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+    memcpy(&isp_cfg.meas.rawae3, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
+#endif
+
 #if defined(ISP_HW_V20) || defined(ISP_HW_V21)
     ConvertAeHelper<T> helper;
     helper.copyYuvAeCfg(isp_cfg, aec_meas);
@@ -570,10 +590,6 @@ void Isp20Params::convertAiqAeToIsp20Params(T& isp_cfg, const rk_aiq_isp_aec_mea
      *            isp_cfg.meas.rawae3.win.h_size,
      *            isp_cfg.meas.rawae3.win.v_size);
      */
-    memcpy(&isp_cfg.meas.rawae3, &aec_meas.rawae3, sizeof(aec_meas.rawae3));
-    memcpy(&isp_cfg.meas.rawae1, &aec_meas.rawae1, sizeof(aec_meas.rawae1));
-    memcpy(&isp_cfg.meas.rawae2, &aec_meas.rawae2, sizeof(aec_meas.rawae2));
-    memcpy(&isp_cfg.meas.rawae0, &aec_meas.rawae0, sizeof(aec_meas.rawae0));
 #if defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
     mLatestMeasCfg.rawae3 = isp_cfg.meas.rawae3;
     mLatestMeasCfg.rawae1 = isp_cfg.meas.rawae1;
@@ -657,10 +673,25 @@ Isp20Params::convertAiqHistToIsp20Params
         return;
     }
 
-    memcpy(&isp_cfg.meas.rawhist3, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+#if ISP_HW_V20 || ISP_HW_V30
+    memcpy(&isp_cfg.meas.rawhist0, &hist_meas.rawhist0, sizeof(hist_meas.rawhist0));
     memcpy(&isp_cfg.meas.rawhist1, &hist_meas.rawhist1, sizeof(hist_meas.rawhist1));
     memcpy(&isp_cfg.meas.rawhist2, &hist_meas.rawhist2, sizeof(hist_meas.rawhist2));
+    memcpy(&isp_cfg.meas.rawhist3, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+#endif
+#if ISP_HW_V21 || ISP_HW_V32
     memcpy(&isp_cfg.meas.rawhist0, &hist_meas.rawhist0, sizeof(hist_meas.rawhist0));
+    memcpy(&isp_cfg.meas.rawhist1, &hist_meas.rawhist1, sizeof(hist_meas.rawhist1));
+    memcpy(&isp_cfg.meas.rawhist2, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+    memcpy(&isp_cfg.meas.rawhist3, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+#endif
+#if ISP_HW_V32_LITE
+    memcpy(&isp_cfg.meas.rawhist0, &hist_meas.rawhist0, sizeof(hist_meas.rawhist0));
+    memcpy(&isp_cfg.meas.rawhist1, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+    memcpy(&isp_cfg.meas.rawhist2, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+    memcpy(&isp_cfg.meas.rawhist3, &hist_meas.rawhist3, sizeof(hist_meas.rawhist3));
+#endif
+
 #if defined(ISP_HW_V20) || defined(ISP_HW_V21)
     ConvertAeHelper<T> helper;
     helper.copyAeHistCfg(isp_cfg, hist_meas);
@@ -1464,11 +1495,10 @@ template<class T>
 void Isp20Params::convertAiqAdehazeToIsp20Params(T& isp_cfg,
         const rk_aiq_isp_dehaze_t& dhaze                     )
 {
-    int i;
-
+#if 0
     int rawWidth = 1920;
     int rawHeight = 1080;
-
+#endif
     if (dhaze.ProcResV10.enable) {
         isp_cfg.module_ens |= ISP2X_MODULE_DHAZ;
         isp_cfg.module_en_update |= ISP2X_MODULE_DHAZ;
@@ -1898,8 +1928,19 @@ Isp20Params::convertAiqLscToIsp20Params(T& isp_cfg,
     memcpy(cfg->gr_data_tbl, lsc.gr_data_tbl, sizeof(lsc.gr_data_tbl));
     memcpy(cfg->gb_data_tbl, lsc.gb_data_tbl, sizeof(lsc.gb_data_tbl));
     memcpy(cfg->b_data_tbl, lsc.b_data_tbl, sizeof(lsc.b_data_tbl));
+#ifndef MAX_LSC_VALUE
+#define MAX_LSC_VALUE 8191
+#endif
+if(lsc.lsc_en) {
+    for(int i = 0; i < ISP3X_LSC_DATA_TBL_SIZE; i++) {
+        cfg->b_data_tbl[i] = MIN(cfg->b_data_tbl[i], MAX_LSC_VALUE);
+        cfg->gb_data_tbl[i] = MIN(cfg->gb_data_tbl[i], MAX_LSC_VALUE);
+        cfg->r_data_tbl[i] = MIN(cfg->r_data_tbl[i], MAX_LSC_VALUE);
+        cfg->gr_data_tbl[i] = MIN(cfg->gr_data_tbl[i], MAX_LSC_VALUE);
+    }
+}
 #if 0//def ISP_HW_V30 // will be done Isp21Params::convertAiqExpIspDgainToIspParams
-    #define MAX_LSC_VALUE 8191
+#define MAX_LSC_VALUE 8191
     struct isp21_bls_cfg &bls_cfg = isp_cfg.others.bls_cfg;
     if(bls_cfg.bls1_en && bls_cfg.bls1_val.b > 0 && bls_cfg.bls1_val.r > 0
             && bls_cfg.bls1_val.gb > 0 && bls_cfg.bls1_val.gr > 0 ) {
@@ -2015,9 +2056,6 @@ void Isp20Params::convertAiqRawnrToIsp20Params(T& isp_cfg,
     }
     isp_cfg.module_en_update |= ISP2X_MODULE_RAWNR;
     isp_cfg.module_cfg_update |= ISP2X_MODULE_RAWNR;
-
-    int rawbit = 12;//rawBit;
-    float tmp;
 
     //(0x0004)
     pRawnrCfg->gauss_en = rawnr.gauss_en;
@@ -2911,7 +2949,7 @@ Isp20Params::convertAiqAldchToIsp20Params(T& isp_cfg,
 
         pLdchCfg->hsize = ldch_cfg.lut_h_size;
         pLdchCfg->vsize = ldch_cfg.lut_v_size;
-        pLdchCfg->buf_fd = ldch_cfg.lut_mapxy_buf_fd;
+        pLdchCfg->buf_fd = ldch_cfg.lut_mapxy_buf_fd[0];
     } else {
         isp_cfg.module_ens &= ~ISP2X_MODULE_LDCH;
         isp_cfg.module_en_update |= ISP2X_MODULE_LDCH;
@@ -3717,8 +3755,6 @@ Isp20Params::hdrtmoPredictK(float* luma, float* expo, s32 frameNum, PredictKPara
     float correction_factor = TmoPara->correction_factor;
     float ratio = 1;
     float offset = TmoPara->correction_offset;
-    float LongExpoRatio = 1;
-    float ShortExpoRatio = 1;
     float MiddleExpoRatio = 1;
     float MiddleLumaChange = 1;
     float LongLumaChange = 1;
@@ -3727,22 +3763,16 @@ Isp20Params::hdrtmoPredictK(float* luma, float* expo, s32 frameNum, PredictKPara
 
     //get expo change
     if(frameNum == 3 || frameNum == 2) {
-        if(nextLExpo != 0 && curLExpo != 0)
-            LongExpoRatio = nextLExpo / curLExpo;
-        else
+        if(nextLExpo == 0 && curLExpo == 0)
             LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Long frame expo!!!");
     }
 
     if(frameNum == 3) {
-        if(nextMExpo != 0 && curMExpo != 0)
-            ShortExpoRatio = nextMExpo / curMExpo;
-        else
+        if(nextMExpo == 0 && curMExpo == 0)
             LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Short frame expo!!!");
     }
 
-    if(nextSExpo != 0 && curSExpo != 0)
-        ShortExpoRatio = nextSExpo / curSExpo;
-    else
+    if(nextSExpo == 0 && curSExpo == 0)
         LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "Wrong Short frame expo!!!");
 
     float nextLMeanLuma = 0;

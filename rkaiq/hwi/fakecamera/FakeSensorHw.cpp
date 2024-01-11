@@ -322,8 +322,10 @@ FakeSensorHw::start(bool prepared)
 
     V4l2SubDevice::start();
 
-    _timer->SetTimer(0, 100000);
-    _timer->StartTimer();
+    if (!use_rkrawstream) {
+        _timer->SetTimer(0, 100000);
+        _timer->StartTimer();
+    }
 
     EXIT_CAMHW_FUNCTION();
     return XCAM_RETURN_NO_ERROR;
@@ -333,9 +335,11 @@ XCamReturn
 FakeSensorHw::stop()
 {
     ENTER_CAMHW_FUNCTION();
-    _timer->StopTimer();
-    _vbuf_list.clear();
-    SensorHw::stop();
+    if (!use_rkrawstream) {
+        _timer->StopTimer();
+        _vbuf_list.clear();
+        SensorHw::stop();
+    }
     EXIT_CAMHW_FUNCTION();
     return XCAM_RETURN_NO_ERROR;
 }
@@ -351,7 +355,6 @@ FakeSensorHw::get_selection (int pad, uint32_t target, struct v4l2_subdev_select
 XCamReturn
 FakeSensorHw::getFormat(struct v4l2_subdev_format &aFormat)
 {
-    int ret = 0;
     ENTER_CAMHW_FUNCTION();
     aFormat.format.width = _width;
     aFormat.format.height = _height;

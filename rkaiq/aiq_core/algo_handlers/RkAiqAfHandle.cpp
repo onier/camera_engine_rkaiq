@@ -63,7 +63,7 @@ XCamReturn RkAiqAfHandleInt::setAttrib(rk_aiq_af_attrib_t* att) {
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
-    RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
+    // RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
     mCfgMutex.lock();
 #ifdef DISABLE_HANDLE_ATTRIB
@@ -136,7 +136,11 @@ XCamReturn RkAiqAfHandleInt::lock() {
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
-    if (sharedCom->snsDes.lens_des.focus_support) rk_aiq_uapi_af_Lock(mAlgoCtx);
+    if (sharedCom->snsDes.lens_des.focus_support) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_af_Lock(mAlgoCtx);
+        mCfgMutex.unlock();
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -148,7 +152,11 @@ XCamReturn RkAiqAfHandleInt::unlock() {
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
-    if (sharedCom->snsDes.lens_des.focus_support) rk_aiq_uapi_af_Unlock(mAlgoCtx);
+    if (sharedCom->snsDes.lens_des.focus_support) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_af_Unlock(mAlgoCtx);
+        mCfgMutex.unlock();
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -160,7 +168,11 @@ XCamReturn RkAiqAfHandleInt::Oneshot() {
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
-    if (sharedCom->snsDes.lens_des.focus_support) rk_aiq_uapi_af_Oneshot(mAlgoCtx);
+    if (sharedCom->snsDes.lens_des.focus_support) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_af_Oneshot(mAlgoCtx);
+        mCfgMutex.unlock();
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -172,7 +184,11 @@ XCamReturn RkAiqAfHandleInt::ManualTriger() {
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
-    if (sharedCom->snsDes.lens_des.focus_support) rk_aiq_uapi_af_ManualTriger(mAlgoCtx);
+    if (sharedCom->snsDes.lens_des.focus_support) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_af_ManualTriger(mAlgoCtx);
+        mCfgMutex.unlock();
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -184,7 +200,11 @@ XCamReturn RkAiqAfHandleInt::Tracking() {
     XCamReturn ret                              = XCAM_RETURN_NO_ERROR;
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
-    if (sharedCom->snsDes.lens_des.focus_support) rk_aiq_uapi_af_Tracking(mAlgoCtx);
+    if (sharedCom->snsDes.lens_des.focus_support) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_af_Tracking(mAlgoCtx);
+        mCfgMutex.unlock();
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return ret;
@@ -344,9 +364,17 @@ XCamReturn RkAiqAfHandleInt::prepare() {
     af_config_int->otp_af = sharedCom->snsDes.otp_af;
     af_config_int->otp_pdaf = sharedCom->snsDes.otp_pdaf;
 
-    RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
-    ret                       = des->prepare(mConfig);
-    RKAIQCORE_CHECK_RET(ret, "af algo prepare failed");
+    if ((af_config_int->com.u.prepare.sns_op_width != 0) &&
+        (af_config_int->com.u.prepare.sns_op_height != 0)) {
+        RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
+        ret                       = des->prepare(mConfig);
+        RKAIQCORE_CHECK_RET(ret, "af algo prepare failed");
+    } else {
+        LOGI_AF("%s: input sns_op_width %d or sns_op_height %d is zero, bypass!",
+            __func__,
+            af_config_int->com.u.prepare.sns_op_width,
+            af_config_int->com.u.prepare.sns_op_height);
+    }
 
     EXIT_ANALYZER_FUNCTION();
     return XCAM_RETURN_NO_ERROR;
@@ -549,9 +577,9 @@ XCamReturn RkAiqAfHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPara
         }
 
         SmartPtr<RkAiqHandle>* ae_handle = mAiqCore->getCurAlgoTypeHandle(RK_AIQ_ALGO_TYPE_AE);
-        int algo_id                      = (*ae_handle)->getAlgoId();
 
         if (ae_handle) {
+            int algo_id = (*ae_handle)->getAlgoId();
             if (algo_id == 0) {
                 RkAiqAeHandleInt* ae_algo = dynamic_cast<RkAiqAeHandleInt*>(ae_handle->ptr());
 

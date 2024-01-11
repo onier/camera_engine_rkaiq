@@ -710,10 +710,51 @@
  *   poll
  *
  *   Change-Id: I9b366a9f47ce24783651c93512125dca7c49917f
+ * 
+ * v5.0x1.3-rc1
+ * - multi isp: isp32 support 4k
+ * - ldch: support multi isp mode
+ * - output ERROR and KEY logs as default
+ * - fix lots of CppCheck errors
+ * - kernel depandency: isp32 use 4k need this patch:
+ *   https://10.10.10.29/c/rk/kernel/+/184947
+ *   media: rockchip: isp: support unite mode for isp32
+ * 
+ *   Change-Id: Iae10911ee0f199210c7913d3e99dd85ec4642f81
+ * 
+ * v5.0x1.3-rc2
+ * - optimize ae stats usage
+ * - ccm/lsc/dehaze: fix interpolation bugs 
+ * - support 2 cam's online tuning for Android
+ * - add default manual settings for algo's API getAtrrib
+ * - fix tool online tuning bug that params in page sysctl may be overwitten by
+ *   main page.
+ * v5.0x3.0
+ * - update kernel headers to match the ISP version v2.3.0
+ * v5.0x4.0
+ * - update kernel headers to match the ISP version v2.4.0
+ * - support single frame mode 
+ * - optimize TB procedure
+ * - support j2s4b on device
+ * - support AI nr
+ * - support 8k for rk3562
+ * - fix bugs:
+ *   - fix ae is not running for 3562
+ *   - fix drc longframeMode error
+ * v5.0x4.1
+ * - update kernel headers: rkisp_thunderboot_resmem_head
+ * - awb:
+ *   - support user awb OTP
+ *   - support awb gain mapped from main sensor
+ * - support fastboot aiq started one or two times
+ * - fix bugs:
+ *   - fix some bugs of rk3562 8k
+ *   - fix ae may be not running on all platform introduced in v5.0x3.0
+ *   - fix aiq_core state error when aiq stop
  */
 
-#define RK_AIQ_VERSION_REAL_V "v5.0x1.3"
-#define RK_AIQ_RELEASE_DATE "2023-07-06"
+#define RK_AIQ_VERSION_REAL_V "v5.0x4.1"
+#define RK_AIQ_RELEASE_DATE "2023-10-23"
 
 /******* DO NOT EDIT THE FOLLOWINGS ***********/
 

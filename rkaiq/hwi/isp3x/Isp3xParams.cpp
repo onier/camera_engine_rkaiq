@@ -1147,6 +1147,41 @@ void Isp3xParams::convertAiqCacToIsp3xParams(struct isp3x_isp_params_cfg& isp_cf
 }
 #endif
 
+#if defined(ISP_HW_V30)
+void Isp3xParams::convertAiqLdchToIsp3xParams(struct isp3x_isp_params_cfg& isp_cfg,
+        struct isp3x_isp_params_cfg& isp_cfg_right,
+        const rk_aiq_isp_ldch_t& ldch_cfg, bool is_multi_isp)
+{
+    struct isp2x_ldch_cfg  *pLdchCfg = &isp_cfg.others.ldch_cfg;
+
+    // TODO: add update flag for ldch
+    if (ldch_cfg.sw_ldch_en) {
+        isp_cfg.module_ens |= ISP2X_MODULE_LDCH;
+        isp_cfg.module_en_update |= ISP2X_MODULE_LDCH;
+        isp_cfg.module_cfg_update |= ISP2X_MODULE_LDCH;
+
+        pLdchCfg->hsize = ldch_cfg.lut_h_size;
+        pLdchCfg->vsize = ldch_cfg.lut_v_size;
+        pLdchCfg->buf_fd = ldch_cfg.lut_mapxy_buf_fd[0];
+
+        LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "enable ldch h/v size: %dx%d, buf_fd: %d",
+                        pLdchCfg->hsize, pLdchCfg->vsize, pLdchCfg->buf_fd);
+
+        if (is_multi_isp) {
+            struct isp2x_ldch_cfg *cfg_right = &isp_cfg.others.ldch_cfg;
+            cfg_right = &isp_cfg_right.others.ldch_cfg;
+            memcpy(cfg_right, pLdchCfg, sizeof(*cfg_right));
+            cfg_right->buf_fd = ldch_cfg.lut_mapxy_buf_fd[1];
+
+            LOGD_CAMHW_SUBM(ISP20PARAM_SUBM, "multi isp: ldch right isp buf fd: %d", cfg_right->buf_fd);
+        }
+    } else {
+        isp_cfg.module_ens &= ~ISP2X_MODULE_LDCH;
+        isp_cfg.module_en_update |= ISP2X_MODULE_LDCH;
+    }
+}
+#endif
+
 #if RKAIQ_HAVE_DEHAZE_V11_DUO
 void Isp3xParams::convertAiqAdehazeToIsp3xParams(struct isp3x_isp_params_cfg& isp_cfg,
         const rk_aiq_isp_dehaze_v3x_t& dhaze)
@@ -1227,20 +1262,62 @@ void Isp3xParams::convertAiqAdehazeToIsp3xParams(struct isp3x_isp_params_cfg& is
     for(int i = 0; i < ISP3X_DHAZ_HIST_WR_NUM; i++)
         cfg->hist_wr[i] = dhaze.ProcResV11duo.hist_wr[i];
 
-#if 0
-    LOGE_ADEHAZE("%s(%d) dehaze local gain IDX(0~5): 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", __func__, __LINE__, cfg->sigma_idx[0], cfg->sigma_idx[1],
-                 cfg->sigma_idx[2], cfg->sigma_idx[3], cfg->sigma_idx[4], cfg->sigma_idx[5]);
-    LOGE_ADEHAZE("%s(%d) dehaze local gain LUT(0~5): 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", __func__, __LINE__, cfg->sigma_lut[0], cfg->sigma_lut[1],
-                 cfg->sigma_lut[2], cfg->sigma_lut[3], cfg->sigma_lut[4], cfg->sigma_lut[5]);
-#endif
+    LOG1_ADEHAZE(
+        "%s: round_en:%d soft_wr_en:%d enhance_en:%d air_lc_en:%d hpara_en:%d "
+        "hist_en:%d "
+        "dc_en:%d\n",
+        __func__, cfg->round_en, cfg->soft_wr_en, cfg->enhance_en, cfg->air_lc_en, cfg->hpara_en,
+        cfg->hist_en, cfg->dc_en);
+    LOG1_ADEHAZE(
+        "%s: yblk_th:%d yhist_th:%d dc_max_th:%d dc_min_th:%d wt_max:%d bright_max:%d "
+        "bright_min:%d \n",
+        __func__, cfg->yblk_th, cfg->yhist_th, cfg->dc_max_th, cfg->dc_min_th, cfg->wt_max,
+        cfg->bright_max, cfg->bright_min);
+    LOG1_ADEHAZE("%s: tmax_base:%d dark_th:%d air_max:%d air_min:%d tmax_max:%d tmax_off:%d \n",
+                 __func__, cfg->tmax_base, cfg->dark_th, cfg->air_max, cfg->air_min, cfg->tmax_max,
+                 cfg->tmax_off);
+    LOG1_ADEHAZE("%s: hist_k:%d hist_th_off:%d hist_min:%d hist_gratio:%d hist_scale:%d \n",
+                 __func__, cfg->hist_k, cfg->hist_th_off, cfg->hist_min, cfg->hist_gratio,
+                 cfg->hist_scale);
+    LOG1_ADEHAZE("%s: gaus_h0:%d gaus_h1:%d gaus_h2:%d enhance_value:%d enhance_chroma:%d \n",
+                 __func__, cfg->gaus_h0, cfg->gaus_h1, cfg->gaus_h2, cfg->enhance_value,
+                 cfg->enhance_chroma);
+    LOG1_ADEHAZE(
+        "%s: iir_wt_sigma:%d iir_sigma:%d stab_fnum:%d iir_tmax_sigma:%d iir_air_sigma:%d "
+        "iir_pre_wet:%d \n",
+        __func__, cfg->iir_wt_sigma, cfg->iir_sigma, cfg->stab_fnum, cfg->iir_tmax_sigma,
+        cfg->iir_air_sigma, cfg->iir_pre_wet);
+    LOG1_ADEHAZE("%s: cfg_alpha:%d cfg_wt:%d cfg_air:%d cfg_gratio:%d cfg_tmax:%d \n", __func__,
+                 cfg->cfg_alpha, cfg->cfg_wt, cfg->cfg_air, cfg->cfg_gratio, cfg->cfg_tmax);
+    LOG1_ADEHAZE(
+        "%s: range_sima:%d space_sigma_cur:%d space_sigma_pre:%d dc_weitcur:%d bf_weight:%d \n",
+        __func__, cfg->range_sima, cfg->space_sigma_cur, cfg->space_sigma_pre, cfg->dc_weitcur,
+        cfg->bf_weight);
+    LOG1_ADEHAZE("%s: sigma_idx: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", __FUNCTION__,
+                 cfg->sigma_idx[0], cfg->sigma_idx[1], cfg->sigma_idx[2], cfg->sigma_idx[3],
+                 cfg->sigma_idx[4], cfg->sigma_idx[5], cfg->sigma_idx[6], cfg->sigma_idx[7],
+                 cfg->sigma_idx[8], cfg->sigma_idx[9], cfg->sigma_idx[10], cfg->sigma_idx[11],
+                 cfg->sigma_idx[12], cfg->sigma_idx[13], cfg->sigma_idx[14]);
+    LOG1_ADEHAZE("%s: sigma_lut: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                 __FUNCTION__, cfg->sigma_lut[0], cfg->sigma_lut[1], cfg->sigma_lut[2],
+                 cfg->sigma_lut[3], cfg->sigma_lut[4], cfg->sigma_lut[5], cfg->sigma_lut[6],
+                 cfg->sigma_lut[7], cfg->sigma_lut[8], cfg->sigma_lut[9], cfg->sigma_lut[10],
+                 cfg->sigma_lut[11], cfg->sigma_lut[12], cfg->sigma_lut[13], cfg->sigma_lut[14],
+                 cfg->sigma_lut[15], cfg->sigma_lut[16]);
+    LOG1_ADEHAZE("%s: enh_curve: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                 __FUNCTION__, cfg->enh_curve[0], cfg->enh_curve[1], cfg->enh_curve[2],
+                 cfg->enh_curve[3], cfg->enh_curve[4], cfg->enh_curve[5], cfg->enh_curve[6],
+                 cfg->enh_curve[7], cfg->enh_curve[8], cfg->enh_curve[9], cfg->enh_curve[10],
+                 cfg->enh_curve[11], cfg->enh_curve[12], cfg->enh_curve[13], cfg->enh_curve[14],
+                 cfg->enh_curve[15], cfg->enh_curve[16]);
 }
 #endif
 
 bool Isp3xParams::convert3aResultsToIspCfg(SmartPtr<cam3aResult> &result,
         void* isp_cfg_p, bool is_multi_isp)
 {
-    struct isp3x_isp_params_cfg& isp_cfg = *(struct isp3x_isp_params_cfg*)isp_cfg_p;
-    struct isp3x_isp_params_cfg isp_cfg_right = {};
+    struct isp3x_isp_params_cfg& isp_cfg       = *(struct isp3x_isp_params_cfg*)isp_cfg_p;
+    struct isp3x_isp_params_cfg& isp_cfg_right = *((struct isp3x_isp_params_cfg*)isp_cfg_p + 1);
 
     if (result.ptr() == NULL) {
         LOGE_CAMHW_SUBM(ISP20PARAM_SUBM, "3A result empty");
@@ -1397,8 +1474,9 @@ bool Isp3xParams::convert3aResultsToIspCfg(SmartPtr<cam3aResult> &result,
     {
 #if RKAIQ_HAVE_CAC_V03 || RKAIQ_HAVE_CAC_V10
         RkAiqIspCacParamsProxyV3x* params = result.get_cast_ptr<RkAiqIspCacParamsProxyV3x>();
-        if (params)
+        if (params) {
             convertAiqCacToIsp3xParams(isp_cfg, isp_cfg_right, params->data()->result, is_multi_isp);
+        }
 #endif
     }
     break;
@@ -1472,11 +1550,14 @@ bool Isp3xParams::convert3aResultsToIspCfg(SmartPtr<cam3aResult> &result,
     }
     break;
     case RESULT_TYPE_LDCH_PARAM:
+#if defined(ISP_HW_V30)
     {
         RkAiqIspLdchParamsProxy* params = result.get_cast_ptr<RkAiqIspLdchParamsProxy>();
-        if (params)
-            convertAiqAldchToIsp20Params(isp_cfg, params->data()->result);
+        if (params && params->data()->is_update) {
+            convertAiqLdchToIsp3xParams(isp_cfg, isp_cfg_right, params->data()->result, is_multi_isp);
+        }
     }
+#endif
     break;
     case RESULT_TYPE_ADEGAMMA_PARAM:
     {
@@ -1539,10 +1620,6 @@ bool Isp3xParams::convert3aResultsToIspCfg(SmartPtr<cam3aResult> &result,
         return false;
     }
 
-    if (is_multi_isp) {
-        memcpy(&((struct isp3x_isp_params_cfg*)isp_cfg_p + 1)->others.cac_cfg,
-               &isp_cfg_right.others.cac_cfg, sizeof(struct isp3x_cac_cfg));
-    }
     return true;
 }
 

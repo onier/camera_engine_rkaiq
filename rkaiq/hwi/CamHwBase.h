@@ -127,6 +127,9 @@ public:
     virtual XCamReturn setAngleZ(float angleZ) {
         return  XCAM_RETURN_ERROR_FAILED;
     }
+    virtual XCamReturn getFocusPosition(int& position) {
+        return  XCAM_RETURN_ERROR_FAILED;
+    }
     virtual void getShareMemOps(isp_drv_share_mem_ops_t** mem_ops) {};
     virtual XCamReturn getEffectiveIspParams(rkisp_effect_params_v20& ispParams, uint32_t frame_id) {
         return  XCAM_RETURN_ERROR_FAILED;
@@ -160,7 +163,9 @@ public:
     virtual XCamReturn rawReProc_prepare (uint32_t sequence, rk_aiq_frame_info_t *offline_finfo) {
         return XCAM_RETURN_ERROR_FAILED;
     }
-    virtual void setUserSensorFormat(uint16_t width, uint16_t height, uint16_t code) { }
+    virtual void setRawStreamInfo(rk_aiq_rkrawstream_info_t *info) {
+        mRawStreamInfo = *info;
+    }
     HwResListener* mHwResLintener;
 
 protected:
@@ -186,6 +191,7 @@ protected:
     bool mIsMain;
     rk_aiq_tb_info_t mTbInfo;
     std::map<std::string, int> mDevBufCntMap;
+    rk_aiq_rkrawstream_info_t mRawStreamInfo;
 
  private:
     XCAM_DEAD_COPY (CamHwBase);

@@ -40,7 +40,7 @@ XCamReturn AdrcStart(AdrcContext_t* pAdrcCtx) {
     return (XCAM_RETURN_NO_ERROR);
 }
 
-float DrcGetInterpRatioV10(float* pX, int lo, int hi, float CtrlValue, int length_max) {
+float DrcGetInterpRatioV10(float* pX, int& lo, int& hi, float CtrlValue, int length_max) {
     float ratio = 0.0f;
 
     if (CtrlValue < pX[0]) {
@@ -121,21 +121,31 @@ void AdrcV10ClipStAutoParams(AdrcContext_t* pAdrcCtx) {
     pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.curPixWeit =
         LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.curPixWeit,
                     NORMALIZE_MAX, NORMALIZE_MIN);
+    pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.preFrameWeit =
+        LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.preFrameWeit,
+                    NORMALIZE_MAX, NORMALIZE_MIN);
     pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_force_sgm =
         LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_force_sgm,
                     NORMALIZE_MAX, NORMALIZE_MIN);
     pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_sgm_cur =
         LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_sgm_cur,
                     NORMALIZE_MAX, NORMALIZE_MIN);
+    pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_sgm_pre =
+        LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Range_sgm_pre,
+                    NORMALIZE_MAX, NORMALIZE_MIN);
     pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Space_sgm_cur =
         LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Space_sgm_cur,
+                    SPACESGMMAX, SPACESGMMIN);
+    pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Space_sgm_pre =
+        LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.LocalTMOSetting.Space_sgm_pre,
                     SPACESGMMAX, SPACESGMMIN);
     for (int i = 0; i < ADRC_Y_NUM; i++) {
         pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.Scale_y[i] =
             LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.Scale_y[i], SCALEYMAX, SCALEYMIN);
         pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.CompressSetting.Manual_curve[i] =
-            LIMIT_VALUE(pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.CompressSetting.Manual_curve[i],
-                        MANUALCURVEMAX, MANUALCURVEMIN);
+            LIMIT_VALUE_UNSIGNED(
+                pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.CompressSetting.Manual_curve[i],
+                MANUALCURVEMAX);
     }
     pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.ByPassThr = LIMIT_VALUE(
         pAdrcCtx->drcAttrV10.stAuto.DrcTuningPara.ByPassThr, NORMALIZE_MAX, NORMALIZE_MIN);
@@ -308,7 +318,7 @@ void AdrcGetTuningProcResV10(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pAd
     pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_lpdetail_ratio =
         (unsigned short)(SHIFT12BIT(pAdrcCtx->NextData.dynParams.Drc_v10.GlobalContrast) + 0.5f);
     pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_weipre_frame =
-        LIMIT_VALUE(pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_weipre_frame, 255.0f, 0.0f);
+        LIMIT_VALUE_UNSIGNED(pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_weipre_frame, BIT_8_MAX);
     pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_weig_maxl =
         (unsigned char)(SHIFT4BIT(pAdrcCtx->NextData.dynParams.Drc_v10.Strength) + 0.5f);
     pAdrcProcRes->DrcProcRes.Drc_v10.sw_drc_weig_bilat =

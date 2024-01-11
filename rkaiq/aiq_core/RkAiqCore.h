@@ -308,6 +308,7 @@ public:
     XCamReturn set_pdaf_support(bool support);
     bool get_pdaf_support();
 #endif
+    XCamReturn setAOVForAE(bool en);
 
 public:
     // following vars shared by all algo handlers
@@ -384,6 +385,7 @@ public:
         RkAiqAwbStats* awbStatsBuf;
         RkAiqAfStats* afStatsBuf;
         RkAiqAdehazeStats* adehazeStatsBuf;
+        RkAiqAgainStats* againStatsBuf;
         XCamVideoBuffer* sp;
         XCamVideoBuffer* ispGain;
         XCamVideoBuffer* kgGain;
@@ -396,7 +398,7 @@ public:
         rk_aiq_scale_raw_info_t scaleRawInfo;
         RkAiqFullParams* fullParams;
         void reset() {
-            frameId = -1;
+            frameId = 0;
             sof     = 0;
             xcam_mem_clear(res_comb);
             xcam_mem_clear(amdResParams);
@@ -418,6 +420,7 @@ public:
             nrImg       = nullptr;
             pdafStatsBuf = nullptr;
             fullParams = nullptr;
+            againStatsBuf = nullptr;
         }
     } RkAiqAlgosGroupShared_t;
     RkAiqAlgosComShared_t mAlogsComSharedParams;
@@ -454,6 +457,12 @@ public:
     }
 
     void syncVicapScaleMode();
+    IRkAiqResourceTranslator* getTranslator() {
+        return mTranslator.ptr();
+    }
+
+    void awakenClean(uint32_t sequeence);
+    XCamReturn setUserOtpInfo(rk_aiq_user_otp_info_t otp_info);
 
 protected:
     // in analyzer thread
@@ -621,6 +630,7 @@ protected:
     SmartPtr<RkAiqAwbStatsPool>                 mAiqAwbStatsPool;
     SmartPtr<RkAiqAtmoStatsPool>                mAiqAtmoStatsPool;
     SmartPtr<RkAiqAdehazeStatsPool>             mAiqAdehazeStatsPool;
+    SmartPtr<RkAiqAgainStatsPool>               mAiqAgainStatsPool;
     SmartPtr<RkAiqAfStatsPool>                  mAiqAfStatsPool;
     SmartPtr<RkAiqOrbStatsPool>                 mAiqOrbStatsIntPool;
 #if RKAIQ_HAVE_PDAF
@@ -665,6 +675,9 @@ protected:
     XCamReturn handleAfStats(const SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqAfStatsProxy>& afStat);
     XCamReturn handleAtmoStats(const SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqAtmoStatsProxy>& tmoStat);
     XCamReturn handleAdehazeStats(const SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqAdehazeStatsProxy>& dehazeStat);
+#if RK_GAIN_V2_ENABLE_GAIN2DDR
+    XCamReturn handleAgainStats(const SmartPtr<VideoBuffer> &buffer, SmartPtr<RkAiqAgainStatsProxy>& gainStat);
+#endif
     XCamReturn handleOrbStats(const SmartPtr<VideoBuffer> &buffer);
     XCamReturn handlePdafStats(const SmartPtr<VideoBuffer> &buffer);
     inline uint64_t grpId2GrpMask(uint32_t grpId) {
@@ -683,7 +696,7 @@ protected:
 #ifdef RKAIQ_ENABLE_CAMGROUP
     RkAiqCamGroupManager* mCamGroupCoreManager;
 #endif
-    std::bitset<RK_AIQ_ALGO_TYPE_MAX> mAllReqAlgoResMask{0};
+    std::bitset<RK_AIQ_ALGO_TYPE_MAX> mAllReqAlgoResMask {0};
 
 private:
 #if defined(RKAIQ_HAVE_THUMBNAILS)
@@ -705,11 +718,12 @@ private:
     bool mPdafSupport{false};
     int64_t mFrmInterval = 30000LL;
     int64_t mSofTime = 0LL;
-    int64_t mAfStatsTime;
-    int64_t mPdafStatsTime;
-    uint32_t mAfStatsFrmId;
-    SmartPtr<RkAiqAfStatsProxy> mAfStats;
-    SmartPtr<RkAiqPdafStatsProxy> mPdafStats;
+    int64_t mAfStatsTime[2] {0};
+    int64_t mPdafStatsTime[2] {0};
+    uint32_t mAfStatsFrmId[2] {(uint32_t) -1, (uint32_t) -1};
+    uint32_t mPdafStatsFrmId[2] {(uint32_t) -1, (uint32_t) -1};
+    SmartPtr<RkAiqAfStatsProxy> mAfStats[2];
+    SmartPtr<RkAiqPdafStatsProxy> mPdafStats[2];
     CamProfiles mProfiles;
     SmartPtr<RkAiqVicapRawBuf_t> mVicapBufs;
     bool mIsEnableVicap{false};
@@ -726,6 +740,9 @@ private:
     uint32_t mLatestParamsDoneId {0};
     uint32_t mLatestEvtsId {0};
     uint32_t mLatestStatsId {0};
+    std::list<RkAiqAlgoType_t> mUpdateCalibAlgosList;
+    void mapModStrListToEnum(ModuleNameList& change_name_list);
+    rk_aiq_user_otp_info_t mUserOtpInfo;
 };
 
 }

@@ -114,7 +114,7 @@ static int sample_get_mwb_ct(const rk_aiq_sys_ctx_t* ctx)
 {
     unsigned int cct;
     rk_aiq_uapi2_getWBCT(ctx, &cct);
-    printf("get cct=%d\n\n", cct);
+    printf("get cct=%u\n\n", cct);
     return 0;
 }
 
@@ -973,6 +973,41 @@ static int sample_awb_setFFWbgain(const rk_aiq_sys_ctx_t* ctx, rk_aiq_uapi_mode_
 
     return 0;
 }
+static int sample_awb_setIqPara(const rk_aiq_sys_ctx_t* ctx, rk_aiq_uapi_mode_sync_e sync)
+{
+    //get
+
+    printf("sample_awb_getIqPara 0 \n\n");
+    rk_aiq_uapiV2_Wb_Awb_IqAtPa_V32_t autoPara,autoPara_backup,autoPara_get;
+    rk_aiq_user_api2_awbV32_GetIQAutoPara(ctx, &autoPara);
+    printf("sample_awb_getIqPara 1\n\n");
+
+    memcpy(&autoPara_backup,&autoPara,sizeof(rk_aiq_uapiV2_Wb_Awb_IqAtPa_V32_t));
+    rk_aiq_uapiV2_Wb_Awb_IqAtExtPa_V32_t autoExtPara,autoExtPara_backup,autoExtPara_get;
+    rk_aiq_user_api2_awbV32_GetIQAutoExtPara(ctx,&autoExtPara );
+    memcpy(&autoExtPara_backup,&autoExtPara,sizeof(rk_aiq_uapiV2_Wb_Awb_IqAtExtPa_V32_t));
+    printf("sample_awb_getIqPara 2\n\n");
+
+    //modify
+
+    autoPara.rgb2TcsPara.pseudoLuminanceWeight[0] -=0.02;
+    autoPara.rgb2TcsPara.pseudoLuminanceWeight[2] -=0.02;
+    autoPara.rgb2TcsPara.rotationMat[0] -=0.02;
+    autoPara.rgb2TcsPara.rotationMat[8] -=0.02;
+    autoExtPara.lineRgBg[2]++;
+    autoExtPara.lineRgProjCCT[2]++;
+
+    //set
+    printf("sample_awb_setIqPara finish -11111 \n\n");
+    rk_aiq_user_api2_awbV32_SetIQAutoPara(ctx, &autoPara);
+    printf("sample_awb_setIqPara finish 0 \n\n");
+
+    rk_aiq_user_api2_awbV32_SetIQAutoExtPara(ctx,&autoExtPara);
+
+    printf("sample_awb_setIqPara finish 11111 \n\n");
+    return 0;
+}
+
 
 //#if rk356x || rk3588
 static void sample_awb1_usage()
@@ -1041,7 +1076,6 @@ XCamReturn sample_awb_module(const void *arg)
         ERR ("%s, ctx is nullptr\n", __FUNCTION__);
         return XCAM_RETURN_ERROR_PARAM;
     }
-    unsigned int cct;
 
     sample_awb1_usage ();
     do {
@@ -1292,7 +1326,6 @@ XCamReturn sample_awb32_module(const void *arg)
         ERR ("%s, ctx is nullptr\n", __FUNCTION__);
         return XCAM_RETURN_ERROR_PARAM;
     }
-    unsigned int cct;
 
     sample_awb32_usage ();
     do {
@@ -1360,6 +1393,27 @@ XCamReturn sample_awb32_module(const void *arg)
             case 'e':
                 sample_get_awb_gain_adjust(ctx);
                 break;
+              case 'f':{
+                float attr[4]={ 0.97,1,1, 0.94};
+                rk_aiq_user_api2_awb_setAwbPreWbgain(ctx,attr);
+                printf("setAwbPreWbgain\n\n");
+                break;}
+            case 'g':{
+                rk_aiq_uapiV2_awb_Slave2Main_Cfg_t slave2Main;
+                slave2Main.enable = true;
+                slave2Main.camM.wbgain.rgain = 1.6480  ;
+                slave2Main.camM.wbgain.grgain = 1 ;
+                slave2Main.camM.wbgain.gbgain= 1 ;
+                slave2Main.camM.wbgain.bgain = 1.84 ;
+                slave2Main.camM.fLV = 1280;
+                slave2Main.camM.fLV_valid = true;
+                char filename[]="/etc/iqfiles/wbgain_convert2.bin";
+                rk_aiq_user_api2_awb_loadConvertLut(&slave2Main.cct_lut_cfg,filename);
+                rk_aiq_user_api2_awb_IqMap2Main(ctx,slave2Main);
+                rk_aiq_user_api2_awb_freeConvertLut(&slave2Main.cct_lut_cfg);
+
+                printf("IqMap2Main\n\n");
+                break;}
             case 'A':
                 sample_awb_awbv32_setAllAttr(ctx, RK_AIQ_UAPI_MODE_DEFAULT);
                 sample_awb_awbv32_getAllAttr(ctx);

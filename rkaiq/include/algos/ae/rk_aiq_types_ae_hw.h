@@ -40,6 +40,10 @@ typedef enum WinSplitMode_s {
     LEFT_AND_RIGHT_MODE = 0,
     LEFT_MODE,
     RIGHT_MODE,
+
+    TOP_AND_BOTTOM_MODE = 0,
+    TOP_MODE,
+    BOTTOM_MODE,
 } WinSplitMode;
 
 /*****************************************************************************/
@@ -137,7 +141,7 @@ typedef struct sihst_cfg {
 #pragma pack()
 
 /*NOTE: name of rawae/rawhist channel has been renamed!
-   RawAE0 = RawAE lite,  addr=0x4500  <=> RawHIST0
+   RawAE0 = RawAE lite, addr=0x4500 <=> RawHIST0
    RawAE1 = RawAE big2, addr=0x4600 <=> RawHIST1
    RawAE2 = RawAE big3, addr=0x4700 <=> RawHIST2
    RawAE3 = RawAE big1, addr=0x4400, extra aebig <=> RawHIST3
@@ -146,23 +150,37 @@ typedef struct rk_aiq_ae_meas_params_s {
     bool   ae_meas_en;
     bool   ae_meas_update;
     rawaelite_meas_cfg_t rawae0;
+#if ISP_HW_V20 || ISP_HW_V21 || ISP_HW_V30 || ISP_HW_V32
     rawaebig_meas_cfg_t rawae1;
+#endif
+#if ISP_HW_V20 || ISP_HW_V30
     rawaebig_meas_cfg_t rawae2;
+#endif
     rawaebig_meas_cfg_t rawae3;
+#if ISP_HW_V20
     yuvae_meas_cfg_t yuvae;
+#endif
 } rk_aiq_ae_meas_params_t;
 
+/* Differentiate structure according to hardware version */
 typedef struct rk_aiq_hist_meas_params_s {
     bool   hist_meas_en;
     bool   hist_meas_update;
     unsigned char ae_swap; // used to choose LITE & BIG
     unsigned char ae_sel; // used for rawae3 & rawhist3
     rawhistlite_cfg_t rawhist0;
+#if ISP_HW_V20 || ISP_HW_V21 || ISP_HW_V30 || ISP_HW_V32
     rawhistbig_cfg_t rawhist1;
+#endif
+#if ISP_HW_V20 || ISP_HW_V30
     rawhistbig_cfg_t rawhist2;
+#endif
     rawhistbig_cfg_t rawhist3;
+#if ISP_HW_V20
     sihst_cfg_t sihist;
+#endif
 } rk_aiq_hist_meas_params_t;
+
 /*****************************************************************************/
 /**
  * @brief   ISP2.0 AEC AEC HW-Meas Res Params
@@ -204,12 +222,16 @@ typedef struct yuvae_stat {
 } yuvae_stat_t;
 
 typedef struct Aec_Stat_Res_s {
-    //rawae
-    rawaebig_stat_t rawae_big;
-    rawaelite_stat_t rawae_lite;
-    //rawhist
-    rawhist_stat_t rawhist_big;
-    rawhist_stat_t rawhist_lite;
+    union {
+        //rawae
+        rawaebig_stat_t rawae_big;
+        rawaelite_stat_t rawae_lite;
+    };
+    union {
+        //rawhist
+        rawhist_stat_t rawhist_big;
+        rawhist_stat_t rawhist_lite;
+    };
 } Aec_Stat_Res_t;
 
 typedef struct RkAiqAecHwConfig_s {
@@ -222,10 +244,13 @@ typedef struct RkAiqAecHwConfig_s {
 typedef struct RkAiqAecHwStatsRes_s {
     Aec_Stat_Res_t chn[3];
     Aec_Stat_Res_t extra;
+#if ISP_HW_V20 || ISP_HW_V21
     yuvae_stat_t yuvae;
     sihist_stat_t sihist;
-} RkAiqAecHwStatsRes_t;
+#endif
+    uint16_t raw_mean[4];  //not HW! The last 8bits are decimal places, raw_mean[3] = extra-chn-mean
 
+} RkAiqAecHwStatsRes_t;
 
 /*****************************************************************************/
 /**

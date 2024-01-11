@@ -99,6 +99,8 @@ public:
         AntiTmoFlicker.FirstChangeDone = false;
         AntiTmoFlicker.FirstChangeDoneNum = 0;
         _working_mode = RK_AIQ_WORKING_MODE_ISP_HDR3;
+        _CamPhyId = -1;
+        _lsc_en = false;
     };
     virtual ~Isp20Params() {};
     virtual void setCamPhyId(int phyId) {
@@ -262,6 +264,9 @@ protected:
 	struct isp32_isp_meas_cfg mLatestMeasCfg;
 	struct isp32_bls_cfg mLatestBlsCfg;
 	struct isp32_awb_gain_cfg mLatestWbGainCfg;
+#endif
+#if defined(ISP_HW_V30) || defined(ISP_HW_V21)
+    struct isp21_awb_gain_cfg mLatestWbGainCfg;
 #endif
 };
 }

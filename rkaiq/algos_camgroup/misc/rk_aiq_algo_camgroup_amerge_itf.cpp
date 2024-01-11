@@ -332,7 +332,7 @@ static XCamReturn AmergeProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* o
         }
 
         // get tuning para process
-        if (!bypass_tuning_process)
+        if (!bypass_expo_process || !bypass_tuning_process)
             AmergeTuningProcessing(pAmergeGrpCtx,
                                    pAmergeGrpProcRes->camgroupParmasArray[0]->_amergeConfig);
         // get expo para process
@@ -354,6 +354,8 @@ static XCamReturn AmergeProcess(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* o
                     __FUNCTION__, pAmergeGrpCtx->FrameID);
     }
 
+    IS_UPDATE_MEM((pAmergeGrpProcRes->camgroupParmasArray[0]->_amergeConfig), pAmergeGrpParams->_offset_is_update) =
+        outparams->cfg_update;
     for (int i = 1; i < pAmergeGrpProcRes->arraySize; i++) {
         memcpy(pAmergeGrpProcRes->camgroupParmasArray[i]->_amergeConfig,
                pAmergeGrpProcRes->camgroupParmasArray[0]->_amergeConfig,

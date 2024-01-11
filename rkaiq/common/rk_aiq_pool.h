@@ -33,10 +33,17 @@ typedef struct RKAiqAecExpInfoWrapper_s {
     int algo_id;
     RKAiqAecExpInfoWrapper_s() {
         exp_i2c_params.bValid = false;
+        memset(&new_ae_exp, 0, sizeof(new_ae_exp));
+        memset(&ae_proc_res_rk, 0, sizeof(ae_proc_res_rk));
+        algo_id = 0;
     };
 } RKAiqAecExpInfoWrapper_t;
 
 typedef struct RKAiqSensorExpInfo_t: public XCam::BufferData {
+    RKAiqSensorExpInfo_t () {
+        memset(&aecExpInfo, 0, sizeof(aecExpInfo));
+        exp_i2c_params = NULL;
+    }
     rk_aiq_exposure_params_t aecExpInfo;
     Sensor_dpcc_res_t SensorDpccInfo;
     RKAiqExpI2cParam_t* exp_i2c_params;
@@ -236,6 +243,9 @@ typedef SharedItemProxy<RkAiqAtmoStats> RkAiqAtmoStatsProxy;
 typedef SharedItemPool<RkAiqAdehazeStats> RkAiqAdehazeStatsPool;
 typedef SharedItemProxy<RkAiqAdehazeStats> RkAiqAdehazeStatsProxy;
 
+typedef SharedItemPool<RkAiqAgainStats> RkAiqAgainStatsPool;
+typedef SharedItemProxy<RkAiqAgainStats> RkAiqAgainStatsProxy;
+
 typedef SharedItemPool<RkAiqAfStats> RkAiqAfStatsPool;
 typedef SharedItemProxy<RkAiqAfStats> RkAiqAfStatsProxy;
 
@@ -258,6 +268,8 @@ public:
         awb_stats_valid      = false;
         awb_cfg_effect_valid = false;
         af_stats_valid       = false;
+        atmo_stats_valid     = false;
+        adehaze_stats_valid  = false;
         frame_id             = -1;
     };
     virtual ~RkAiqIspStats() {
@@ -451,7 +463,8 @@ typedef SharedItemProxy<rk_aiq_isp_af_params_v32_lite_t>    RkAiqIspAfParamsProx
 class RkAiqFullParams : public XCam::BufferData {
 public:
     explicit RkAiqFullParams()
-        : mExposureParams(NULL)
+        : mFrmId(0)
+        , mExposureParams(NULL)
         , mFocusParams(NULL)
         , mIrisParams(NULL)
         , mCpslParams(NULL)

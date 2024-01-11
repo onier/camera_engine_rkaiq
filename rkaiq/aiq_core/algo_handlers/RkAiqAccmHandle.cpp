@@ -55,6 +55,22 @@ XCamReturn RkAiqAccmHandleInt::updateConfig(bool needSync) {
         sendSignal(mCurAttV2.sync.sync_mode);
 #endif
     }
+    if (updateCalibAttr) {
+#if RKAIQ_HAVE_CCM_V1
+        mCurCalibAtt   = mNewCalibAtt;
+        // TODO
+        rk_aiq_uapi_accm_SetIqParam(mAlgoCtx, &mCurCalibAtt, false);
+        updateCalibAttr = false;
+        sendSignal(mCurCalibAtt.sync.sync_mode);
+#endif
+#if RKAIQ_HAVE_CCM_V2
+        mCurCalibAttV2   = mNewCalibAttV2;
+        // TODO
+        rk_aiq_uapi_accm_SetIqParam(mAlgoCtx, &mCurCalibAttV2, false);
+        updateCalibAttr = false;
+        sendSignal(mCurCalibAttV2.sync.sync_mode);
+#endif
+    }
 
     if (needSync) mCfgMutex.unlock();
 #endif
@@ -124,6 +140,75 @@ XCamReturn RkAiqAccmHandleInt::getAttrib(rk_aiq_ccm_attrib_t* att) {
         } else {
             rk_aiq_uapi_accm_GetAttrib(mAlgoCtx, att);
             att->sync.sync_mode = mNewAtt.sync.sync_mode;
+            att->sync.done = true;
+        }
+    }
+#endif
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn RkAiqAccmHandleInt::setIqParam(const rk_aiq_ccm_calib_attrib_t* att) {
+    ENTER_ANALYZER_FUNCTION();
+
+    XCAM_ASSERT(att != nullptr);
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    mCfgMutex.lock();
+#ifdef DISABLE_HANDLE_ATTRIB
+    ret = rk_aiq_uapi_accm_SetIqParam(mAlgoCtx, att, false);
+#else
+
+    // check if there is different between att & mCurAtt(sync)/mNewAtt(async)
+    // if something changed, set att to mNewAtt, and
+    // the new params will be effective later when updateConfig
+    // called by RkAiqCore
+    bool isChanged = false;
+    if (att->sync.sync_mode == RK_AIQ_UAPI_MODE_ASYNC && \
+        memcmp(&mNewCalibAtt, att, sizeof(*att)))
+        isChanged = true;
+    else if (att->sync.sync_mode != RK_AIQ_UAPI_MODE_ASYNC && \
+             memcmp(&mCurCalibAtt, att, sizeof(*att)))
+        isChanged = true;
+
+    // if something changed
+    if (isChanged) {
+        mNewCalibAtt   = *att;
+        updateCalibAttr = true;
+        waitSignal(att->sync.sync_mode);
+    }
+#endif
+
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn RkAiqAccmHandleInt::getIqParam(rk_aiq_ccm_calib_attrib_t* att) {
+    ENTER_ANALYZER_FUNCTION();
+
+    XCAM_ASSERT(att != nullptr);
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+#ifdef DISABLE_HANDLE_ATTRIB
+    mCfgMutex.lock();
+    rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+    mCfgMutex.unlock();
+#else
+    if (att->sync.sync_mode == RK_AIQ_UAPI_MODE_SYNC) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+        att->sync.done = true;
+        mCfgMutex.unlock();
+    } else {
+        if (updateCalibAttr) {
+            memcpy(att, &mNewCalibAtt, sizeof(mNewCalibAtt));
+            att->sync.done = false;
+        } else {
+            rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+            att->sync.sync_mode = mNewCalibAtt.sync.sync_mode;
             att->sync.done = true;
         }
     }
@@ -204,6 +289,76 @@ XCamReturn RkAiqAccmHandleInt::getAttribV2(rk_aiq_ccm_v2_attrib_t* att) {
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
+
+XCamReturn RkAiqAccmHandleInt::setIqParamV2(const rk_aiq_ccm_v2_calib_attrib_t* att) {
+    ENTER_ANALYZER_FUNCTION();
+
+    XCAM_ASSERT(att != nullptr);
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    mCfgMutex.lock();
+#ifdef DISABLE_HANDLE_ATTRIB
+    ret = rk_aiq_uapi_accm_SetIqParam(mAlgoCtx, att, false);
+#else
+
+    // check if there is different between att & mCurAtt(sync)/mNewAtt(async)
+    // if something changed, set att to mNewAtt, and
+    // the new params will be effective later when updateConfig
+    // called by RkAiqCore
+    bool isChanged = false;
+    if (att->sync.sync_mode == RK_AIQ_UAPI_MODE_ASYNC && \
+        memcmp(&mNewCalibAttV2, att, sizeof(*att)))
+        isChanged = true;
+    else if (att->sync.sync_mode != RK_AIQ_UAPI_MODE_ASYNC && \
+             memcmp(&mCurCalibAttV2, att, sizeof(*att)))
+        isChanged = true;
+
+    // if something changed
+    if (isChanged) {
+        mNewCalibAttV2   = *att;
+        updateCalibAttr = true;
+        waitSignal(att->sync.sync_mode);
+    }
+#endif
+
+    mCfgMutex.unlock();
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn RkAiqAccmHandleInt::getIqParamV2(rk_aiq_ccm_v2_calib_attrib_t* att) {
+    ENTER_ANALYZER_FUNCTION();
+
+    XCAM_ASSERT(att != nullptr);
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+#ifdef DISABLE_HANDLE_ATTRIB
+    mCfgMutex.lock();
+    rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+    mCfgMutex.unlock();
+#else
+
+    if (att->sync.sync_mode == RK_AIQ_UAPI_MODE_SYNC) {
+        mCfgMutex.lock();
+        rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+        att->sync.done = true;
+        mCfgMutex.unlock();
+    } else {
+        if (mNewCalibAttV2) {
+            memcpy(att, &mNewCalibAttV2, sizeof(mNewCalibAttV2));
+            att->sync.done = false;
+        } else {
+            rk_aiq_uapi_accm_GetIqParam(mAlgoCtx, att);
+            att->sync.sync_mode = mNewCalibAttV2.sync.sync_mode;
+            att->sync.done = true;
+        }
+    }
+#endif
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
 #endif
 
 XCamReturn RkAiqAccmHandleInt::queryCcmInfo(rk_aiq_ccm_querry_info_t* ccm_querry_info) {
@@ -218,6 +373,33 @@ XCamReturn RkAiqAccmHandleInt::queryCcmInfo(rk_aiq_ccm_querry_info_t* ccm_querry
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
+XCamReturn RkAiqAccmHandleInt::getAcolorSwInfo(rk_aiq_color_info_t* aColor_sw_info) {
+    ENTER_ANALYZER_FUNCTION();
+    LOGV_ACCM("%s enter",__FUNCTION__);
+    XCAM_ASSERT(aColor_sw_info != nullptr);
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    RkAiqAlgoProcAccm* accm_proc_int        = (RkAiqAlgoProcAccm*)mProcInParam;
+    memcpy(aColor_sw_info->awbGain,accm_proc_int->accm_sw_info.awbGain,sizeof(aColor_sw_info->awbGain));
+    aColor_sw_info->sensorGain = accm_proc_int->accm_sw_info.sensorGain;
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn RkAiqAccmHandleInt::setAcolorSwInfo(rk_aiq_color_info_t aColor_sw_info) {
+    ENTER_ANALYZER_FUNCTION();
+
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    LOGV_ACCM("%s sensor gain = %f, wbgain=[%f,%f] ",__FUNCTION__,aColor_sw_info.sensorGain,
+      aColor_sw_info.awbGain[0],aColor_sw_info.awbGain[1]);
+    colorSwInfo = aColor_sw_info;
+    colorConstFlag=true;
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
 
 XCamReturn RkAiqAccmHandleInt::prepare() {
     ENTER_ANALYZER_FUNCTION();
@@ -226,10 +408,6 @@ XCamReturn RkAiqAccmHandleInt::prepare() {
 
     ret = RkAiqHandle::prepare();
     RKAIQCORE_CHECK_RET(ret, "accm handle prepare failed");
-
-    RkAiqAlgoConfigAccm* accm_config_int = (RkAiqAlgoConfigAccm*)mConfig;
-    RkAiqCore::RkAiqAlgosGroupShared_t* shared =
-        (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
 
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)mDes;
     ret                       = des->prepare(mConfig);
@@ -280,7 +458,7 @@ XCamReturn RkAiqAccmHandleInt::processing() {
 #else
     if (!shared->fullParams || !shared->fullParams->mCcmParams.ptr()) {
 #endif
-        LOGE_ALSC("[%d]: no gic buf !", shared->frameId);
+        LOGE_ACCM("[%d]: no ccm buf !", shared->frameId);
         return XCAM_RETURN_BYPASS;
     }
 
@@ -357,6 +535,10 @@ XCamReturn RkAiqAccmHandleInt::processing() {
         }
     }
 #endif
+    if(colorConstFlag==true){
+        memcpy(accm_proc_int->accm_sw_info.awbGain,colorSwInfo.awbGain,sizeof(colorSwInfo.awbGain));
+        accm_proc_int->accm_sw_info.sensorGain = colorSwInfo.sensorGain;
+    }
 
 #ifdef DISABLE_HANDLE_ATTRIB
     mCfgMutex.lock();

@@ -73,6 +73,10 @@ prepare(RkAiqAlgoCom* params)
             confPara->com.u.prepare.calibv2, ccm_calib_v2));
 #endif
     }
+    // just update calib ptr
+    if (params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB_PTR)
+        return XCAM_RETURN_NO_ERROR;
+
     AccmPrepare((accm_handle_t)(params->ctx->accm_para));
 
     LOG1_ACCM( "%s: (exit)\n", __FUNCTION__);

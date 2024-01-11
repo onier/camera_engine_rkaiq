@@ -787,8 +787,6 @@ XCamReturn RkAiqAwbHandleInt::prepare() {
     RKAIQCORE_CHECK_RET(ret, "awb handle prepare failed");
 
     RkAiqAlgoConfigAwb* awb_config_int = (RkAiqAlgoConfigAwb*)mConfig;
-    RkAiqCore::RkAiqAlgosGroupShared_t* shared =
-        (RkAiqCore::RkAiqAlgosGroupShared_t*)(getGroupShared());
     // TODO
     // awb_config_int->rawBit;
     awb_config_int->mem_ops_ptr   = mAiqCore->mShareMemOps;
@@ -1068,6 +1066,7 @@ XCamReturn RkAiqAwbHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPar
         cur_params->mAwbGainParams = params->mAwbGainParams ;
 #endif
         awb_gain_param->is_update = true;
+        awb_com->awb_gain_update = false;
         LOGD_AWB("[%d] wbgain params from algo", mWbGainSyncFlag);
     } else if (mWbGainSyncFlag != awb_param->sync_flag) {
         awb_gain_param->sync_flag = mWbGainSyncFlag;
@@ -1098,6 +1097,7 @@ XCamReturn RkAiqAwbHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPar
     if (awb_com->awb_cfg_update) {
         mWbParamSyncFlag = shared->frameId;
         awb_param->sync_flag = mWbParamSyncFlag;
+
 #if defined(ISP_HW_V30)
         cur_params->mAwbV3xParams  = params->mAwbV3xParams;
 #elif defined(ISP_HW_V21)
@@ -1108,6 +1108,7 @@ XCamReturn RkAiqAwbHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPar
         cur_params->mAwbParams     = params->mAwbParams;
 #endif
         awb_param->is_update = true;
+        awb_com->awb_cfg_update = false;
         LOGD_AWB("[%d] params from algo", mWbParamSyncFlag);
     } else if (mWbParamSyncFlag != awb_param->sync_flag) {
         awb_param->sync_flag = mWbParamSyncFlag;

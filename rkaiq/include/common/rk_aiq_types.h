@@ -86,6 +86,11 @@
     ((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24))
 #define rk_fmt_fourcc_be(a, b, c, d)    (rk_fmt_fourcc(a, b, c, d) | (1 << 31))
 
+typedef struct rk_aiq_color_info_s{
+    float sensorGain;
+    float awbGain[2];
+}rk_aiq_color_info_t;
+
 typedef struct rk_aiq_range_s {
     float min;
     float max;
@@ -769,6 +774,23 @@ typedef enum rk_isp_stream_mode_e {
     RK_ISP_STREAM_MODE_ONLNIE,
     RK_ISP_STREAM_MODE_OFFLNIE,
 } rk_isp_stream_mode_t;
+
+typedef struct {
+    struct rkmodule_awb_inf otp_awb;
+} rk_aiq_user_otp_info_t;
+
+typedef enum {
+    RK_ISP_RKRAWSTREAM_MODE_INVALID = 0,
+    RK_ISP_RKRAWSTREAM_MODE_HALF_ONLINE,
+    RK_ISP_RKRAWSTREAM_MODE_OFFLINE,
+} rk_aiq_rkrawstream_mode_t;
+
+typedef struct {
+    int width;
+    int height;
+    rk_aiq_format_t format;
+    rk_aiq_rkrawstream_mode_t mode;
+} rk_aiq_rkrawstream_info_t;
 
 #define RK_AIQ_CAM_GROUP_MAX_CAMS (8)
 

@@ -42,10 +42,11 @@ typedef struct rk_aiq_singlecam_3a_result_s {
         XCamVideoBuffer* _aePreRes;
         RKAiqAecExpInfo_t _effAecExpInfo;
         bool _bEffAecExpValid;
+        RkAiqSetStatsCfg stats_cfg_to_trans;
     } aec;
     // awb params
     struct {
-        union{
+        union {
             rk_aiq_wb_gain_t* _awbGainParams;
             rk_aiq_wb_gain_v32_t* _awbGainV32Params;
         };
@@ -56,7 +57,7 @@ typedef struct rk_aiq_singlecam_3a_result_s {
             rk_aiq_isp_awb_meas_cfg_v3x_t* _awbCfgV3x;
         };
         XCamVideoBuffer* _awbStats;
-        XCamVideoBuffer* _awbProcRes;
+        RkAiqAlgoProcResAwbShared_t _awbProcRes;
     } awb;
     rk_aiq_lsc_cfg_t* _lscConfig;
     AdpccProcResult_t* _dpccConfig;
@@ -135,6 +136,10 @@ typedef struct rk_aiq_singlecam_3a_result_s {
             RK_GAIN_Fix_V2_t*  _again_procRes_v2;
         };
     } again;
+
+    //otp info
+    struct rkmodule_awb_inf _otp_awb;
+    struct rkmodule_lsc_inf *_otp_lsc;
 } rk_aiq_singlecam_3a_result_t;
 
 // for create_contex

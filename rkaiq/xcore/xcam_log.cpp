@@ -93,7 +93,7 @@ static char log_file_name[LOG_FILE_NAME_MAX_LENGTH] = {0};
  *    Linux:
  *      export persist_camera_engine_log=0x4014
  */
-static unsigned long long g_cam_engine_log_level = 0xff0;
+static unsigned long long g_cam_engine_log_level = 0xff1;
 
 #if 0
 typedef struct xcore_cam_log_module_info_s {
@@ -160,8 +160,11 @@ bool xcam_get_enviroment_value(const char* variable, unsigned long long* value)
 }
 
 void xcam_get_runtime_log_level() {
+#ifdef ANDROID_OS
+    const char* file_name = "/data/.rkaiq_log";
+#else
     const char* file_name = "/tmp/.rkaiq_log";
-
+#endif
     if (!access(file_name, F_OK)) {
         FILE *fp = fopen(file_name, "r");
         char level[64] = {'\0'};
@@ -192,10 +195,11 @@ void xcam_get_runtime_log_level() {
 int xcam_get_log_level() {
 #ifdef ANDROID_OS
     char property_value[PROPERTY_VALUE_MAX] = {0};
-
-    property_get("persist.vendor.rkisp.log", property_value, "0");
+    char property_value_default[PROPERTY_VALUE_MAX] = {0};
+    sprintf(property_value_default, "%llx", g_cam_engine_log_level);
+    property_get("persist.vendor.rkisp.log", property_value, property_value_default);
     g_cam_engine_log_level = strtoull(property_value, nullptr, 16);
-
+    ALOGI("rkaiq log level %llx\n", g_cam_engine_log_level);
 #else
     xcam_get_enviroment_value("persist_camera_engine_log",
                               &g_cam_engine_log_level);
@@ -246,6 +250,9 @@ void xcam_print_log (int module, int sub_modules, int level, const char* format,
 #endif
 #ifdef ANDROID_OS
     switch(level) {
+    case XCORE_LOG_LEVEL_NONE:
+        ALOGI("[%s]:%s", g_xcore_log_infos[module].module_name, buffer);
+        break;
     case XCORE_LOG_LEVEL_ERR:
         ALOGE("[%s]:%s", g_xcore_log_infos[module].module_name, buffer);
         break;

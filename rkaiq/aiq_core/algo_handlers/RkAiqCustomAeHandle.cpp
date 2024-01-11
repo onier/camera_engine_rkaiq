@@ -123,6 +123,14 @@ XCamReturn RkAiqCustomAeHandle::getExpWinAttr(Uapi_ExpWin_t* pExpWinAttr) {
     return XCAM_RETURN_NO_ERROR;
 }
 
+XCamReturn RkAiqCustomAeHandle::setAecStatsCfg(Uapi_AecStatsCfg_t AecStatsCfg) {
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn RkAiqCustomAeHandle::getAecStatsCfg(Uapi_AecStatsCfg_t* pAecStatsCfg) {
+    return XCAM_RETURN_NO_ERROR;
+}
+
 XCamReturn RkAiqCustomAeHandle::queryExpInfo(Uapi_ExpQueryInfo_t* pExpQueryInfo) {
     return XCAM_RETURN_NO_ERROR;
 }
@@ -185,8 +193,6 @@ XCamReturn RkAiqCustomAeHandle::preProcess() {
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    RkAiqAlgoPreAe* ae_pre_int        = (RkAiqAlgoPreAe*)mPreInParam;
-    bool postMsg = true;
 #ifdef BYPASS_CUSTOM_AE
     if (0) {
 #else

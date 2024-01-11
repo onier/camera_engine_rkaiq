@@ -28,7 +28,8 @@ public:
     IRkAiqResourceTranslator ()
         : mCamPhyId(-1)
         , mIsGroupMode(false)
-        , mModuleRotation(0) {};
+        , mModuleRotation(0)
+        , mWorkingMode(0) {};
     virtual ~IRkAiqResourceTranslator () {};
 
     virtual XCamReturn translateIspStats(const SmartPtr<VideoBuffer>& from,
@@ -62,6 +63,10 @@ public:
     }
     virtual XCamReturn translateAdehazeStats(const SmartPtr<VideoBuffer>& from,
             SmartPtr<RkAiqAdehazeStatsProxy>& to) {
+        return XCAM_RETURN_BYPASS;
+    }
+    virtual XCamReturn translateAgainStats(const SmartPtr<VideoBuffer>& from,
+            SmartPtr<RkAiqAgainStatsProxy>& to){
         return XCAM_RETURN_BYPASS;
     }
 #if RKAIQ_HAVE_PDAF

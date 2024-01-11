@@ -77,7 +77,11 @@ static XCamReturn prepare(RkAiqAlgoCom* params) {
         CalibDbV2_Bayer2dnrV23_t *bayernr_v23 = (CalibDbV2_Bayer2dnrV23_t*)(CALIBDBV2_GET_MODULE_PTR((void*)pCalibDbV2, bayer2dnr_v23));
         pAblcCtx->stBayer2dnrCalib = bayernr_v23->CalibPara;
 #endif
-        LOGE_ABLC("%s: Ablc Reload Para!\n", __FUNCTION__);
+        // just update calib ptr
+        if (params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB_PTR)
+            return XCAM_RETURN_NO_ERROR;
+
+        LOGI_ABLC("%s: Ablc Reload Para!\n", __FUNCTION__);
         pAblcCtx->stBlcCalib = *calibv2_ablc_calib;
         pAblcCtx->isUpdateParam = true;
         pAblcCtx->isReCalculate |= 1;
@@ -90,7 +94,6 @@ static XCamReturn prepare(RkAiqAlgoCom* params) {
 
 static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams) {
     XCamReturn result = XCAM_RETURN_NO_ERROR;
-    int iso;
     int delta_iso = 0;
     LOG1_ABLC("%s: (enter)\n", __FUNCTION__);
 
@@ -151,6 +154,9 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
             }
             stExpInfo.arTime[0] = curExp->LinearExp.exp_real_params.integration_time;
             stExpInfo.arIso[0]  = stExpInfo.arAGain[0] * stExpInfo.arDGain[0] * 50 * stExpInfo.isp_dgain[0];
+            LOGD_ABLC("%s:%d index:%d again:%f dgain:%f isp_dgain:%f time:%f iso:%d hdr_mode:%d\n",
+                          __FUNCTION__, __LINE__, 0, stExpInfo.arAGain[0], stExpInfo.arDGain[0], stExpInfo.isp_dgain[0],
+                          stExpInfo.arTime[0], stExpInfo.arIso[0], stExpInfo.hdr_mode);
         } else {
             for (int i = 0; i < 3; i++) {
                 if (curExp->HdrExp[i].exp_real_params.analog_gain < 1.0) {
@@ -184,10 +190,9 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
     }
 
     delta_iso = abs(stExpInfo.arIso[stExpInfo.hdr_mode] -
-                    pAblcCtx->stExpInfo.arIso[pAblcCtx->stExpInfo.hdr_mode]);
-    if (delta_iso > ABLC_V32_RECALCULATE_DELTE_ISO) {
-        pAblcCtx->isReCalculate |= 1;
-    }
+		pAblcCtx->stExpInfo.arIso[pAblcCtx->stExpInfo.hdr_mode]);
+    if(delta_iso > 0)
+	    pAblcCtx->isReCalculate |= 1;
 
     if (pAblcCtx->isReCalculate) {
         AblcResult_V32_t ret = AblcV32Process(pAblcCtx, &stExpInfo);
