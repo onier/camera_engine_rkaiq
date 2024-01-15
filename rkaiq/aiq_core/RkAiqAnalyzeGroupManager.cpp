@@ -30,6 +30,7 @@ RkAiqAnalyzerGroup::RkAiqAnalyzerGroup(RkAiqCore* aiqCore, enum rk_aiq_core_anal
                                        const bool singleThrd)
     : mAiqCore(aiqCore), mGroupType(type), mDepsFlag(flag) {
     mUserSetDelayCnts = INT8_MAX;
+    mAwakenId         = (uint32_t)-1;
     if (grpConds)
         mGrpConds = *grpConds;
     if (!singleThrd) {
@@ -117,6 +118,12 @@ void RkAiqAnalyzerGroup::setVicapScaleFlag(bool mode) {
     mVicapScaleStart = mode;
 }
 
+void RkAiqAnalyzerGroup::awakenClean(uint32_t sequence) {
+    stop();
+    mAwakenId = sequence;
+    start();
+}
+
 bool RkAiqAnalyzerGroup::msgHandle(RkAiqCoreVdBufMsg* msg) {
     if (!((1ULL << msg->msg_id) & mDepsFlag)) {
         return true;
@@ -124,8 +131,9 @@ bool RkAiqAnalyzerGroup::msgHandle(RkAiqCoreVdBufMsg* msg) {
 
     XCamMessageType  msg_id = msg->msg_id;
     uint32_t delayCnt = getMsgDelayCnt(msg_id);
-    if (msg->frame_id == 0 && getAiqCore()->getTbInfo()->is_pre_aiq) {
-        delayCnt = 0;
+    if (getAiqCore()->getTbInfo()->prd_type != RK_AIQ_PRD_TYPE_NORMAL) {
+        if (msg->frame_id == mAwakenId)
+            delayCnt = 0;
     }
     uint32_t userId = msg->frame_id + delayCnt;
     GroupMessage& msgWrapper = mGroupMsgMap[userId];
@@ -136,8 +144,8 @@ bool RkAiqAnalyzerGroup::msgHandle(RkAiqCoreVdBufMsg* msg) {
     if (msg_cnts >= MAX_MESSAGES) {
         LOGE_ANALYZER_SUBM(ANALYZER_SUBM,
             "camId: %d, group(%s): id[%d] push msg(%s), msg_cnts: %d overflow",
-             AnalyzerGroupType2Str[mGroupType], msg->frame_id,
-             MessageType2Str[msg->msg_id]);
+             mAiqCore->mAlogsComSharedParams.mCamPhyId, AnalyzerGroupType2Str[mGroupType], msg->frame_id,
+             MessageType2Str[msg->msg_id], msg_cnts);
         for (int i = 0; i < msg_cnts; i++) {
             LOGE_ANALYZER_SUBM(ANALYZER_SUBM, "%d: fid:%d, msg:%s",
                                i, msgWrapper.msgList[i].frame_id, MessageType2Str[msgWrapper.msgList[i].msg_id]);
@@ -475,6 +483,13 @@ XCamReturn RkAiqAnalyzeGroupManager::groupMessageHandler(std::array<RkAiqCoreVdB
                         shared->adehazeStatsBuf = dehazeStats->data().ptr();
                 }
                 break;
+            case XCAM_MESSAGE_AGAIN_STATS_OK:
+                {
+                    RkAiqAgainStatsProxy* againStats = vdBufMsg->msg.get_cast_ptr<RkAiqAgainStatsProxy>();
+                    if (againStats)
+                        shared->againStatsBuf = againStats->data().ptr();
+                }
+                break;
             case XCAM_MESSAGE_VICAP_POLL_SCL_OK:
             {
                 RkAiqVicapRawBufInfo_t *buf_info = (RkAiqVicapRawBufInfo_t *)vdBufMsg->msg->map();
@@ -570,6 +585,9 @@ XCamReturn RkAiqAnalyzeGroupManager::groupMessageHandler(std::array<RkAiqCoreVdB
     if (shared->scaleRawInfo.raw_s) {
         shared->scaleRawInfo.raw_s->unref(shared->scaleRawInfo.raw_s);
         shared->scaleRawInfo.raw_s = nullptr;
+    }
+    if (shared->againStatsBuf) {
+        shared->againStatsBuf = nullptr;
     }
 
     return XCAM_RETURN_NO_ERROR;

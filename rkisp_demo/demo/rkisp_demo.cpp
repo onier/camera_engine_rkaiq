@@ -56,7 +56,7 @@
 #define DEFAULT_CAPTURE_RAW_PATH "/tmp/capture_image"
 #endif
 #define CAPTURE_CNT_FILENAME ".capture_cnt"
-// #define ENABLE_UAPI_TEST
+//#define ENABLE_UAPI_TEST
 #define IQFILE_PATH_MAX_LEN 256
 // #define CUSTOM_AE_DEMO_TEST
 // #define CUSTOM_GROUP_AE_DEMO_TEST
@@ -64,6 +64,8 @@
 // #define TEST_MEMS_SENSOR_INTF
 // #define CUSTOM_AF_DEMO_TEST
 // #define CUSTOM_GROUP_AWB_DEMO_TEST
+// #define OTP_API_TEST
+//#define COLOR_CONSISTENCY_TEST
 #ifdef ISPFEC_API
 #include "IspFec/rk_ispfec_api.h"
 #include <xf86drm.h>
@@ -1260,6 +1262,24 @@ static int read_frame(demo_context_t *ctx)
     process_image(buf_addr,  buf.sequence, bytesused, ctx);
 #else
     process_image(ctx->buffers[i].start,  buf.sequence, bytesused, ctx);
+#endif
+
+#ifdef COLOR_CONSISTENCY_TEST
+    rk_aiq_wb_querry_info_t wb_querry_info;
+    rk_aiq_user_api2_awb_QueryWBInfo(ctx->aiq_ctx, &wb_querry_info);//ctx->aiq_ctx is main camera
+    rk_aiq_uapiV2_awb_Slave2Main_Cfg_t slave2Main;
+    slave2Main.enable = true;
+    slave2Main.camM.wbgain = wb_querry_info.gain;
+    slave2Main.camM.fLV = wb_querry_info.LVValue;
+    slave2Main.camM.fLV_valid = true;
+    char filename[]="/etc/iqfiles/wbgain_convert2.bin";
+    rk_aiq_user_api2_awb_loadConvertLut(&slave2Main.cct_lut_cfg,filename);
+    rk_aiq_user_api2_awb_IqMap2Main(ctx->aiq_ctx,slave2Main);//ctx->aiq_ctx is slave camera
+    rk_aiq_user_api2_awb_freeConvertLut(&slave2Main.cct_lut_cfg);
+    rk_aiq_color_info_t aColor_sw_info;
+    rk_aiq_user_api2_GetAcolorSwInfo(ctx->aiq_ctx,&aColor_sw_info);//ctx->aiq_ctx is main camera
+    printf("sensor gain = %f ,wbgain=[%f,%f]\n",aColor_sw_info.sensorGain,aColor_sw_info.awbGain[0],aColor_sw_info.awbGain[1]);
+    rk_aiq_uapi2_setAcolorSwInfo(ctx->aiq_ctx,aColor_sw_info);//ctx->aiq_ctx is slave camera
 #endif
 
     if (-1 == xioctl(ctx->fd, VIDIOC_QBUF, &buf))
@@ -2500,6 +2520,48 @@ static void rkisp_routine(demo_context_t *ctx)
 #if 0
             test_tuning_api(ctx);
 #endif
+
+#ifdef OTP_API_TEST
+            rk_aiq_user_otp_info_t otp_info = {};
+            otp_info.otp_awb.flag = true;
+            otp_info.otp_awb.r_value = 548;
+            otp_info.otp_awb.b_value = 521;
+            otp_info.otp_awb.gr_value = 1021;
+            otp_info.otp_awb.gb_value = -1;
+            otp_info.otp_awb.golden_r_value = 532;
+            otp_info.otp_awb.golden_b_value = 529;
+            otp_info.otp_awb.golden_gr_value = 1020;
+            otp_info.otp_awb.golden_gb_value = -1;
+
+            if (rk_aiq_uapi2_sysctl_setUserOtpInfo(ctx->aiq_ctx, otp_info) != 0) {
+                ERR("Failed to set User Otp\n");
+            } else {
+                ERR("whm set User Otp: flag = %d, value = [%d, %d, %d, %d], golden = [%d, %d, %d, %d]\n",
+                    otp_info.otp_awb.flag, otp_info.otp_awb.r_value, otp_info.otp_awb.b_value,
+                    otp_info.otp_awb.gr_value, otp_info.otp_awb.gb_value,
+                    otp_info.otp_awb.golden_r_value, otp_info.otp_awb.golden_b_value,
+                    otp_info.otp_awb.golden_gr_value, otp_info.otp_awb.golden_gb_value);
+            }
+#endif
+#ifdef COLOR_CONSISTENCY_TEST
+            rk_aiq_uapiV2_awb_Slave2Main_Cfg_t slave2Main;
+            slave2Main.enable = true;
+            slave2Main.camM.wbgain.rgain = 1.6480  ;
+            slave2Main.camM.wbgain.grgain = 1 ;
+            slave2Main.camM.wbgain.gbgain= 1 ;
+            slave2Main.camM.wbgain.bgain = 1.84 ;
+            char filename[]="/etc/iqfiles/wbgain_convert2.bin";
+            rk_aiq_user_api2_awb_loadConvertLut(&slave2Main.cct_lut_cfg,filename);
+            rk_aiq_user_api2_awb_IqMap2Main(ctx->aiq_ctx,slave2Main);//ctx->aiq_ctx is slave camera
+            rk_aiq_user_api2_awb_freeConvertLut(&slave2Main.cct_lut_cfg);
+
+            rk_aiq_color_info_t aColor_sw_info;//about main camera
+            aColor_sw_info.sensorGain =5;
+            aColor_sw_info.awbGain[0] = slave2Main.camM.wbgain.rgain/slave2Main.camM.wbgain.grgain;
+            aColor_sw_info.awbGain[1] = slave2Main.camM.wbgain.bgain/slave2Main.camM.wbgain.gbgain;
+            ret = rk_aiq_uapi2_setAcolorSwInfo(ctx->aiq_ctx,aColor_sw_info);//ctx->aiq_ctx is slave camera
+#endif
+
             XCamReturn ret = rk_aiq_uapi2_sysctl_prepare(ctx->aiq_ctx, ctx->width, ctx->height, work_mode);
 
             if (ret != XCAM_RETURN_NO_ERROR)
@@ -2512,7 +2574,6 @@ static void rkisp_routine(demo_context_t *ctx)
                     rk_aiq_uapi2_sysctl_registRkRawCb(ctx->aiq_ctx, release_buffer);
                 }
                 ret = rk_aiq_uapi2_sysctl_start(ctx->aiq_ctx );
-
                 init_device(ctx);
                 if (ctx->pponeframe)
                     init_device_pp_oneframe(ctx);
@@ -2525,6 +2586,8 @@ static void rkisp_routine(demo_context_t *ctx)
 
                 if (ctx->ctl_type != TEST_CTL_TYPE_DEFAULT) {
 restart:
+
+
                     static int test_ctl_cnts = 0;
                     ctx->frame_count = 60;
                     start_capturing(ctx);
@@ -2571,6 +2634,45 @@ restart:
         } else if (ctx->camgroup_ctx) {
             // only do once for cam group
             if (ctx->dev_using == 1) {
+                rk_aiq_camgroup_camInfos_t camInfos;
+                memset(&camInfos, 0, sizeof(camInfos));
+                if (rk_aiq_uapi2_camgroup_getCamInfos((rk_aiq_camgroup_ctx_t *)ctx->camgroup_ctx, &camInfos) == XCAM_RETURN_NO_ERROR) {
+                    for (int i = 0; i < camInfos.valid_sns_num; i++) {
+                        rk_aiq_sys_ctx_t* aiq_ctx = NULL;
+                        aiq_ctx = rk_aiq_uapi2_camgroup_getAiqCtxBySnsNm((rk_aiq_camgroup_ctx_t *)ctx->camgroup_ctx, camInfos.sns_ent_nm[i]);
+                        if (!aiq_ctx)
+                            continue;
+
+                        printf("aiq_ctx sns name: %s, camPhyId %d\n",
+                                camInfos.sns_ent_nm[i], camInfos.sns_camPhyId[i]);
+                        rk_aiq_user_otp_info_t otp_info = {};
+                        otp_info.otp_awb.flag = true;
+                        if (i == 0) {
+                            otp_info.otp_awb.r_value = 548;
+                            otp_info.otp_awb.b_value = 521;
+                            otp_info.otp_awb.gr_value = 1021;
+                            otp_info.otp_awb.gb_value = -1;
+                            otp_info.otp_awb.golden_r_value = 532;
+                            otp_info.otp_awb.golden_b_value = 529;
+                            otp_info.otp_awb.golden_gr_value = 1020;
+                            otp_info.otp_awb.golden_gb_value = -1;
+                        } else {
+                            otp_info.otp_awb.r_value = 1;
+                            otp_info.otp_awb.b_value = 1;
+                            otp_info.otp_awb.gr_value = 1;
+                            otp_info.otp_awb.gb_value = -1;
+                            otp_info.otp_awb.golden_r_value = 1;
+                            otp_info.otp_awb.golden_b_value = 1;
+                            otp_info.otp_awb.golden_gr_value = 1;
+                            otp_info.otp_awb.golden_gb_value = -1;
+                        }
+
+                        if (rk_aiq_uapi2_sysctl_setUserOtpInfo(aiq_ctx, otp_info) != 0) {
+                            printf("Failed to set User Otp\n");
+                        }
+                    }
+                }
+
                 XCamReturn ret = rk_aiq_uapi2_camgroup_prepare(ctx->camgroup_ctx, work_mode);
 
                 if (ret != XCAM_RETURN_NO_ERROR)

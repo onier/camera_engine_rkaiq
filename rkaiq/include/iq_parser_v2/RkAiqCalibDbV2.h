@@ -31,18 +31,36 @@
 #include "ablc_head_V32.h"
 #include "rk_aiq_algo_des.h"
 #include "sharp_head_v33.h"
+#include "rkpostisp_head_v1.h"
 #include "xcam_log.h"
 #include "xcam_mutex.h"
 
 struct cJSON;
 
-namespace RkCam {
+typedef struct calib2bin_block_s {
+    char     name[32];
+    uint32_t   size;
+    uint32_t   offset;
+}__attribute__ ((aligned(4))) calib2bin_block_t;
 
-typedef struct __map_index {
-    void *dst_offset;
-    void *ptr_offset;
-    size_t len;
-} map_index_t;
+typedef struct calib2bin_header_s {
+    uint64_t mask;
+    uint32_t   bin_size;
+    uint8_t  block_len;
+    uint32_t   block_offset;
+    uint32_t   bin_offset;
+}__attribute__ ((aligned(4))) calib2bin_header_t;
+
+typedef struct rk_aiq_rtt_share_info_s {
+    uint8_t type;
+    uint8_t iq_bin_mode;
+    bool flip;
+    bool mirror;
+    uint32_t vts;
+    uintptr_t aiq_iq_addr;
+}__attribute__ ((aligned(4))) rk_aiq_rtt_share_info_t;
+
+namespace RkCam {
 
 typedef std::shared_ptr<std::list<std::string>> ModuleNameList;
 typedef std::shared_ptr<std::list<RkAiqAlgoType_t>> AlgoList;
@@ -71,10 +89,12 @@ public:
     static CamCalibDbProj_t *bin2calibproj(const void *bin_buff, size_t len);
     static CamCalibDbV2Context_t *json2calib(const char *jsfile);
     static CamCalibDbV2Context_t *cjson2calib(cJSON *json);
+    static void bin2calib(void *bin_buff, void *struct_ptr);
 
     static int calib2json(const char *jsfile, CamCalibDbV2Context_t *calib);
     static cJSON *calib2cjson(const CamCalibDbV2Context_t *calib);
     static int calibproj2json(const char *jsfile, CamCalibDbProj_t *calibproj);
+    static int calib2bin(void *bin_buf, CamCalibDbV2Context_t *CalibDbV2);
 
     static void releaseCalibDbProj();
     static CamCalibDbV2Context_t toDefaultCalibDb(CamCalibDbProj_t *calibproj);
@@ -117,6 +137,7 @@ public:
 
     static void *loadWholeFile(const char *fpath, size_t *fsize);
     static int parseBinStructMap(uint8_t *data, size_t len);
+    static int restoreBinStructMap(uint8_t *data, size_t len, uint8_t *restore_ptr);
 
 private:
     static std::map<std::string, CamCalibDbProj_t *> mCalibDbsMap;

@@ -20,9 +20,6 @@
 
 #include "base/xcam_common.h"
 #include "rk_aiq_types.h"
-#ifdef ANDROID_OS
-#include <functional>
-#endif
 
 XCAM_BEGIN_DECLARE
 
@@ -38,6 +35,8 @@ typedef enum rk_aiq_status_e {
 
 typedef struct rk_aiq_metas_s {
     uint32_t frame_id;
+    int cam_id;
+    const char* sensor_name;
 } rk_aiq_metas_t;
 
 typedef struct rk_aiq_multi_cam_s {
@@ -71,11 +70,7 @@ typedef struct rk_aiq_ver_info_s{
 } rk_aiq_ver_info_t;
 
 typedef XCamReturn (*rk_aiq_error_cb)(rk_aiq_err_msg_t* err_msg);
-#ifdef ANDROID_OS
-typedef std::function<XCamReturn(rk_aiq_metas_t* metas)> rk_aiq_metas_cb;
-#else
 typedef XCamReturn (*rk_aiq_metas_cb)(rk_aiq_metas_t* metas);
-#endif
 typedef XCamReturn (*rk_aiq_hwevt_cb)(rk_aiq_hwevt_t* hwevt);
 
 typedef enum rk_aiq_cam_type_e {
@@ -92,12 +87,21 @@ typedef enum rk_aiq_prd_type_e {
     RK_AIQ_PRD_TYPE_NORMAL,
     RK_AIQ_PRD_TYPE_TB_BATIPC,
     RK_AIQ_PRD_TYPE_TB_DOORLOCK,
+    RK_AIQ_PRD_TYPE_SINGLE_FRAME,
 } rk_aiq_prd_type_t;
+
+typedef enum rk_aiq_iq_bin_mode_s {
+    RK_AIQ_META_FULL_IQ_BIN = 0,
+    RK_AIQ_META_NOT_FULL_IQ_BIN,
+} rk_aiq_iq_bin_mode_t;
 
 typedef struct rk_aiq_tb_info_s {
     uint16_t magic;
     bool is_pre_aiq;
     uint8_t prd_type;
+    bool is_start_once;
+    uint8_t iq_bin_mode;
+    void *rtt_share_addr;
 } rk_aiq_tb_info_t;
 
 XCAM_END_DECLARE

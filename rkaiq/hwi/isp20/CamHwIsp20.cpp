@@ -117,9 +117,9 @@ CamHwIsp20::CamHwIsp20()
     mEffectIspParamsPool = new RkAiqIspEffParamsPool("ISP_EFF", CAMHWISP_EFFECT_ISP_POOL_NUM);
     _curIspParamsSeq = 0;
 
-    userSensorWidth = 0;
-    userSensorHeight = 0;
-    userSensorFmtCode = 0;
+    use_rkrawstream = false;
+    xcam_mem_clear(mRawStreamInfo);
+    mRawStreamInfo.mode = RK_ISP_RKRAWSTREAM_MODE_INVALID;
 }
 
 CamHwIsp20::~CamHwIsp20()
@@ -1487,7 +1487,7 @@ CamHwIsp20::init(const char* sns_ent_name)
     sensorHw->setCamPhyId(mCamPhyId);
     mSensorDev = sensorHw;
     mSensorDev->open();
-    sensorHw->setTbInfo (mTbInfo.is_pre_aiq);
+    sensorHw->setTbInfo (mTbInfo);
 
     Isp20Params::setCamPhyId(mCamPhyId);
 
@@ -1571,53 +1571,56 @@ CamHwIsp20::init(const char* sns_ent_name)
     mPdafStreamUnit = new PdafStreamProcUnit(ISP_POLL_PDAF_STATS);
     mPdafStreamUnit->set_devices(this);
 
-#ifndef USE_RAWSTREAM_LIB
-    auto buf_it = std::find_if(
-                      std::begin(mDevBufCntMap), std::end(mDevBufCntMap),
-    [&](const std::pair<std::string, int>& buf_cnt_map) {
-        return (
-                   !buf_cnt_map.first.compare("rkraw_tx") || !buf_cnt_map.first.compare("rkraw_rx") ||
-                   !buf_cnt_map.first.compare(0, sizeof("stream_cif_mipi_id"), "stream_cif_mipi_id") ||
-                   !buf_cnt_map.first.compare(0, sizeof("rkisp_rawwr"), "rkisp_rawwr"));
-    });
-    int buf_cnt = 0;
-    if (buf_it != mDevBufCntMap.end()) {
-        buf_cnt = buf_it->second;
+    if (mRawStreamInfo.mode != RK_ISP_RKRAWSTREAM_MODE_INVALID) {
+        use_rkrawstream = true;
     }
 
-    if (!_linked_to_1608) {
-        mRawCapUnit = new RawStreamCapUnit(s_info, _linked_to_isp, buf_cnt);
-        mRawProcUnit = new RawStreamProcUnit(s_info, _linked_to_isp, buf_cnt);
+    if (!use_rkrawstream) {
+        auto buf_it = std::find_if(
+                          std::begin(mDevBufCntMap), std::end(mDevBufCntMap),
+        [&](const std::pair<std::string, int>& buf_cnt_map) {
+            return (
+                       !buf_cnt_map.first.compare("rkraw_tx") || !buf_cnt_map.first.compare("rkraw_rx") ||
+                       !buf_cnt_map.first.compare(0, sizeof("stream_cif_mipi_id"), "stream_cif_mipi_id") ||
+                       !buf_cnt_map.first.compare(0, sizeof("rkisp_rawwr"), "rkisp_rawwr"));
+        });
+        int buf_cnt = 0;
+        if (buf_it != mDevBufCntMap.end()) {
+            buf_cnt = buf_it->second;
+        }
 
-        // set sensor stream flag.
-        mRawCapUnit->setSensorCategory(false);
-        mRawProcUnit->setSensorCategory(false);
-    } else {
-        // 1608 sensor
-        if (NULL == CamHwIsp20::rk1608_share_inf.raw_cap_unit.ptr()) {
-            // [baron] just new buffer in 1st.
+        if (!_linked_to_1608) {
             mRawCapUnit = new RawStreamCapUnit(s_info, _linked_to_isp, buf_cnt);
-            CamHwIsp20::rk1608_share_inf.raw_cap_unit = mRawCapUnit;
+            mRawProcUnit = new RawStreamProcUnit(s_info, _linked_to_isp, buf_cnt);
+
+            // set sensor stream flag.
+            mRawCapUnit->setSensorCategory(false);
+            mRawProcUnit->setSensorCategory(false);
+        } else {
+            // 1608 sensor
+            if (NULL == CamHwIsp20::rk1608_share_inf.raw_cap_unit.ptr()) {
+                // [baron] just new buffer in 1st.
+                mRawCapUnit = new RawStreamCapUnit(s_info, _linked_to_isp, buf_cnt);
+                CamHwIsp20::rk1608_share_inf.raw_cap_unit = mRawCapUnit;
+            }
+
+            mRawProcUnit = new RawStreamProcUnit(s_info, _linked_to_isp, buf_cnt);
+            if (mRawProcUnit.ptr()) {
+                // [baron] save multi rx addr for 1 tx.
+                CamHwIsp20::rk1608_share_inf.raw_proc_unit[mCamPhyId] = mRawProcUnit.ptr();
+            }
+
+            // update tx by bakeup tx.
+            mRawCapUnit = CamHwIsp20::rk1608_share_inf.raw_cap_unit;
+            mRawCapUnit->setSensorCategory(true);
+            mRawProcUnit->setSensorCategory(true);
         }
 
-        mRawProcUnit = new RawStreamProcUnit(s_info, _linked_to_isp, buf_cnt);
-        if (mRawProcUnit.ptr()) {
-            // [baron] save multi rx addr for 1 tx.
-            CamHwIsp20::rk1608_share_inf.raw_proc_unit[mCamPhyId] = mRawProcUnit.ptr();
-        }
-
-        // update tx by bakeup tx.
-        mRawCapUnit = CamHwIsp20::rk1608_share_inf.raw_cap_unit;
-        mRawCapUnit->setSensorCategory(true);
-        mRawProcUnit->setSensorCategory(true);
+        mRawCapUnit->set_devices(mIspCoreDev, this, mRawProcUnit.ptr());
+        mRawProcUnit->set_devices(mIspCoreDev, this);
+        mRawCapUnit->setCamPhyId(mCamPhyId);
+        mRawProcUnit->setCamPhyId(mCamPhyId);
     }
-
-    mRawCapUnit->set_devices(mIspCoreDev, this, mRawProcUnit.ptr());
-    mRawProcUnit->set_devices(mIspCoreDev, this);
-    mRawCapUnit->setCamPhyId(mCamPhyId);
-    mRawProcUnit->setCamPhyId(mCamPhyId);
-#endif
-
     //cif scale
     if (!_linked_to_isp && !_linked_to_1608) {
         if (strlen(s_info->cif_info->mipi_scl0))
@@ -1685,7 +1688,7 @@ CamHwIsp20::deInit()
     int isp_index = s_info->isp_info->logic_id;
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sensor_name(%s) is linked to isp_index(%d)",
                     sns_name, isp_index);
-    if (!mNoReadBack) {
+    if (!mNoReadBack && !use_rkrawstream) {
         setupHdrLink(RK_AIQ_WORKING_MODE_ISP_HDR3, isp_index, false);
         setupHdrLink_vidcap(_hdr_mode, isp_index, false);
     }
@@ -1710,6 +1713,12 @@ CamHwIsp20::deInit()
     if (strstr(sns_name, "_s_")) {
         rawReproc_deInit(sns_name);
     }
+
+    if (_skipped_params) {
+        free(_skipped_params);
+        _skipped_params = NULL;
+    }
+
     return XCAM_RETURN_NO_ERROR;
 }
 
@@ -1732,18 +1741,7 @@ CamHwIsp20::poll_buffer_ready (SmartPtr<VideoBuffer> &buf)
         }
 #endif
     } else if (buf->_buf_type == ISP_POLL_PARAMS) {
-        V4l2BufferProxy* v4lbuf = buf.get_cast_ptr<V4l2BufferProxy>();
-        struct isp2x_isp_params_cfg* data = (struct isp2x_isp_params_cfg*)(v4lbuf->get_v4l2_userptr());
-        static int frame_id0_cnt = 0;
-        if (mTbInfo.is_pre_aiq) {
-            if (data->frame_id == 0) {
-                ++frame_id0_cnt;
-            }
-            LOGK_CAMHW("<TB> poll param id %d cnt %d", data->frame_id, frame_id0_cnt);
-        }
-        if (!mTbInfo.is_pre_aiq && frame_id0_cnt < 1) {
-            return XCAM_RETURN_NO_ERROR;
-        }
+        return XCAM_RETURN_NO_ERROR;
     }
     return CamHwBase::poll_buffer_ready(buf);
 }
@@ -1758,7 +1756,6 @@ CamHwIsp20::setupPipelineFmtCif(struct v4l2_subdev_selection& sns_sd_sel,
     int8_t bpp = 0;
     pixFmt2Bpp(sns_v4l_pix_fmt, bpp);
 
-#ifndef USE_RAWSTREAM_LIB
     if (mIsMultiIspMode && !mNoReadBack) {
         ret = mRawCapUnit->set_csi_mem_word_big_align(sns_sd_sel.r.width, sns_sd_sel.r.height,
                 sns_v4l_pix_fmt, bpp);
@@ -1787,7 +1784,6 @@ CamHwIsp20::setupPipelineFmtCif(struct v4l2_subdev_selection& sns_sd_sel,
     }
 
     mRawProcUnit->set_rx_format(sns_sd_sel, sns_v4l_pix_fmt);
-#endif
 
     //set cif scale fmt
     if (mCifScaleStream.ptr()) {
@@ -1887,13 +1883,11 @@ CamHwIsp20::setupPipelineFmtIsp(struct v4l2_subdev_selection& sns_sd_sel,
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-#ifndef USE_RAWSTREAM_LIB
     if (!_linked_to_1608 || CamHwIsp20::rk1608_share_inf.first_en[mCamPhyId]) {
         mRawCapUnit->set_tx_format(sns_sd_fmt, sns_v4l_pix_fmt);
     }
 
     mRawProcUnit->set_rx_format(sns_sd_fmt, sns_v4l_pix_fmt);
-#endif
 
     // set scale fmt
     if (mCifScaleStream.ptr()) {
@@ -2033,15 +2027,6 @@ CamHwIsp20::setupPipelineFmt()
         ret = XCAM_RETURN_NO_ERROR;
     }
 
-    // with librkrawstream, usr may change raw image, such as crop or rotate.
-    // in this case, pipeline format is differ from sensor format.
-    if(userSensorWidth && userSensorHeight){
-        sns_sd_sel.r.width = userSensorWidth;
-        sns_sd_sel.r.height = userSensorHeight;
-    }
-    if(userSensorFmtCode){
-        sns_sd_fmt.format.code = userSensorFmtCode;
-    }
 
     if (!_linked_to_isp && _crop_rect.width && _crop_rect.height) {
         struct v4l2_format mipi_tx_fmt;
@@ -2049,7 +2034,6 @@ CamHwIsp20::setupPipelineFmt()
         LOGD_CAMHW_SUBM(ISP20HW_SUBM, "vicap get_crop %dx%d@%d,%d\n",
                         _crop_rect.width, _crop_rect.height, _crop_rect.left, _crop_rect.top);
 
-#ifndef USE_RAWSTREAM_LIB
         if (!_linked_to_1608) {
             ret = mRawCapUnit->get_tx_device(0)->get_format(mipi_tx_fmt);
         } else {
@@ -2057,11 +2041,9 @@ CamHwIsp20::setupPipelineFmt()
                 ret = mRawCapUnit->get_tx_device(0)->get_format(mipi_tx_fmt);
             }
         }
-#endif
         mipi_tx_fmt.fmt.pix.width = _crop_rect.width;
         mipi_tx_fmt.fmt.pix.height = _crop_rect.height;
 
-#ifndef USE_RAWSTREAM_LIB
         if (!_linked_to_1608) {
             ret = mRawCapUnit->get_tx_device(0)->set_format(mipi_tx_fmt);
         } else {
@@ -2069,7 +2051,6 @@ CamHwIsp20::setupPipelineFmt()
                 ret = mRawCapUnit->get_tx_device(0)->set_format(mipi_tx_fmt);
             }
         }
-#endif
         sns_sd_sel.r.width = _crop_rect.width;
         sns_sd_sel.r.height = _crop_rect.height;
         sns_sd_fmt.format.width = _crop_rect.width;
@@ -2376,8 +2357,9 @@ CamHwIsp20::setupHdrLink(int hdr_mode, int isp_index, bool enable)
         }
     }
     if (src_pad_s && sink_pad) {
-        if (enable)
+        if (enable) {
             media_setup_link(device, src_pad_s, sink_pad, MEDIA_LNK_FL_ENABLED);
+        }
         else
             media_setup_link(device, src_pad_s, sink_pad, 0);
     }
@@ -2717,7 +2699,7 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
         mNoReadBack = false;
 
     if (mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_DOORLOCK ||
-        mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
+            mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
         mNoReadBack = true;
     }
 
@@ -2725,9 +2707,11 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
 
     //sof event
     if (!mIspSofStream.ptr()) {
-        if (mNoReadBack) {
+        if (mTbInfo.prd_type == RK_AIQ_PRD_TYPE_SINGLE_FRAME) {
+            mIspSofStream = new RKSofEventStream(_cif_csi2_sd, ISP_POLL_SOF);
+        } else if (mNoReadBack) {
             if (mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_DOORLOCK ||
-                mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
+                    mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
                 mIspSofStream = new RKSofEventStream(_cif_csi2_sd, ISP_POLL_SOF);
             } else {
                 mIspSofStream = new RKSofEventStream(mIspCoreDev, ISP_POLL_SOF);
@@ -2748,15 +2732,16 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
                 this);
     }
 
-    if (!mNoReadBack) {
-        setupHdrLink(RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode), isp_index, true);
-        if (!_linked_to_isp) {
-            int cif_index = s_info->cif_info->model_idx;
-            setupHdrLink_vidcap(_hdr_mode, cif_index, true);
-        }
-    } else
-        setupHdrLink(RK_AIQ_WORKING_MODE_ISP_HDR3, isp_index, false);
-
+    if (!use_rkrawstream) {
+        if (!mNoReadBack) {
+            setupHdrLink(RK_AIQ_HDR_GET_WORKING_MODE(_hdr_mode), isp_index, true);
+            if (!_linked_to_isp) {
+                int cif_index = s_info->cif_info->model_idx;
+                setupHdrLink_vidcap(_hdr_mode, cif_index, true);
+            }
+        } else
+            setupHdrLink(RK_AIQ_WORKING_MODE_ISP_HDR3, isp_index, false);
+    }
     sensorHw = mSensorDev.get_cast_ptr<BaseSensorHw>();
     ret = sensorHw->set_working_mode(mode);
     if (ret) {
@@ -2773,10 +2758,10 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
         sensorHw->set_sync_mode(NO_SYNC_MODE);
     }
 
-#ifndef USE_RAWSTREAM_LIB
-    mRawCapUnit->set_working_mode(mode);
-    mRawProcUnit->set_working_mode(mode);
-#endif
+    if (!use_rkrawstream) {
+        mRawCapUnit->set_working_mode(mode);
+        mRawProcUnit->set_working_mode(mode);
+    }
 
     setExpDelayInfo(mode);
     setLensVcmCfg(s_info->mod_info);
@@ -2787,9 +2772,12 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
 #if defined(ISP_HW_V20)
     _ispp_module_init_ens = 0;
 #endif
-    ret = setupPipelineFmt();
-    if (ret < 0) {
-        LOGE_CAMHW_SUBM(ISP20HW_SUBM, "setupPipelineFmt err: %d\n", ret);
+
+    if (!use_rkrawstream) {
+        ret = setupPipelineFmt();
+        if (ret < 0) {
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "setupPipelineFmt err: %d\n", ret);
+        }
     }
 
     struct v4l2_subdev_format isp_src_fmt;
@@ -2803,9 +2791,17 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
         uint32_t width = isp_src_fmt.format.width;
         uint32_t height = isp_src_fmt.format.height;
         mParamsSplitter        = new IspParamsSplitter();
+#if defined(ISP_HW_V32_LITE)
+        mParamsSplitter->SetPicInfo({0, 0, width, height})
+        .SetLeftIspRect({0, 0, width / 2 + extended_pixel, height / 2 + extended_pixel})
+        .SetRightIspRect({width / 2 - extended_pixel, 0, width / 2 + extended_pixel, height / 2 + extended_pixel})
+        .SetBottomLeftIspRect({0, height / 2 - extended_pixel, width / 2 + extended_pixel, height / 2 + extended_pixel})
+        .SetBottomRightIspRect({width / 2 - extended_pixel, height / 2 - extended_pixel, width / 2 + extended_pixel, height / 2 + extended_pixel});
+#else
         mParamsSplitter->SetPicInfo({0, 0, width, height})
         .SetLeftIspRect({0, 0, width / 2 + extended_pixel, height})
         .SetRightIspRect({width / 2 - extended_pixel, 0, width / 2 + extended_pixel, height});
+#endif
         IspParamsSplitter::Rectangle f = mParamsSplitter->GetPicInfo();
         IspParamsSplitter::Rectangle l = mParamsSplitter->GetLeftIspRect();
         IspParamsSplitter::Rectangle r = mParamsSplitter->GetRightIspRect();
@@ -2822,8 +2818,7 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
     }
 #endif
 
-#ifndef USE_RAWSTREAM_LIB
-    if (!_linked_to_isp && !mNoReadBack) {
+    if (!_linked_to_isp && !mNoReadBack && !use_rkrawstream) {
         if (!_linked_to_1608) {
             mRawCapUnit->prepare_cif_mipi();
         } else {
@@ -2833,7 +2828,6 @@ CamHwIsp20::prepare(uint32_t width, uint32_t height, int mode, int t_delay, int 
             }
         }
     }
-#endif
 
 #if defined(RKAIQ_ENABLE_SPSTREAM)
     if ((_cur_calib_infos.mfnr.enable && _cur_calib_infos.mfnr.motion_detect_en) || _cur_calib_infos.af.ldg_param.enable) {
@@ -2973,7 +2967,7 @@ CamHwIsp20::start()
         setIspConfig();
 #endif
     LOGK_CAMHW("cid[%d] %s success. isGroup:%d, isOnline:%d, isMultiIsp:%d, init_ens:0x%llx",
-              mCamPhyId, __func__, mIsGroupMode, mNoReadBack, mIsMultiIspMode, _isp_module_ens);
+               mCamPhyId, __func__, mIsGroupMode, mNoReadBack, mIsMultiIspMode, _isp_module_ens);
     EXIT_CAMHW_FUNCTION();
     return ret;
 }
@@ -2985,8 +2979,7 @@ CamHwIsp20::hdr_mipi_prepare_mode(int mode)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     int new_mode = RK_AIQ_HDR_GET_WORKING_MODE(mode);
 
-#ifndef USE_RAWSTREAM_LIB
-    if (!mNoReadBack) {
+    if (!mNoReadBack && !use_rkrawstream) {
         bool init_state = true;
         if (_linked_to_1608) {
             if (CamHwIsp20::rk1608_share_inf.us_prepare_cnt > 0) {
@@ -3029,7 +3022,6 @@ CamHwIsp20::hdr_mipi_prepare_mode(int mode)
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "hdr mipi start err: %d\n", ret);
         }
     }
-#endif
     return ret;
 }
 
@@ -3039,8 +3031,7 @@ CamHwIsp20::hdr_mipi_start_mode(int mode)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "%s enter", __FUNCTION__);
 
-#ifndef USE_RAWSTREAM_LIB
-    if (!mNoReadBack) {
+    if (!mNoReadBack && !use_rkrawstream) {
         if (!_linked_to_1608) {
             mRawCapUnit->start(mode);
             mRawProcUnit->start(mode);
@@ -3066,7 +3057,6 @@ CamHwIsp20::hdr_mipi_start_mode(int mode)
             }
         }
     }
-#endif
     if (mCifScaleStream.ptr())
         mCifScaleStream->start();
     LOGD_CAMHW_SUBM(ISP20HW_SUBM, "%s exit", __FUNCTION__);
@@ -3077,24 +3067,24 @@ XCamReturn
 CamHwIsp20::hdr_mipi_stop()
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-#ifndef USE_RAWSTREAM_LIB
-    mRawProcUnit->stop();
+    if (!use_rkrawstream) {
+        mRawProcUnit->stop();
 
-    if (!_linked_to_1608) {
-        mRawCapUnit->stop();
-    } else {
-        bool stop_en = false;
-        CamHwIsp20::rk1608_share_inf.us_stop_cnt++;
-        if (CamHwIsp20::rk1608_share_inf.us_stop_cnt > 10)
-            CamHwIsp20::rk1608_share_inf.us_stop_cnt = 10;
-        if (CamHwIsp20::rk1608_share_inf.us_stop_cnt == CamHwIsp20::rk1608_share_inf.en_sns_num) {
-            stop_en = true;
-        }
-        if (stop_en) {
+        if (!_linked_to_1608) {
             mRawCapUnit->stop();
+        } else {
+            bool stop_en = false;
+            CamHwIsp20::rk1608_share_inf.us_stop_cnt++;
+            if (CamHwIsp20::rk1608_share_inf.us_stop_cnt > 10)
+                CamHwIsp20::rk1608_share_inf.us_stop_cnt = 10;
+            if (CamHwIsp20::rk1608_share_inf.us_stop_cnt == CamHwIsp20::rk1608_share_inf.en_sns_num) {
+                stop_en = true;
+            }
+            if (stop_en) {
+                mRawCapUnit->stop();
+            }
         }
     }
-#endif
     if (mCifScaleStream.ptr())
         mCifScaleStream->stop();
     return ret;
@@ -3246,11 +3236,11 @@ XCamReturn CamHwIsp20::pause()
     sensorHw = mSensorDev.get_cast_ptr<BaseSensorHw>();
     sensorHw->stop();
 #ifndef DISABLE_PARAMS_POLL_THREAD
-        if (mIspParamStream.ptr())
-            mIspParamStream->stop();
+    if (mIspParamStream.ptr())
+        mIspParamStream->stop();
 #else
-        if (mIspParamsDev.ptr())
-            mIspParamsDev->stop();
+    if (mIspParamsDev.ptr())
+        mIspParamsDev->stop();
 #endif
 #if defined(ISP_HW_V20)
     if (mTnrStreamProcUnit.ptr())
@@ -3347,14 +3337,14 @@ XCamReturn CamHwIsp20::swWorkingModeDyn(int mode)
 #endif
     _hdr_mode = mode;
 
-#ifndef USE_RAWSTREAM_LIB
-    mRawCapUnit->set_working_mode(mode);
-    mRawProcUnit->set_working_mode(mode);
-    // remap _mipi_tx_devs for cif
-    if (!_linked_to_isp && !mNoReadBack) {
-        mRawCapUnit->prepare_cif_mipi();
+    if (!use_rkrawstream) {
+        mRawCapUnit->set_working_mode(mode);
+        mRawProcUnit->set_working_mode(mode);
+        // remap _mipi_tx_devs for cif
+        if (!_linked_to_isp && !mNoReadBack) {
+            mRawCapUnit->prepare_cif_mipi();
+        }
     }
-#endif
 
     return ret;
 }
@@ -3688,9 +3678,9 @@ CamHwIsp20::getSensorModeData(const char* sns_ent_name,
         ret = XCAM_RETURN_NO_ERROR;
     }
 
-    if(userSensorWidth && userSensorHeight){
-        sns_des.sensor_output_width = userSensorWidth;
-        sns_des.sensor_output_height = userSensorHeight;
+    if (use_rkrawstream) {
+        sns_des.sensor_output_width = mRawStreamInfo.width;
+        sns_des.sensor_output_height = mRawStreamInfo.height;
         sns_des.isp_acq_width = sns_des.sensor_output_width;
         sns_des.isp_acq_height = sns_des.sensor_output_height;
     }
@@ -4051,9 +4041,9 @@ CamHwIsp20::setHdrProcessCount(rk_aiq_luma_params_t luma_params)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     ENTER_CAMHW_FUNCTION();
-#ifndef USE_RAWSTREAM_LIB
-    mRawProcUnit->set_hdr_frame_readback_infos(luma_params.frame_id, luma_params.hdrProcessCnt);
-#endif
+    if (!use_rkrawstream) {
+        mRawProcUnit->set_hdr_frame_readback_infos(luma_params.frame_id, luma_params.hdrProcessCnt);
+    }
     EXIT_CAMHW_FUNCTION();
     return ret;
 }
@@ -4804,17 +4794,16 @@ CamHwIsp20::getModuleCtl(rk_aiq_module_id_t moduleId, bool &en)
 
 XCamReturn CamHwIsp20::notify_capture_raw()
 {
-#ifndef USE_RAWSTREAM_LIB
-    if (mRawProcUnit.ptr())
+    if (mRawProcUnit.ptr() && !use_rkrawstream)
         return mRawProcUnit->notify_capture_raw();
     else
-#endif
         return XCAM_RETURN_ERROR_FAILED;
 }
 
 XCamReturn CamHwIsp20::capture_raw_ctl(capture_raw_t type, int count, const char* capture_dir, char* output_dir)
 {
-#ifndef USE_RAWSTREAM_LIB
+    if (use_rkrawstream)
+        return XCAM_RETURN_ERROR_FAILED;
     if (!mRawProcUnit.ptr())
         return XCAM_RETURN_ERROR_FAILED;
 
@@ -4822,7 +4811,6 @@ XCamReturn CamHwIsp20::capture_raw_ctl(capture_raw_t type, int count, const char
         return mRawProcUnit->capture_raw_ctl(type);
     else if (type == CAPTURE_RAW_SYNC)
         return mRawProcUnit->capture_raw_ctl(type, count, capture_dir, output_dir);
-#endif
     return XCAM_RETURN_ERROR_FAILED;
 }
 
@@ -4868,11 +4856,11 @@ XCamReturn CamHwIsp20::setSensorFlip(bool mirror, bool flip, int skip_frm_cnt)
     /* struct timespec tp; */
     /* clock_gettime(CLOCK_MONOTONIC, &tp); */
     /* int64_t skip_ts = (int64_t)(tp.tv_sec) * 1000 * 1000 * 1000 + (int64_t)(tp.tv_nsec); */
-#ifndef USE_RAWSTREAM_LIB
-    if (_state == CAM_HW_STATE_STARTED && skip_frame_sequence != -1) {
-        mRawCapUnit->skip_frames(skip_frm_cnt, skip_frame_sequence);
+    if (!use_rkrawstream) {
+        if (_state == CAM_HW_STATE_STARTED && skip_frame_sequence != -1) {
+            mRawCapUnit->skip_frames(skip_frm_cnt, skip_frame_sequence);
+        }
     }
-#endif
     return ret;
 }
 
@@ -4886,8 +4874,9 @@ XCamReturn CamHwIsp20::getSensorFlip(bool& mirror, bool& flip)
 XCamReturn CamHwIsp20::setSensorCrop(rk_aiq_rect_t& rect)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (use_rkrawstream)
+        return ret;
     struct v4l2_crop crop;
-#ifndef USE_RAWSTREAM_LIB
     for (int i = 0; i < 3; i++) {
         V4l2Device* mipi_tx = mRawCapUnit->get_tx_device(i).get_cast_ptr<V4l2Device>();
         memset(&crop, 0, sizeof(crop));
@@ -4902,15 +4891,15 @@ XCamReturn CamHwIsp20::setSensorCrop(rk_aiq_rect_t& rect)
         }
     }
     _crop_rect = rect;
-#endif
     return ret;
 }
 
 XCamReturn CamHwIsp20::getSensorCrop(rk_aiq_rect_t& rect)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    if (use_rkrawstream)
+        return ret;
     struct v4l2_crop crop;
-#ifndef USE_RAWSTREAM_LIB
     V4l2Device* mipi_tx = mRawCapUnit->get_tx_device(0).get_cast_ptr<V4l2Device>();
     memset(&crop, 0, sizeof(crop));
     ret = mipi_tx->get_crop(crop);
@@ -4918,7 +4907,6 @@ XCamReturn CamHwIsp20::getSensorCrop(rk_aiq_rect_t& rect)
     rect.top = crop.c.top;
     rect.width = crop.c.width;
     rect.height = crop.c.height;
-#endif
     return ret;
 }
 
@@ -4926,18 +4914,18 @@ void CamHwIsp20::setHdrGlobalTmoMode(uint32_t frame_id, bool mode)
 {
     if (mNoReadBack)
         return;
-#ifndef USE_RAWSTREAM_LIB
+    if (use_rkrawstream)
+        return;
     mRawProcUnit->set_hdr_global_tmo_mode(frame_id, mode);
-#endif
 }
 
 void CamHwIsp20::setMulCamConc(bool cc)
 {
-#ifndef USE_RAWSTREAM_LIB
+    if (use_rkrawstream)
+        return;
     mRawProcUnit->setMulCamConc(cc);
     if (cc)
         mNoReadBack = false;
-#endif
 }
 
 void CamHwIsp20::getShareMemOps(isp_drv_share_mem_ops_t** mem_ops)
@@ -5592,10 +5580,8 @@ XCamReturn CamHwIsp20::notify_sof(SmartPtr<VideoBuffer>& buf)
     BaseSensorHw* mSensorSubdev = mSensorDev.get_cast_ptr<BaseSensorHw>();
     LensHw* mLensSubdev = mLensDev.get_cast_ptr<LensHw>();
     mSensorSubdev->handle_sof(evtdata->_timestamp, evtdata->_frameid);
-#ifndef USE_RAWSTREAM_LIB
-    if (!mNoReadBack)
+    if (!mNoReadBack && !use_rkrawstream)
         mRawProcUnit->notify_sof(evtdata->_timestamp, evtdata->_frameid);
-#endif
     if (mLensSubdev)
         mLensSubdev->handle_sof(evtdata->_timestamp, evtdata->_frameid);
     return XCAM_RETURN_NO_ERROR;
@@ -5807,16 +5793,16 @@ CamHwIsp20::setIspConfig(cam3aResultList* result_list)
     if (v4l2buf.ptr()) {
 #if defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
         struct isp32_isp_params_cfg* isp_params =
-                (struct isp32_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
+            (struct isp32_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
 #elif defined(ISP_HW_V30)
         struct isp3x_isp_params_cfg* isp_params =
-                (struct isp3x_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
+            (struct isp3x_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
 #elif defined(ISP_HW_V21)
         struct isp21_isp_params_cfg* isp_params =
-                (struct isp21_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
+            (struct isp21_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
 #else
         struct isp20_isp_params_cfg* isp_params =
-                (struct isp20_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
+            (struct isp20_isp_params_cfg*)v4l2buf->get_buf().m.userptr;
 #endif
         int buf_index      = v4l2buf->get_buf().index;
         bool isMultiIsp    = mIsMultiIspMode;
@@ -5829,7 +5815,7 @@ CamHwIsp20::setIspConfig(cam3aResultList* result_list)
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "ISP parameter translation error\n");
 
         if (isp_params->module_cfg_update == 0 &&
-            isp_params->module_en_update == 0) {
+                isp_params->module_en_update == 0) {
             mIspParamsDev->return_buffer_to_pool(v4l2buf);
             LOGE_CAMHW_SUBM(ISP20HW_SUBM, "no new ISP parameters to drv");
             return ret;
@@ -5859,11 +5845,15 @@ CamHwIsp20::setIspConfig(cam3aResultList* result_list)
         }
 #endif
 
-#if defined(RKAIQ_HAVE_MULTIISP) && defined(ISP_HW_V32)
+#if defined(RKAIQ_HAVE_MULTIISP) && (defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE))
         struct isp32_isp_params_cfg ori_params;
         if (mIsMultiIspMode) {
             ori_params = *isp_params;
+#if defined(ISP_HW_V32_LITE)
+            mParamsSplitter->SplitIspParamsVertical(&ori_params, isp_params);
+#else
             mParamsSplitter->SplitIspParams(&ori_params, isp_params);
+#endif
         }
 #endif
 
@@ -5877,23 +5867,27 @@ CamHwIsp20::setIspConfig(cam3aResultList* result_list)
         }
 #endif
 
-#if defined(RKAIQ_HAVE_MULTIISP) && (defined(ISP_HW_V30) || defined(ISP_HW_V32))
+#if defined(RKAIQ_HAVE_MULTIISP) && (defined(ISP_HW_V30) || defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE))
         if (mIsMultiIspMode)
             updateEffParams(isp_params, &ori_params);
         else
             updateEffParams(isp_params, NULL);
 #else
-            updateEffParams(isp_params, NULL);
+        updateEffParams(isp_params, NULL);
 #endif
         bool is_wait_params_done = false;
-        if (mTbInfo.prd_type != RK_AIQ_PRD_TYPE_NORMAL) {
+        if (mTbInfo.prd_type != RK_AIQ_PRD_TYPE_NORMAL &&
+                mTbInfo.prd_type != RK_AIQ_PRD_TYPE_SINGLE_FRAME) {
             // skip the params
             if (processTb(isp_params)) {
                 mIspParamsDev->return_buffer_to_pool(v4l2buf);
                 return XCAM_RETURN_NO_ERROR;
             }
-            if (mTbInfo.is_pre_aiq && frameId == 0)
+            if ((mTbInfo.is_pre_aiq || mTbInfo.is_start_once) && frameId == 0)
                 is_wait_params_done = true;
+        }
+        if (mAweekId == frameId) {
+            isp_params->module_cfg_update |= ISP32_MODULE_RTT_FST;
         }
 
         if (mIspParamsDev->queue_buffer(v4l2buf) != 0) {
@@ -5913,9 +5907,9 @@ CamHwIsp20::setIspConfig(cam3aResultList* result_list)
                 LOGW_CAMHW_SUBM(ISP20HW_SUBM, "poll params error, queue cnts: %d !",
                                 mIspParamsDev->get_queued_bufcnt());
                 if (mIspParamsDev->get_queued_bufcnt() == buf_counts && try_time > 0) {
-                   timeout = 30;
-                   try_time--;
-                   continue;
+                    timeout = 30;
+                    try_time--;
+                    continue;
                 } else
                     break;
             }
@@ -6009,9 +6003,8 @@ XCamReturn CamHwIsp20::get_stream_format(rkaiq_stream_type_t type, struct v4l2_f
     case RKISP20_STREAM_MIPITX_L:
     {
         memset(&format, 0, sizeof(format));
-#ifndef USE_RAWSTREAM_LIB
-        ret = mRawCapUnit->get_tx_device(0)->get_format(format);
-#endif
+        if (!use_rkrawstream)
+            ret = mRawCapUnit->get_tx_device(0)->get_format(format);
         break;
     }
     case RKISP20_STREAM_SP:
@@ -6110,11 +6103,9 @@ void CamHwIsp20::notify_isp_stream_status(bool on)
 XCamReturn CamHwIsp20::reset_hardware()
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-#ifndef USE_RAWSTREAM_LIB
-    if (mRawCapUnit.ptr()) {
+    if (mRawCapUnit.ptr() && !use_rkrawstream) {
         ret = mRawCapUnit->reset_hardware();
     }
-#endif
     return ret;
 }
 
@@ -6179,7 +6170,7 @@ CamHwIsp20::rawReproc_genIspParams (uint32_t sequence, rk_aiq_frame_info_t *offl
     if (mode) {
         if (offline_finfo) {
             SensorHw* mSensor = mSensorDev.get_cast_ptr<SensorHw>();
-            ret = mSensor->set_offline_effecting_exp_map(sequence + 1, offline_finfo);
+            ret = mSensor->set_effecting_exp_map(sequence + 1, offline_finfo, 1);
         }
         struct v4l2_event event;
         event.u.frame_sync.frame_sequence = sequence;
@@ -6351,8 +6342,8 @@ CamHwIsp20::rawReProc_prepare (uint32_t sequence, rk_aiq_frame_info_t *offline_f
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
     SensorHw* mSensor = mSensorDev.get_cast_ptr<SensorHw>();
-    ret = mSensor->set_offline_effecting_exp_map(sequence, &offline_finfo[0]);
-    ret = mSensor->set_offline_effecting_exp_map(sequence + 1, &offline_finfo[1]);
+    ret = mSensor->set_effecting_exp_map(sequence, &offline_finfo[0], 1);
+    ret = mSensor->set_effecting_exp_map(sequence + 1, &offline_finfo[1], 1);
     return ret;
 }
 
@@ -6372,6 +6363,91 @@ CamHwIsp20::setCifSclStartFlag(int ratio, bool mode)
     rk_sensor_full_info_t *s_info = it->second.ptr();
     ret = mCifScaleStream->restart(s_info, ratio, this, mode);
     return ret;
+}
+
+XCamReturn
+CamHwIsp20::setFastAeExp(uint32_t frameId)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    if (mTbInfo.rtt_share_addr) {
+        rkisp32_thunderboot_resmem_head fastAeAwbInfo;
+        rk_aiq_exposure_params_t fastae;
+        SensorHw* mSensor = mSensorDev.get_cast_ptr<SensorHw>();
+        if (mIspCoreDev->io_control(RKISP_CMD_GET_TB_HEAD_V32, &fastAeAwbInfo) < 0)
+            ret = XCAM_RETURN_ERROR_FAILED;
+
+        if (ret == XCAM_RETURN_NO_ERROR) {
+            if( _working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                fastae.LinearExp.exp_real_params.analog_gain      = (float)fastAeAwbInfo.head.exp_gain[0] / (1 << 16);
+                fastae.LinearExp.exp_real_params.integration_time = (float)fastAeAwbInfo.head.exp_time[0] / (1 << 16);
+                fastae.LinearExp.exp_real_params.digital_gain     = 1.0f;
+                fastae.LinearExp.exp_real_params.isp_dgain        = (float)fastAeAwbInfo.head.exp_isp_dgain[0] / (1 << 16);
+                fastae.LinearExp.exp_sensor_params.analog_gain_code_global = fastAeAwbInfo.head.exp_gain_reg[0];
+                fastae.LinearExp.exp_sensor_params.coarse_integration_time = fastAeAwbInfo.head.exp_time_reg[0];
+                LOGD_CAMHW("fast LinearExp ae set frame %u effect exp %f %f %f", frameId,
+                                                                                fastae.LinearExp.exp_real_params.analog_gain,
+                                                                                fastae.LinearExp.exp_real_params.integration_time,
+                                                                                fastae.LinearExp.exp_real_params.isp_dgain);
+            } else {
+                fastae.HdrExp[0].exp_real_params.analog_gain      = (float)fastAeAwbInfo.head.exp_gain[0] / (1 << 16);
+                fastae.HdrExp[0].exp_real_params.integration_time = (float)fastAeAwbInfo.head.exp_time[0] / (1 << 16);
+                fastae.HdrExp[0].exp_real_params.digital_gain     = 1.0f;
+                fastae.HdrExp[0].exp_real_params.isp_dgain        = (float)fastAeAwbInfo.head.exp_isp_dgain[0] / (1 << 16);
+                fastae.HdrExp[0].exp_sensor_params.analog_gain_code_global = fastAeAwbInfo.head.exp_gain_reg[0];
+                fastae.HdrExp[0].exp_sensor_params.coarse_integration_time = fastAeAwbInfo.head.exp_time_reg[0];
+
+                fastae.HdrExp[1].exp_real_params.analog_gain      = (float)fastAeAwbInfo.head.exp_gain[1] / (1 << 16);
+                fastae.HdrExp[1].exp_real_params.integration_time = (float)fastAeAwbInfo.head.exp_time[1] / (1 << 16);
+                fastae.HdrExp[1].exp_real_params.digital_gain     = 1.0f;
+                fastae.HdrExp[1].exp_real_params.isp_dgain        = (float)fastAeAwbInfo.head.exp_isp_dgain[1] / (1 << 16);
+                fastae.HdrExp[1].exp_sensor_params.analog_gain_code_global = fastAeAwbInfo.head.exp_gain_reg[1];
+                fastae.HdrExp[1].exp_sensor_params.coarse_integration_time = fastAeAwbInfo.head.exp_time_reg[1];
+
+                fastae.HdrExp[2].exp_real_params.analog_gain      = (float)fastAeAwbInfo.head.exp_gain[2] / (1 << 16);
+                fastae.HdrExp[2].exp_real_params.integration_time = (float)fastAeAwbInfo.head.exp_time[2] / (1 << 16);
+                fastae.HdrExp[2].exp_real_params.digital_gain     = 1.0f;
+                fastae.HdrExp[2].exp_real_params.isp_dgain        = (float)fastAeAwbInfo.head.exp_isp_dgain[2] / (1 << 16);
+                fastae.HdrExp[2].exp_sensor_params.analog_gain_code_global = fastAeAwbInfo.head.exp_gain_reg[2];
+                fastae.HdrExp[2].exp_sensor_params.coarse_integration_time = fastAeAwbInfo.head.exp_time_reg[2];
+                LOGD_CAMHW("fast HdrExp[0] ae set frame %u effect exp %f %f %f", frameId,
+                                                                                fastae.HdrExp[0].exp_real_params.analog_gain,
+                                                                                fastae.HdrExp[0].exp_real_params.integration_time,
+                                                                                fastae.HdrExp[0].exp_real_params.isp_dgain);
+            }
+            mSensor->set_effecting_exp_map(frameId, &fastae, 0);
+        }
+    } else {
+        ret = XCAM_RETURN_ERROR_FAILED;
+    }
+    mAweekId = frameId;
+
+    return ret;
+
+}
+
+XCamReturn
+CamHwIsp20::setVicapStreamMode(int mode, bool is_single_mode)
+{
+    SensorHw* mSensor = mSensorDev.get_cast_ptr<SensorHw>();
+    uint32_t frameId = 0;
+    bool isSglMd = false;
+    // mode: 0: pause, 1: resume
+    if (mode) {
+        isSglMd = mSensor->get_is_single_mode();
+        if (!isSglMd)
+            return XCAM_RETURN_NO_ERROR;
+
+        mSensor->set_pause_flag(false, 0, isSglMd);
+        mRawCapUnit->setVicapStreamMode(mode, &frameId, isSglMd);
+        LOGD_CAMHW("raw stream is resume");
+    } else {
+        mRawCapUnit->setVicapStreamMode(mode, &frameId, is_single_mode);
+        mSensor->set_pause_flag(true, frameId, is_single_mode);
+        LOGD_CAMHW("raw stream is stop, id %u, switch to %s frame mode", frameId, is_single_mode ? "single" : "multi");
+    }
+
+    return XCAM_RETURN_NO_ERROR;
 }
 
 } //namspace RkCam

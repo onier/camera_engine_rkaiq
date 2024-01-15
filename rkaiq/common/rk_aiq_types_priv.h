@@ -101,7 +101,7 @@ typedef struct rkisp_effect_params_s {
 #elif defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
 typedef struct rkisp_effect_params_s {
 #if defined(RKAIQ_HAVE_MULTIISP)
-    struct isp32_isp_params_cfg isp_params_v32[2];
+    struct isp32_isp_params_cfg isp_params_v32[4];
 #endif
     struct isp32_isp_meas_cfg meas;
     struct isp32_bls_cfg bls_cfg;
@@ -562,6 +562,21 @@ public:
     uint32_t frame_id;
 private:
     XCAM_DEAD_COPY (RkAiqAdehazeStats);
+};
+
+class RkAiqAgainStats : public XCam::BufferData {
+public :
+    explicit RkAiqAgainStats() {
+        xcam_mem_clear(again_stats);
+        again_stats_valid = false;
+        frame_id = -1;
+    };
+
+    rk_aiq_again_stat_t again_stats;
+    bool again_stats_valid;
+    uint32_t frame_id;
+private:
+    XCAM_DEAD_COPY (RkAiqAgainStats);
 };
 
 class RkAiqAfStats : public XCam::BufferData {

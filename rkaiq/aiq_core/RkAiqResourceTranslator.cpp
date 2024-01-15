@@ -23,11 +23,12 @@
 #include "isp20/rkispp-config.h"
 #include "RkAiqResourceTranslator.h"
 #include "PdafStreamProcUnit.h"
-#ifdef PDAF_RAW_DUMP
 #include <fcntl.h>
 #include <unistd.h>
-#include <arpa/inet.h>
+#ifdef ANDROID_OS
+#include <cutils/properties.h>
 #endif
+
 #ifdef __ARM_NEON
 #define NEON_OPT
 #endif
@@ -273,10 +274,6 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
 #endif
     SmartPtr<RkAiqAecStats> statsInt = to->data();
 
-    if (getWorkingMode() == RK_AIQ_WORKING_MODE_ISP_HDR2) {
-        // Do something;
-    }
-
 #if defined(ISP_HW_V21)
     stats = (struct rkisp_isp21_stat_buffer *)(buf->get_v4l2_userptr());
 #else
@@ -352,9 +349,10 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
     if (!statsInt->aec_stats_valid)
         return XCAM_RETURN_BYPASS;
 
-    // calc ae run flag
+    // calc ae stats run flag
     uint64_t SumHistPix[3] = { 0, 0, 0 };
-    float SumHistBin[3] = { 0.0f, 0.0f, 0.0f };
+    uint64_t SumHistBin[3] = { 0, 0, 0 };
+    uint8_t HistMean[3] = { 0, 0, 0 };
     u32* hist_bin[3];
 
     hist_bin[index0] = stats->params.rawhist0.hist_bin;
@@ -366,33 +364,35 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
 
     for (int i = 0; i < ISP2X_HIST_BIN_N_MAX; i++) {
         SumHistPix[index0] += hist_bin[index0][i];
-        SumHistBin[index0] += (float)(hist_bin[index0][i] * (i + 1));
+        SumHistBin[index0] += (hist_bin[index0][i] * (i + 1));
 
         SumHistPix[index1] += hist_bin[index1][i];
-        SumHistBin[index1] += (float)(hist_bin[index1][i] * (i + 1));
+        SumHistBin[index1] += (hist_bin[index1][i] * (i + 1));
 
         SumHistPix[index2] += hist_bin[index2][i];
-        SumHistBin[index2] += (float)(hist_bin[index2][i] * (i + 1));
+        SumHistBin[index2] += (hist_bin[index2][i] * (i + 1));
     }
-    statsInt->aec_stats.ae_data.hist_mean[0] = (uint8_t)(SumHistBin[0] / (float)MAX(SumHistPix[0], 1));
-    statsInt->aec_stats.ae_data.hist_mean[1] = (uint8_t)(SumHistBin[1] / (float)MAX(SumHistPix[1], 1));
-    statsInt->aec_stats.ae_data.hist_mean[2] = (uint8_t)(SumHistBin[2] / (float)MAX(SumHistPix[2], 1));
 
-    if (_aeRunFlag || _aeAlgoStatsCfg.UpdateStats) {
+    HistMean[0] = (uint8_t)(SumHistBin[0] / MAX(SumHistPix[0], 1));
+    HistMean[1] = (uint8_t)(SumHistBin[1] / MAX(SumHistPix[1], 1));
+    HistMean[2] = (uint8_t)(SumHistBin[2] / MAX(SumHistPix[2], 1));
+    bool run_flag = getAeStatsRunFlag(HistMean);
+    run_flag |= _aeAlgoStatsCfg.UpdateStats;
 
+    if (run_flag) {
         calcAecLiteWinStats(&stats->params.rawae0,
                             &statsInt->aec_stats.ae_data.chn[index0].rawae_lite,
-                            &statsInt->aec_stats.ae_data.raw_mean[index0],
+                            &_aeRawMean[index0],
                             _aeAlgoStatsCfg.LiteWeight, _aeAlgoStatsCfg.RawStatsChnSel, _aeAlgoStatsCfg.YRangeMode);
 
         calcAecBigWinStats(&stats->params.rawae1,
                            &statsInt->aec_stats.ae_data.chn[index1].rawae_big,
-                           &statsInt->aec_stats.ae_data.raw_mean[index1],
+                           &_aeRawMean[index1],
                            _aeAlgoStatsCfg.BigWeight, _aeAlgoStatsCfg.RawStatsChnSel, _aeAlgoStatsCfg.YRangeMode);
 
         calcAecBigWinStats(&stats->params.rawae2,
                            &statsInt->aec_stats.ae_data.chn[index2].rawae_big,
-                           &statsInt->aec_stats.ae_data.raw_mean[index2],
+                           &_aeRawMean[index2],
                            _aeAlgoStatsCfg.BigWeight, _aeAlgoStatsCfg.RawStatsChnSel, _aeAlgoStatsCfg.YRangeMode);
 
         memcpy(statsInt->aec_stats.ae_data.chn[index0].rawhist_lite.bins, stats->params.rawhist0.hist_bin, ISP2X_HIST_BIN_N_MAX * sizeof(u32));
@@ -406,7 +406,7 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
 
             calcAecBigWinStats(&stats->params.rawae3,
                                &statsInt->aec_stats.ae_data.chn[AeSelMode].rawae_big,
-                               &statsInt->aec_stats.ae_data.raw_mean[AeSelMode],
+                               &_aeRawMean[AeSelMode],
                                _aeAlgoStatsCfg.BigWeight, _aeAlgoStatsCfg.RawStatsChnSel, _aeAlgoStatsCfg.YRangeMode);
 
             memcpy(statsInt->aec_stats.ae_data.chn[AeSelMode].rawhist_big.bins, stats->params.rawhist3.hist_bin, ISP2X_HIST_BIN_N_MAX * sizeof(u32));
@@ -416,7 +416,7 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
 
             calcAecBigWinStats(&stats->params.rawae3,
                                &statsInt->aec_stats.ae_data.extra.rawae_big,
-                               &statsInt->aec_stats.ae_data.raw_mean[AeSelMode],
+                               &_aeRawMean[AeSelMode],
                                _aeAlgoStatsCfg.BigWeight, _aeAlgoStatsCfg.RawStatsChnSel, _aeAlgoStatsCfg.YRangeMode);
 
             memcpy(statsInt->aec_stats.ae_data.extra.rawhist_big.bins, stats->params.rawhist3.hist_bin, ISP2X_HIST_BIN_N_MAX * sizeof(u32));
@@ -436,6 +436,8 @@ RkAiqResourceTranslator::translateAecStats (const SmartPtr<VideoBuffer> &from, S
         memcpy(statsInt->aec_stats.ae_data.sihist.bins, stats->params.sihst.win_stat[0].hist_bins, ISP2X_SIHIST_WIN_NUM * sizeof(u32));
 
     }
+
+    memcpy(statsInt->aec_stats.ae_data.raw_mean, _aeRawMean, sizeof(_aeRawMean));
 
     if (expParams.ptr()) {
 
@@ -750,6 +752,32 @@ RkAiqResourceTranslator::translateAfStats (const SmartPtr<VideoBuffer> &from, Sm
 }
 
 #if RKAIQ_HAVE_PDAF
+bool RkAiqResourceTranslator::getFileValue(const char* path, int* pos) {
+    const char* delim = " ";
+    char buffer[16]   = {0};
+    int fp;
+
+    fp = open(path, O_RDONLY | O_SYNC);
+    if (fp != -1) {
+        if (read(fp, buffer, sizeof(buffer)) <= 0) {
+            LOGE_AF("%s read %s failed!", __func__, path);
+            goto OUT;
+        } else {
+            char* p = nullptr;
+
+            p = strtok(buffer, delim);
+            if (p != nullptr) {
+                *pos = atoi(p);
+            }
+        }
+        close(fp);
+        return true;
+    }
+
+OUT:
+    return false;
+}
+
 XCamReturn
 RkAiqResourceTranslator::translatePdafStats (const SmartPtr<VideoBuffer> &from, SmartPtr<RkAiqPdafStatsProxy> &to, bool sns_mirror)
 {
@@ -769,6 +797,8 @@ RkAiqResourceTranslator::translatePdafStats (const SmartPtr<VideoBuffer> &from, 
     uint32_t i, j, pixelperline;
     unsigned short pdWidth;
     unsigned short pdHeight;
+    bool dumppdraw = false;
+    uint32_t frame_id;
 
     pdLData = statsInt->pdaf_stats.pdLData;
     pdRData = statsInt->pdaf_stats.pdRData;
@@ -781,16 +811,20 @@ RkAiqResourceTranslator::translatePdafStats (const SmartPtr<VideoBuffer> &from, 
     {
         FILE* fp;
         char name[64];
-        uint32_t frame_id = buf->get_sequence() % 10;
+        frame_id = buf->get_sequence() % 10;
 
         ALOGD("@%s: pdWidthxpdHeight: %dx%d !\n", __FUNCTION__, pdaf->pdWidth, pdaf->pdHeight);
         memset(name, 0, sizeof(name));
         if (frame_id < 3) {
             sprintf(name, DEFAULT_PD_RAW_PATH, frame_id);
             fp = fopen(name, "wb");
-            fwrite(pdData, pdaf->pdWidth * pdaf->pdHeight, 2, fp);
-            fflush(fp);
-            fclose(fp);
+            if (fp) {
+                fwrite(pdData, pdaf->pdWidth * pdaf->pdHeight, 2, fp);
+                fflush(fp);
+                fclose(fp);
+            } else {
+                LOGE_AF("%s: can not write to %s file", __func__, name);
+            }
         }
     }
 #endif
@@ -846,28 +880,74 @@ RkAiqResourceTranslator::translatePdafStats (const SmartPtr<VideoBuffer> &from, 
     }
 
 #ifdef PDAF_RAW_DUMP
-    {
+    frame_id = buf->get_sequence() % 10;
+
+    if (frame_id < 3) {
+        dumppdraw = true;
+    }
+#endif
+
+    mEnPdDump = false;
+#ifndef ANDROID_OS
+    char* valueStr = getenv("rkaiq_pddump");
+    if (valueStr) {
+        mEnPdDump = atoi(valueStr) > 0 ? true : false;
+    }
+#else
+    char property_value[PROPERTY_VALUE_MAX] = {'\0'};
+
+    property_get("persist.vendor.rkaiq_pddump", property_value, "-1");
+    int val = atoi(property_value);
+    if (val != -1)
+        mEnPdDump = atoi(property_value) > 0 ? true : false;
+#endif
+
+    if (mEnPdDump) {
+        int dump_cnt = 0;
+        if (getFileValue("/data/.dump_pd", &dump_cnt) == true) {
+            if (dump_cnt > 0) {
+                mPdafDumpCnt = dump_cnt;
+                system("echo 0 > /data/.dump_pd");
+            }
+        } else {
+            mPdafDumpCnt = 0;
+        }
+
+        if (mPdafDumpCnt > 0) {
+            frame_id = buf->get_sequence();
+
+            LOGI_AF("%s: dump pd raw, mPdafDumpCnt %d, frame_id %d", __func__, mPdafDumpCnt, frame_id);
+            mPdafDumpCnt--;
+            dumppdraw = true;
+        }
+    }
+
+    if (dumppdraw) {
         FILE* fp;
         char name[64];
-        int frame_id = buf->get_sequence() % 10;
 
-        if (frame_id < 3) {
-            memset(name, 0, sizeof(name));
-            sprintf(name, DEFAULT_PD_LRAW_PATH, frame_id);
-            fp = fopen(name, "wb");
+        memset(name, 0, sizeof(name));
+        sprintf(name, DEFAULT_PD_LRAW_PATH, frame_id);
+        fp = fopen(name, "wb");
+        if (fp) {
             fwrite(statsInt->pdaf_stats.pdLData, pdWidth * pdHeight, 2, fp);
             fflush(fp);
             fclose(fp);
+        } else {
+            LOGE_AF("%s: can not write to %s file", __func__, name);
+        }
 
-            memset(name, 0, sizeof(name));
-            sprintf(name, DEFAULT_PD_RRAW_PATH, frame_id);
-            fp = fopen(name, "wb");
+        memset(name, 0, sizeof(name));
+        sprintf(name, DEFAULT_PD_RRAW_PATH, frame_id);
+        fp = fopen(name, "wb");
+        if (fp) {
             fwrite(statsInt->pdaf_stats.pdRData, pdWidth * pdHeight, 2, fp);
             fflush(fp);
             fclose(fp);
+        } else {
+            LOGE_AF("%s: can not write to %s file", __func__, name);
         }
     }
-#endif
 
     statsInt->pdaf_stats_valid = true;
     statsInt->frame_id = buf->get_sequence();
@@ -940,6 +1020,31 @@ void
 RkAiqResourceTranslator::releaseParams()
 {
     _expParams.release();
+}
+
+bool RkAiqResourceTranslator::getAeStatsRunFlag(uint8_t* HistMean)
+{
+    bool run_flag = false;
+    int FrameNum = 0;
+    int cur_working_mode = getWorkingMode();
+
+    if (cur_working_mode == RK_AIQ_WORKING_MODE_NORMAL)
+        FrameNum = 1;
+    else if(cur_working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR2 && cur_working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3)
+        FrameNum = 2;
+    else if(cur_working_mode >= RK_AIQ_WORKING_MODE_ISP_HDR3)
+        FrameNum = 3;
+    else
+        LOGE("wrong working mode=%d\n", cur_working_mode);
+
+    for(int i = 0; i < FrameNum; i++) {
+        if(_aeHistMean[i] != HistMean[i]) {
+            run_flag = true;
+            _aeHistMean[i] = HistMean[i];
+        }
+    }
+
+    return run_flag;
 }
 
 } //namespace RkCam

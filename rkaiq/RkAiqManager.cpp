@@ -526,12 +526,11 @@ RkAiqManager::syncSofEvt(SmartPtr<VideoBuffer>& hwres)
         // TODO: moved to aiq core ?
         if (mMetasCb) {
             rk_aiq_metas_t metas;
+            memset(&metas, 0, sizeof(metas));
             metas.frame_id = hwres->get_sequence();
-#ifdef ANDROID_OS
-            mMetasCb(&metas);
-#else
+            metas.cam_id = mCamHw->getCamPhyId();
+            metas.sensor_name = mSnsEntName;
             (*mMetasCb)(&metas);
-#endif
         }
     }
 
@@ -546,26 +545,42 @@ RkAiqManager::hwResCb(SmartPtr<VideoBuffer>& hwres)
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     if (hwres->_buf_type == ISP_POLL_3A_STATS) {
-        if (mTbInfo.is_pre_aiq) {
+        if (mTbInfo.prd_type != RK_AIQ_PRD_TYPE_NORMAL) {
             uint32_t seq = -1;
             seq = hwres.dynamic_cast_ptr<VideoBuffer>()->get_sequence();
-            if (seq == 0 && mTBStatsCnt == 0) {
-                LOGK("<TB> tb hwResCb stats %d\n", seq);
+            Isp20StatsBuffer* buf = hwres.get_cast_ptr<Isp20StatsBuffer>();
+            SmartPtr<CamHwIsp20> mCamHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
+            struct rkisp32_isp_stat_buffer* stats;
+            stats = (struct rkisp32_isp_stat_buffer*)(buf->get_v4l2_userptr());
+            if (stats == NULL) {
+                LOGE("fail to get stats ,ignore\n");
+                return XCAM_RETURN_BYPASS;
+            }
+
+            if ((stats->meas_type & ISP32_STAT_RTT_FST) && (seq != mLastAweekId)) {
+                mRkAiqAnalyzer->awakenClean(seq);
+                ret = mCamHwIsp20->setFastAeExp(seq);
+                if (ret == XCAM_RETURN_NO_ERROR) {
+                    //special setting for AOV AE if run rtt
+                    mRkAiqAnalyzer->setAOVForAE(true);
+                }
+                mLastAweekId = seq;
+
+                // push sof msg
                 struct timespec tp;
                 clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
 
-                SmartPtr<CamHwIsp20> mCamHwIsp20 =
-                    mCamHw.dynamic_cast_ptr<CamHwIsp20>();
                 SmartPtr<ispHwEvt_t> hw_evt = mCamHwIsp20->make_ispHwEvt(
-                                                  0, V4L2_EVENT_FRAME_SYNC,
-                                                  tp.tv_sec * 1000 * 1000 * 1000 + tp.tv_nsec);
-                LOGK("<TB> push sof %d\n", seq);
+                                                    seq, V4L2_EVENT_FRAME_SYNC,
+                                                    tp.tv_sec * 1000 * 1000 * 1000 + tp.tv_nsec);
                 mRkAiqAnalyzer->pushEvts(hw_evt);
+                LOGD("stats meas is special, buf frame id %d", seq);
+            } else if ((mTbInfo.prd_type != RK_AIQ_PRD_TYPE_SINGLE_FRAME && mTbInfo.is_pre_aiq) ||
+                       seq == mLastAweekId) {
+                return ret;
             }
+            ret = mRkAiqAnalyzer->pushStats(hwres);
 
-            if (mTBStatsCnt == 0) ret = mRkAiqAnalyzer->pushStats(hwres);
-
-            mTBStatsCnt++;
         } else {
             ret = mRkAiqAnalyzer->pushStats(hwres);
         }
@@ -577,8 +592,11 @@ RkAiqManager::hwResCb(SmartPtr<VideoBuffer>& hwres)
     } else if (hwres->_buf_type == ISP_POLL_PARAMS) {
         rk_aiq_err_msg_t msg;
         msg.err_code = XCAM_RETURN_BYPASS;
-        if (mTbInfo.is_pre_aiq && mErrCb)
+        if (mTbInfo.is_start_once && !mTBStatsCnt) {
+            mTBStatsCnt++;
+        } else if (!mTbInfo.is_start_once && mErrCb) {
             (*mErrCb)(&msg);
+        }
         if (mHwEvtCb) {
             rk_aiq_hwevt_t hwevt;
 
@@ -602,20 +620,19 @@ RkAiqManager::hwResCb(SmartPtr<VideoBuffer>& hwres)
         if (evtdata->_frameid % 100 == 0)
             xcam_get_runtime_log_level();
 
-        if (mTbInfo.is_pre_aiq) {
-            LOGI("<TB> skip real sof %d\n", evtdata->_frameid);
+        if (mTbInfo.is_pre_aiq || (mTbInfo.is_start_once && !mTBStatsCnt)) {
             return ret;
         }
+
         mRkAiqAnalyzer->pushEvts(hw_evt);
         // TODO: moved to aiq core ?
         if (mMetasCb) {
             rk_aiq_metas_t metas;
+            memset(&metas, 0, sizeof(metas));
             metas.frame_id = evtdata->_frameid;
-#ifdef ANDROID_OS
-            mMetasCb(&metas);
-#else
+            metas.cam_id = mCamHw->getCamPhyId();
+            metas.sensor_name = mSnsEntName;
             (*mMetasCb)(&metas);
-#endif
         }
     } else if (hwres->_buf_type == ISP_POLL_TX) {
 #if 0
@@ -731,6 +748,7 @@ RkAiqManager::hwResCb(SmartPtr<VideoBuffer>& hwres)
         ret = mRkAiqAnalyzer->pushStats(hwres);
     }
 
+exit:
     EXIT_XCORE_FUNCTION();
 
     return ret;
@@ -751,6 +769,9 @@ RkAiqManager::applyAnalyzerResult(SmartPtr<RkAiqFullParamsProxy>& results, bool 
 
     aiqParams = results->data().ptr();
     cam3aResultList results_list;
+
+    if (aiqParams->mFrmId == mLastAweekId)
+        ignoreIsUpdate = true;
 
     if (aiqParams->mExposureParams.ptr()) {
         aiqParams->mExposureParams->setType(RESULT_TYPE_EXPOSURE_PARAM);
@@ -1136,7 +1157,7 @@ void RkAiqManager::setDefMirrorFlip()
         (CalibDb_Sensor_ParaV2_t*)(CALIBDBV2_GET_MODULE_PTR(mCalibDbV2, sensor_calib));
 
     if (mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_DOORLOCK ||
-        mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
+            mTbInfo.prd_type == RK_AIQ_PRD_TYPE_TB_BATIPC) {
         XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
         ret = mCamHw->getSensorFlip(mCurMirror, mCurFlip);
@@ -1319,6 +1340,12 @@ XCamReturn RkAiqManager::calibTuning(CamCalibDbV2Context_t* aiqCalib,
 void RkAiqManager::unsetTuningCalibDb()
 {
     tuningCalib = NULL;
+}
+
+XCamReturn RkAiqManager::setVicapStreamMode(int on, bool isSingleMode)
+{
+    SmartPtr<CamHwIsp20> camHwIsp20 = mCamHw.dynamic_cast_ptr<CamHwIsp20>();
+    return camHwIsp20->setVicapStreamMode(on, isSingleMode);
 }
 
 } //namespace RkCam
